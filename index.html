@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מחשבון עוסק פטור 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Rubik', sans-serif; background-color: #f3f4f6; }
+        .card { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .result-box { transition: all 0.3s ease; }
+        .result-box:hover { transform: translateY(-2px); }
+    </style>
+</head>
+<body class="p-4 md:p-8 text-slate-800">
+
+    <div class="max-w-2xl mx-auto">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-slate-800 mb-2">מחשבון "המשכורת שלי"</h1>
+            <p class="text-slate-500">סימולטור לעוסק פטור (מעודכן ל-2026)</p>
+        </header>
+
+        <div class="card p-6 mb-6 border-r-4 border-blue-500">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <span>⚙️ הגדרות פרופיל</span>
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">מין</label>
+                    <select id="gender" class="w-full p-2 border rounded-lg bg-slate-50 focus:ring-2 focus:ring-blue-500" onchange="calculateResults()">
+                        <option value="male">גבר</option>
+                        <option value="female">אישה</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">מספר ילדים (מתחת לגיל 18)</label>
+                    <input type="number" id="children" value="0" min="0" class="w-full p-2 border rounded-lg bg-slate-50 focus:ring-2 focus:ring-blue-500" onchange="calculateResults()">
+                </div>
+            </div>
+        </div>
+
+        <div class="card p-6 mb-8">
+            <h2 class="text-xl font-bold mb-4">הזנת נתוני החודש</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">סך הכנסות החודש (ש"ח)</label>
+                    <input type="number" id="income" placeholder="למשל: 12000" class="w-full p-3 border rounded-lg text-lg font-bold focus:ring-2 focus:ring-green-500 outline-none" oninput="calculateResults()">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">הוצאות מוכרות (ש"ח)</label>
+                    <input type="number" id="expenses" placeholder="למשל: 1500" class="w-full p-3 border rounded-lg text-lg font-bold focus:ring-2 focus:ring-red-500 outline-none" oninput="calculateResults()">
+                </div>
+            </div>
+        </div>
+
+        <div id="results" class="space-y-4 opacity-50 pointer-events-none transition-opacity duration-300">
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="result-box bg-orange-50 p-4 rounded-xl border border-orange-100">
+                    <div class="text-xs font-bold text-orange-600 uppercase tracking-wide mb-1">חובה להפקיד</div>
+                    <div class="text-sm text-slate-500 mb-1">לפנסיה (גמל)</div>
+                    <div class="text-2xl font-bold text-slate-800">₪<span id="res-pension">0</span></div>
+                    <div class="text-xs text-slate-400 mt-2">מינימום ע"פ חוק</div>
+                </div>
+
+                <div class="result-box bg-blue-50 p-4 rounded-xl border border-blue-100">
+                    <div class="text-xs font-bold text-blue-600 uppercase tracking-wide mb-1">מומלץ להפקיד</div>
+                    <div class="text-sm text-slate-500 mb-1">לקרן השתלמות</div>
+                    <div class="text-2xl font-bold text-slate-800">₪<span id="res-study">0</span></div>
+                    <div class="text-xs text-slate-400 mt-2">4.5% מהרווח (הטבת מס)</div>
+                </div>
+
+                <div class="result-box bg-gray-100 p-4 rounded-xl border border-gray-200">
+                    <div class="text-xs font-bold text-gray-600 uppercase tracking-wide mb-1">לשמור בצד</div>
+                    <div class="text-sm text-slate-500 mb-1">מס הכנסה + ביטוח לאומי</div>
+                    <div class="text-2xl font-bold text-slate-800">₪<span id="res-tax">0</span></div>
+                    <div class="text-xs text-slate-400 mt-2">מקדמות/חבות שנתית</div>
+                </div>
+            </div>
+
+            <div class="card bg-green-600 text-white p-6 mt-6 shadow-lg transform scale-100 hover:scale-[1.01] transition-transform">
+                <div class="flex justify-between items-end">
+                    <div>
+                        <h3 class="text-lg font-medium opacity-90">המשכורת שלך הביתה</h3>
+                        <p class="text-sm opacity-75 mt-1">אחרי כל ההפרשות והמיסים</p>
+                    </div>
+                    <div class="text-4xl font-bold">₪<span id="res-net">0</span></div>
+                </div>
+            </div>
+
+            <p class="text-center text-xs text-slate-400 mt-8">
+                * המחשבון מהווה סימולציה בלבד ואינו תחליף לייעוץ רואה חשבון. <br>
+                הנתונים מעודכנים לפי צפי מדדים ומדרגות מס לשנת 2026.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Updated Constants for 2026
+        const CONSTANTS = {
+            AVG_WAGE: 13683, // Predicted average wage 2026
+            PENSION_RATE_1: 0.0445,
+            PENSION_RATE_2: 0.1255,
+            STUDY_FUND_RATE: 0.045,
+            CREDIT_POINT_VALUE: 255, // Updated credit point value
+            BITUACH_STEP_1_LIMIT: 8210, // 60% of avg wage
+            BITUACH_RATE_1: 0.0597,
+            BITUACH_RATE_2: 0.1783,
+            // 2026 Tax Brackets (Estimated)
+            TAX_BRACKET_1: 7250,
+            TAX_BRACKET_2: 10410,
+            TAX_BRACKET_3: 16710,
+            TAX_BRACKET_4: 23230
+        };
+
+        function calculateResults() {
+            const income = parseFloat(document.getElementById('income').value) || 0;
+            const expenses = parseFloat(document.getElementById('expenses').value) || 0;
+            const gender = document.getElementById('gender').value;
+            const children = parseInt(document.getElementById('children').value) || 0;
+            
+            const resultsDiv = document.getElementById('results');
+
+            if (income > 0) {
+                resultsDiv.classList.remove('opacity-50', 'pointer-events-none');
+            } else {
+                resultsDiv.classList.add('opacity-50', 'pointer-events-none');
+                return;
+            }
+
+            // 1. Profit
+            const profit = Math.max(0, income - expenses);
+
+            // 2. Pension
+            let pension = 0;
+            const halfAvg = CONSTANTS.AVG_WAGE / 2;
+            
+            if (profit <= halfAvg) {
+                pension = profit * CONSTANTS.PENSION_RATE_1;
+            } else if (profit <= CONSTANTS.AVG_WAGE) {
+                pension = (halfAvg * CONSTANTS.PENSION_RATE_1) + ((profit - halfAvg) * CONSTANTS.PENSION_RATE_2);
+            } else {
+                pension = (halfAvg * CONSTANTS.PENSION_RATE_1) + ((CONSTANTS.AVG_WAGE - halfAvg) * CONSTANTS.PENSION_RATE_2);
+            }
+
+            // 3. Study Fund
+            const studyFund = profit * CONSTANTS.STUDY_FUND_RATE;
+
+            // 4. Bituach Leumi
+            let bituach = 0;
+            if (profit <= CONSTANTS.BITUACH_STEP_1_LIMIT) {
+                bituach = profit * CONSTANTS.BITUACH_RATE_1;
+            } else {
+                bituach = (CONSTANTS.BITUACH_STEP_1_LIMIT * CONSTANTS.BITUACH_RATE_1) + 
+                          ((profit - CONSTANTS.BITUACH_STEP_1_LIMIT) * CONSTANTS.BITUACH_RATE_2);
+            }
+
+            // 5. Income Tax
+            let points = (gender === 'male' ? 2.25 : 2.75) + children;
+            let taxCreditValue = points * CONSTANTS.CREDIT_POINT_VALUE;
+
+            let tax = 0;
+            if (profit <= CONSTANTS.TAX_BRACKET_1) {
+                tax = profit * 0.10;
+            } else if (profit <= CONSTANTS.TAX_BRACKET_2) {
+                tax = (CONSTANTS.TAX_BRACKET_1 * 0.10) + ((profit - CONSTANTS.TAX_BRACKET_1) * 0.14);
+            } else if (profit <= CONSTANTS.TAX_BRACKET_3) {
+                tax = (CONSTANTS.TAX_BRACKET_1 * 0.10) + ((CONSTANTS.TAX_BRACKET_2 - CONSTANTS.TAX_BRACKET_1) * 0.14) + ((profit - CONSTANTS.TAX_BRACKET_2) * 0.20);
+            } else {
+                 tax = (CONSTANTS.TAX_BRACKET_1 * 0.10) + ((CONSTANTS.TAX_BRACKET_2 - CONSTANTS.TAX_BRACKET_1) * 0.14) + ((CONSTANTS.TAX_BRACKET_3 - CONSTANTS.TAX_BRACKET_2) * 0.20) + ((profit - CONSTANTS.TAX_BRACKET_3) * 0.31);
+            }
+
+            tax = Math.max(0, tax - taxCreditValue);
+
+            const totalTaxReserve = bituach + tax;
+            const net = profit - pension - studyFund - totalTaxReserve;
+
+            document.getElementById('res-pension').innerText = Math.round(pension).toLocaleString();
+            document.getElementById('res-study').innerText = Math.round(studyFund).toLocaleString();
+            document.getElementById('res-tax').innerText = Math.round(totalTaxReserve).toLocaleString();
+            document.getElementById('res-net').innerText = Math.round(net).toLocaleString();
+        }
+    </script>
+</body>
+</html>
