@@ -3,125 +3,225 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מחשבון עוסק פטור 2026</title>
+    <title>מחשבון עוסק פטור 2026 | מתקדם</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Rubik', sans-serif; background-color: #f3f4f6; }
-        .card { background: white; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        .result-box { transition: all 0.3s ease; }
-        .result-box:hover { transform: translateY(-2px); }
+        body { font-family: 'Rubik', sans-serif; background-color: #f8fafc; }
+        .card { background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; }
+        .input-group { position: relative; }
+        .input-group label { display: block; font-size: 0.85rem; font-weight: 500; color: #64748b; margin-bottom: 0.25rem; }
+        .expense-input { transition: all 0.2s; }
+        .expense-input:focus { border-color: #ef4444; background-color: #fef2f2; }
     </style>
 </head>
 <body class="p-4 md:p-8 text-slate-800">
 
-    <div class="max-w-2xl mx-auto">
+    <div class="max-w-3xl mx-auto">
         <header class="mb-8 text-center">
             <h1 class="text-3xl font-bold text-slate-800 mb-2">מחשבון "המשכורת שלי"</h1>
-            <p class="text-slate-500">סימולטור לעוסק פטור (מעודכן ל-2026)</p>
+            <p class="text-slate-500">גרסה 2.0: כולל חישוב לשכירים ופירוט הוצאות</p>
         </header>
 
-        <div class="card p-6 mb-6 border-r-4 border-blue-500">
-            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-                <span>⚙️ הגדרות פרופיל</span>
+        <div class="card p-6 mb-6 border-r-4 border-blue-600">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-slate-800">
+                <span>⚙️ פרופיל אישי</span>
             </h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-slate-600 mb-1">מין</label>
-                    <select id="gender" class="w-full p-2 border rounded-lg bg-slate-50 focus:ring-2 focus:ring-blue-500" onchange="calculateResults()">
-                        <option value="male">גבר</option>
-                        <option value="female">אישה</option>
-                    </select>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <div class="input-group">
+                        <label>מין</label>
+                        <select id="gender" class="w-full p-2.5 border rounded-lg bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none" onchange="calculateResults()">
+                            <option value="male">גבר</option>
+                            <option value="female">אישה</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>מספר ילדים (מתחת לגיל 18)</label>
+                        <input type="number" id="children" value="0" min="0" class="w-full p-2.5 border rounded-lg bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none" oninput="calculateResults()">
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-600 mb-1">מספר ילדים (מתחת לגיל 18)</label>
-                    <input type="number" id="children" value="0" min="0" class="w-full p-2 border rounded-lg bg-slate-50 focus:ring-2 focus:ring-blue-500" onchange="calculateResults()">
+
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                    <div class="flex items-center gap-2 mb-3">
+                        <input type="checkbox" id="isEmployee" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" onchange="toggleEmployeeFields()">
+                        <label for="isEmployee" class="mb-0 cursor-pointer font-bold text-blue-800">אני עובד/ת גם כשכיר/ה</label>
+                    </div>
+                    
+                    <div id="employeeField" class="hidden transition-all duration-300">
+                        <label class="text-sm text-blue-700 block mb-1">ברוטו משכורת (חודשי):</label>
+                        <input type="number" id="salary" placeholder="למשל: 8000" class="w-full p-2.5 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" oninput="calculateResults()">
+                        <p class="text-xs text-blue-400 mt-1">* קריטי לחישוב מדרגות המס והביטוח הלאומי</p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="card p-6 mb-8">
-            <h2 class="text-xl font-bold mb-4">הזנת נתוני החודש</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">סך הכנסות החודש (ש"ח)</label>
-                    <input type="number" id="income" placeholder="למשל: 12000" class="w-full p-3 border rounded-lg text-lg font-bold focus:ring-2 focus:ring-green-500 outline-none" oninput="calculateResults()">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="card p-6 border-t-4 border-green-500">
+                <h2 class="text-xl font-bold mb-4 text-green-700">הכנסות העסק</h2>
+                <label class="text-sm font-medium text-slate-600 mb-1 block">כמה כסף נכנס החודש?</label>
+                <input type="number" id="income" placeholder="0" class="w-full p-4 border rounded-xl text-2xl font-bold text-green-700 bg-green-50 focus:ring-2 focus:ring-green-500 outline-none" oninput="calculateResults()">
+            </div>
+
+            <div class="card p-6 border-t-4 border-red-500">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-red-700">הוצאות מוכרות</h2>
+                    <div class="text-sm font-bold bg-red-100 text-red-700 px-3 py-1 rounded-full">סה"כ: ₪<span id="totalExpenses">0</span></div>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">הוצאות מוכרות (ש"ח)</label>
-                    <input type="number" id="expenses" placeholder="למשל: 1500" class="w-full p-3 border rounded-lg text-lg font-bold focus:ring-2 focus:ring-red-500 outline-none" oninput="calculateResults()">
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-slate-500">שיווק ופרסום</label>
+                        <input type="number" data-group="exp" class="expense-input w-full p-2 border rounded-lg text-sm" placeholder="פייסבוק, אתר..." oninput="calculateResults()">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500">נסיעות ורכב</label>
+                        <input type="number" data-group="exp" class="expense-input w-full p-2 border rounded-lg text-sm" placeholder="דלק, חניה..." oninput="calculateResults()">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500">ציוד וחומרים</label>
+                        <input type="number" data-group="exp" class="expense-input w-full p-2 border rounded-lg text-sm" placeholder="מחשב, דפים..." oninput="calculateResults()">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500">השתלמויות</label>
+                        <input type="number" data-group="exp" class="expense-input w-full p-2 border rounded-lg text-sm" placeholder="קורסים, ספרות..." oninput="calculateResults()">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500">תקשורת/סלולר</label>
+                        <input type="number" data-group="exp" class="expense-input w-full p-2 border rounded-lg text-sm" placeholder="אינטרנט, נייד..." oninput="calculateResults()">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500">שונות</label>
+                        <input type="number" data-group="exp" class="expense-input w-full p-2 border rounded-lg text-sm" placeholder="כל השאר..." oninput="calculateResults()">
+                    </div>
                 </div>
             </div>
         </div>
 
         <div id="results" class="space-y-4 opacity-50 pointer-events-none transition-opacity duration-300">
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="result-box bg-orange-50 p-4 rounded-xl border border-orange-100">
-                    <div class="text-xs font-bold text-orange-600 uppercase tracking-wide mb-1">חובה להפקיד</div>
-                    <div class="text-sm text-slate-500 mb-1">לפנסיה (גמל)</div>
-                    <div class="text-2xl font-bold text-slate-800">₪<span id="res-pension">0</span></div>
-                    <div class="text-xs text-slate-400 mt-2">מינימום ע"פ חוק</div>
-                </div>
-
-                <div class="result-box bg-blue-50 p-4 rounded-xl border border-blue-100">
-                    <div class="text-xs font-bold text-blue-600 uppercase tracking-wide mb-1">מומלץ להפקיד</div>
-                    <div class="text-sm text-slate-500 mb-1">לקרן השתלמות</div>
-                    <div class="text-2xl font-bold text-slate-800">₪<span id="res-study">0</span></div>
-                    <div class="text-xs text-slate-400 mt-2">4.5% מהרווח (הטבת מס)</div>
-                </div>
-
-                <div class="result-box bg-gray-100 p-4 rounded-xl border border-gray-200">
-                    <div class="text-xs font-bold text-gray-600 uppercase tracking-wide mb-1">לשמור בצד</div>
-                    <div class="text-sm text-slate-500 mb-1">מס הכנסה + ביטוח לאומי</div>
-                    <div class="text-2xl font-bold text-slate-800">₪<span id="res-tax">0</span></div>
-                    <div class="text-xs text-slate-400 mt-2">מקדמות/חבות שנתית</div>
-                </div>
-            </div>
-
-            <div class="card bg-green-600 text-white p-6 mt-6 shadow-lg transform scale-100 hover:scale-[1.01] transition-transform">
-                <div class="flex justify-between items-end">
+            <div class="card bg-slate-800 text-white p-6 shadow-xl relative overflow-hidden">
+                <div class="relative z-10 flex justify-between items-end">
                     <div>
-                        <h3 class="text-lg font-medium opacity-90">המשכורת שלך הביתה</h3>
-                        <p class="text-sm opacity-75 mt-1">אחרי כל ההפרשות והמיסים</p>
+                        <h3 class="text-xl font-medium text-slate-300">נטו להעברה הביתה</h3>
+                        <p class="text-sm text-slate-400 mt-1">אחרי כיסוי מיסים, פנסיה וחיסכון</p>
                     </div>
-                    <div class="text-4xl font-bold">₪<span id="res-net">0</span></div>
+                    <div class="text-5xl font-bold text-green-400">₪<span id="res-net">0</span></div>
                 </div>
             </div>
 
-            <p class="text-center text-xs text-slate-400 mt-8">
-                * המחשבון מהווה סימולציה בלבד ואינו תחליף לייעוץ רואה חשבון. <br>
-                הנתונים מעודכנים לפי צפי מדדים ומדרגות מס לשנת 2026.
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200">
+                    <div class="text-xs font-bold text-orange-600 uppercase mb-1">ביטוח לאומי + מס</div>
+                    <div class="text-2xl font-bold text-slate-800">₪<span id="res-tax">0</span></div>
+                    <div class="text-xs text-slate-400 mt-1">לשמור בצד לתשלום שנתי</div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200">
+                    <div class="text-xs font-bold text-purple-600 uppercase mb-1">פנסיה (חובה)</div>
+                    <div class="text-2xl font-bold text-slate-800">₪<span id="res-pension">0</span></div>
+                    <div class="text-xs text-slate-400 mt-1">להפקיד לקופת גמל</div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200">
+                    <div class="text-xs font-bold text-blue-600 uppercase mb-1">קה"ש (המלצה)</div>
+                    <div class="text-2xl font-bold text-slate-800">₪<span id="res-study">0</span></div>
+                    <div class="text-xs text-slate-400 mt-1">לפטור ממס רווחי הון</div>
+                </div>
+            </div>
+            
+            <p class="text-center text-xs text-slate-400 mt-8 pb-8">
+                * החישוב לוקח בחשבון את הכנסתך כשכיר לצורך קביעת מדרגות המס והביטוח הלאומי (Stacking).
             </p>
         </div>
     </div>
 
     <script>
-        // Updated Constants for 2026
-        const CONSTANTS = {
-            AVG_WAGE: 13683, // Predicted average wage 2026
-            PENSION_RATE_1: 0.0445,
-            PENSION_RATE_2: 0.1255,
-            STUDY_FUND_RATE: 0.045,
-            CREDIT_POINT_VALUE: 255, // Updated credit point value
-            BITUACH_STEP_1_LIMIT: 8210, // 60% of avg wage
-            BITUACH_RATE_1: 0.0597,
-            BITUACH_RATE_2: 0.1783,
-            // 2026 Tax Brackets (Estimated)
-            TAX_BRACKET_1: 7250,
-            TAX_BRACKET_2: 10410,
-            TAX_BRACKET_3: 16710,
-            TAX_BRACKET_4: 23230
+        // Constants 2026 (Estimated)
+        const C = {
+            AVG_WAGE: 13683,
+            PENSION_R1: 0.0445,
+            PENSION_R2: 0.1255,
+            STUDY_FUND: 0.045,
+            CREDIT_POINT: 255,
+            BITUACH_LIMIT: 8210, // Threshold for low rate
+            BITUACH_R1: 0.0597,
+            BITUACH_R2: 0.1783,
+            // Tax Brackets
+            TAX_B1: 7250,  // 10%
+            TAX_B2: 10410, // 14%
+            TAX_B3: 16710, // 20%
+            TAX_B4: 23230  // 31%
         };
 
+        function toggleEmployeeFields() {
+            const isEmployee = document.getElementById('isEmployee').checked;
+            const field = document.getElementById('employeeField');
+            if (isEmployee) {
+                field.classList.remove('hidden');
+            } else {
+                field.classList.add('hidden');
+                document.getElementById('salary').value = ''; // Reset salary
+            }
+            calculateResults();
+        }
+
+        function calculateTaxForAmount(amount) {
+            let tax = 0;
+            if (amount <= 0) return 0;
+            
+            // Bracket 1 calculation
+            let taxableInBracket = Math.min(amount, C.TAX_B1);
+            tax += taxableInBracket * 0.10;
+            amount -= taxableInBracket;
+
+            // Bracket 2
+            if (amount > 0) {
+                taxableInBracket = Math.min(amount, C.TAX_B2 - C.TAX_B1);
+                tax += taxableInBracket * 0.14;
+                amount -= taxableInBracket;
+            }
+
+            // Bracket 3
+            if (amount > 0) {
+                taxableInBracket = Math.min(amount, C.TAX_B3 - C.TAX_B2);
+                tax += taxableInBracket * 0.20;
+                amount -= taxableInBracket;
+            }
+
+            // Bracket 4
+            if (amount > 0) {
+                taxableInBracket = Math.min(amount, C.TAX_B4 - C.TAX_B3);
+                tax += taxableInBracket * 0.31;
+                amount -= taxableInBracket;
+            }
+            
+            // Higher brackets (simplified cap for exempt dealer usually not reaching here)
+            if (amount > 0) {
+                tax += amount * 0.35; 
+            }
+
+            return tax;
+        }
+
         function calculateResults() {
+            // Inputs
             const income = parseFloat(document.getElementById('income').value) || 0;
-            const expenses = parseFloat(document.getElementById('expenses').value) || 0;
+            
+            // Sum Expenses
+            let expenses = 0;
+            document.querySelectorAll('[data-group="exp"]').forEach(input => {
+                expenses += parseFloat(input.value) || 0;
+            });
+            document.getElementById('totalExpenses').innerText = expenses.toLocaleString();
+
+            // Profile
             const gender = document.getElementById('gender').value;
             const children = parseInt(document.getElementById('children').value) || 0;
-            
-            const resultsDiv = document.getElementById('results');
+            const salary = parseFloat(document.getElementById('salary').value) || 0; // Employee Gross
 
+            const resultsDiv = document.getElementById('results');
             if (income > 0) {
                 resultsDiv.classList.remove('opacity-50', 'pointer-events-none');
             } else {
@@ -129,53 +229,76 @@
                 return;
             }
 
-            // 1. Profit
+            // --- CALCULATIONS ---
+
+            // 1. Business Profit
             const profit = Math.max(0, income - expenses);
 
-            // 2. Pension
+            // 2. Pension (Focus on Business Obligation)
+            // Even if employee, self-employed must deposit for their business income.
+            // Simplified: We calculate pension based on profit relative to avg wage tiers.
             let pension = 0;
-            const halfAvg = CONSTANTS.AVG_WAGE / 2;
+            const halfAvg = C.AVG_WAGE / 2;
             
+            // Note: If someone is an employee, technically the "Low rate" pension applies to the FIRST part of income. 
+            // To be safe/conservative, we will calculate pension on profit as if it stands alone, 
+            // ensuring they cover the mandate.
             if (profit <= halfAvg) {
-                pension = profit * CONSTANTS.PENSION_RATE_1;
-            } else if (profit <= CONSTANTS.AVG_WAGE) {
-                pension = (halfAvg * CONSTANTS.PENSION_RATE_1) + ((profit - halfAvg) * CONSTANTS.PENSION_RATE_2);
+                pension = profit * C.PENSION_R1;
+            } else if (profit <= C.AVG_WAGE) {
+                pension = (halfAvg * C.PENSION_R1) + ((profit - halfAvg) * C.PENSION_R2);
             } else {
-                pension = (halfAvg * CONSTANTS.PENSION_RATE_1) + ((CONSTANTS.AVG_WAGE - halfAvg) * CONSTANTS.PENSION_RATE_2);
+                pension = (halfAvg * C.PENSION_R1) + ((C.AVG_WAGE - halfAvg) * C.PENSION_R2);
             }
 
             // 3. Study Fund
-            const studyFund = profit * CONSTANTS.STUDY_FUND_RATE;
+            const studyFund = profit * C.STUDY_FUND;
 
-            // 4. Bituach Leumi
+            // 4. Bituach Leumi (The Stacking Method)
             let bituach = 0;
-            if (profit <= CONSTANTS.BITUACH_STEP_1_LIMIT) {
-                bituach = profit * CONSTANTS.BITUACH_RATE_1;
-            } else {
-                bituach = (CONSTANTS.BITUACH_STEP_1_LIMIT * CONSTANTS.BITUACH_RATE_1) + 
-                          ((profit - CONSTANTS.BITUACH_STEP_1_LIMIT) * CONSTANTS.BITUACH_RATE_2);
-            }
+            // How much of the "Low Rate Bucket" is used by Salary?
+            let usedLowRate = Math.min(salary, C.BITUACH_LIMIT);
+            let remainingLowRate = Math.max(0, C.BITUACH_LIMIT - usedLowRate);
+            
+            // Fill remaining low rate with profit
+            let profitAtLowRate = Math.min(profit, remainingLowRate);
+            let profitAtHighRate = Math.max(0, profit - profitAtLowRate);
 
-            // 5. Income Tax
+            bituach = (profitAtLowRate * C.BITUACH_R1) + (profitAtHighRate * C.BITUACH_R2);
+
+            // 5. Income Tax (The Marginal Method)
+            // Calculate tax on (Salary + Profit) MINUS Tax on (Salary)
+            // This isolates the specific tax owed due to the business income.
+            
+            let totalIncome = salary + profit;
+            let taxOnTotal = calculateTaxForAmount(totalIncome);
+            let taxOnSalaryOnly = calculateTaxForAmount(salary);
+            
+            let businessTaxLiability = taxOnTotal - taxOnSalaryOnly;
+
+            // Apply Credit Points (Only if they weren't fully used by salary)
+            // Usually salary uses them. If salary is 0 or low, we use them here.
+            // We assume Salary (if exists) utilized the points. 
+            // However, to be accurate: We should deduct points from the TOTAL tax liability.
+            
             let points = (gender === 'male' ? 2.25 : 2.75) + children;
-            let taxCreditValue = points * CONSTANTS.CREDIT_POINT_VALUE;
+            let creditValue = points * C.CREDIT_POINT;
 
-            let tax = 0;
-            if (profit <= CONSTANTS.TAX_BRACKET_1) {
-                tax = profit * 0.10;
-            } else if (profit <= CONSTANTS.TAX_BRACKET_2) {
-                tax = (CONSTANTS.TAX_BRACKET_1 * 0.10) + ((profit - CONSTANTS.TAX_BRACKET_1) * 0.14);
-            } else if (profit <= CONSTANTS.TAX_BRACKET_3) {
-                tax = (CONSTANTS.TAX_BRACKET_1 * 0.10) + ((CONSTANTS.TAX_BRACKET_2 - CONSTANTS.TAX_BRACKET_1) * 0.14) + ((profit - CONSTANTS.TAX_BRACKET_2) * 0.20);
-            } else {
-                 tax = (CONSTANTS.TAX_BRACKET_1 * 0.10) + ((CONSTANTS.TAX_BRACKET_2 - CONSTANTS.TAX_BRACKET_1) * 0.14) + ((CONSTANTS.TAX_BRACKET_3 - CONSTANTS.TAX_BRACKET_2) * 0.20) + ((profit - CONSTANTS.TAX_BRACKET_3) * 0.31);
-            }
+            // Total theoretical tax needed from this person
+            let totalTaxNeeded = Math.max(0, taxOnTotal - creditValue);
+            
+            // Assume Salary already paid its share (TaxOnSalary - Credits). 
+            // If Salary was low and paid 0 tax but didn't use all credits, business enjoys remaining credits.
+            let taxSalaryShouldPay = Math.max(0, taxOnSalaryOnly - creditValue);
+            
+            // The business needs to cover the difference
+            let finalBusinessTax = Math.max(0, totalTaxNeeded - taxSalaryShouldPay);
 
-            tax = Math.max(0, tax - taxCreditValue);
-
-            const totalTaxReserve = bituach + tax;
+            // 6. Final Sums
+            const totalTaxReserve = bituach + finalBusinessTax;
             const net = profit - pension - studyFund - totalTaxReserve;
 
+            // Update DOM
             document.getElementById('res-pension').innerText = Math.round(pension).toLocaleString();
             document.getElementById('res-study').innerText = Math.round(studyFund).toLocaleString();
             document.getElementById('res-tax').innerText = Math.round(totalTaxReserve).toLocaleString();
