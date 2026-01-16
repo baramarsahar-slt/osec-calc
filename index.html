@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מחשבון עוסק פטור 2026 | מתקדם</title>
+    <title>מחשבון עוסק פטור 2026 | מלא</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Rubik', sans-serif; background-color: #f8fafc; }
         .card { background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; }
         .input-group { position: relative; }
-        .input-group label { display: block; font-size: 0.85rem; font-weight: 500; color: #64748b; margin-bottom: 0.25rem; }
+        .input-group label { display: block; font-size: 0.9rem; font-weight: 600; color: #334155; margin-bottom: 0.1rem; }
+        .input-helper { font-size: 0.75rem; color: #64748b; margin-bottom: 0.35rem; display: block; }
         .expense-input { transition: all 0.2s; }
         .expense-input:focus { border-color: #ef4444; background-color: #fef2f2; }
     </style>
@@ -20,7 +21,7 @@
     <div class="max-w-3xl mx-auto">
         <header class="mb-8 text-center">
             <h1 class="text-3xl font-bold text-slate-800 mb-2">מחשבון "המשכורת שלי"</h1>
-            <p class="text-slate-500">גרסה 2.0: כולל חישוב לשכירים ופירוט הוצאות</p>
+            <p class="text-slate-500">סימולטור מקיף לעוסק פטור (2026)</p>
         </header>
 
         <div class="card p-6 mb-6 border-r-4 border-blue-600">
@@ -51,7 +52,6 @@
                     <div id="employeeField" class="hidden transition-all duration-300">
                         <label class="text-sm text-blue-700 block mb-1">ברוטו משכורת (חודשי):</label>
                         <input type="number" id="salary" placeholder="למשל: 8000" class="w-full p-2.5 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" oninput="calculateResults()">
-                        <p class="text-xs text-blue-400 mt-1">* קריטי לחישוב מדרגות המס והביטוח הלאומי</p>
                     </div>
                 </div>
             </div>
@@ -70,30 +70,46 @@
                     <div class="text-sm font-bold bg-red-100 text-red-700 px-3 py-1 rounded-full">סה"כ: ₪<span id="totalExpenses">0</span></div>
                 </div>
                 
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 gap-4 max-h-[400px] overflow-y-auto pr-2">
                     <div>
-                        <label class="text-xs text-slate-500">שיווק ופרסום</label>
-                        <input type="number" data-group="exp" class="expense-input w-full p-2 border rounded-lg text-sm" placeholder="פייסבוק, אתר..." oninput="calculateResults()">
+                        <label>משרד ודיור</label>
+                        <span class="input-helper">שכירות/ריבית משכנתא (חלק יחסי), ארנונה</span>
+                        <input type="number" data-group="exp" class="expense-input w-full p-2 border rounded-lg text-sm" placeholder="0" oninput="calculateResults()">
                     </div>
                     <div>
-                        <label class="text-xs text-slate-500">נסיעות ורכב</label>
-                        <input type="number" data-group="exp" class="expense-input w-full p-2 border rounded-lg text-sm" placeholder="דלק, חניה..." oninput="calculateResults()">
+                        <label>תשתיות</label>
+                        <span class="input-helper">חשמל, מים, גז, אינטרנט, טלפון</span>
+                        <input type="number" data-group="exp" class="expense-input w-full p-2 border rounded-lg text-sm" placeholder="0" oninput="calculateResults()">
                     </div>
                     <div>
-                        <label class="text-xs text-slate-500">ציוד וחומרים</label>
-                        <input type="number" data-group="exp" class="expense-input w-full p-2 border rounded-lg text-sm" placeholder="מחשב, דפים..." oninput="calculateResults()">
+                        <label>מנויים ותוכנות</label>
+                        <span class="input-helper">כלי AI, הנה"ח (iCount), אתר, ענן אחסון</span>
+                        <input type="number" data-group="exp" class="expense-input w-full p-2 border rounded-lg text-sm" placeholder="0" oninput="calculateResults()">
                     </div>
                     <div>
-                        <label class="text-xs text-slate-500">השתלמויות</label>
-                        <input type="number" data-group="exp" class="expense-input w-full p-2 border rounded-lg text-sm" placeholder="קורסים, ספרות..." oninput="calculateResults()">
+                        <label>הכשרה מקצועית</label>
+                        <span class="input-helper">הדרכה, קורסים, כנסים, דמי חבר לאגודה</span>
+                        <input type="number" data-group="exp" class="expense-input w-full p-2 border rounded-lg text-sm" placeholder="0" oninput="calculateResults()">
                     </div>
                     <div>
-                        <label class="text-xs text-slate-500">תקשורת/סלולר</label>
-                        <input type="number" data-group="exp" class="expense-input w-full p-2 border rounded-lg text-sm" placeholder="אינטרנט, נייד..." oninput="calculateResults()">
+                        <label>שיווק ופרסום</label>
+                        <span class="input-helper">קידום ממומן, בניית אתר, עיצוב</span>
+                        <input type="number" data-group="exp" class="expense-input w-full p-2 border rounded-lg text-sm" placeholder="0" oninput="calculateResults()">
                     </div>
                     <div>
-                        <label class="text-xs text-slate-500">שונות</label>
-                        <input type="number" data-group="exp" class="expense-input w-full p-2 border rounded-lg text-sm" placeholder="כל השאר..." oninput="calculateResults()">
+                        <label>נסיעות ורכב</label>
+                        <span class="input-helper">דלק, ביטוח, טיפולים, חניה, תחב"צ</span>
+                        <input type="number" data-group="exp" class="expense-input w-full p-2 border rounded-lg text-sm" placeholder="0" oninput="calculateResults()">
+                    </div>
+                    <div>
+                        <label>ציוד ועזרים</label>
+                        <span class="input-helper">ספרים, משחקים, ריהוט, מחשוב, מתכלים</span>
+                        <input type="number" data-group="exp" class="expense-input w-full p-2 border rounded-lg text-sm" placeholder="0" oninput="calculateResults()">
+                    </div>
+                    <div>
+                        <label>כיבוד</label>
+                        <span class="input-helper">קפה, חלב, כיבוד קל לפגישות</span>
+                        <input type="number" data-group="exp" class="expense-input w-full p-2 border rounded-lg text-sm" placeholder="0" oninput="calculateResults()">
                     </div>
                 </div>
             </div>
@@ -197,7 +213,6 @@
                 amount -= taxableInBracket;
             }
             
-            // Higher brackets (simplified cap for exempt dealer usually not reaching here)
             if (amount > 0) {
                 tax += amount * 0.35; 
             }
@@ -234,15 +249,10 @@
             // 1. Business Profit
             const profit = Math.max(0, income - expenses);
 
-            // 2. Pension (Focus on Business Obligation)
-            // Even if employee, self-employed must deposit for their business income.
-            // Simplified: We calculate pension based on profit relative to avg wage tiers.
+            // 2. Pension
             let pension = 0;
             const halfAvg = C.AVG_WAGE / 2;
             
-            // Note: If someone is an employee, technically the "Low rate" pension applies to the FIRST part of income. 
-            // To be safe/conservative, we will calculate pension on profit as if it stands alone, 
-            // ensuring they cover the mandate.
             if (profit <= halfAvg) {
                 pension = profit * C.PENSION_R1;
             } else if (profit <= C.AVG_WAGE) {
@@ -254,51 +264,34 @@
             // 3. Study Fund
             const studyFund = profit * C.STUDY_FUND;
 
-            // 4. Bituach Leumi (The Stacking Method)
+            // 4. Bituach Leumi
             let bituach = 0;
-            // How much of the "Low Rate Bucket" is used by Salary?
             let usedLowRate = Math.min(salary, C.BITUACH_LIMIT);
             let remainingLowRate = Math.max(0, C.BITUACH_LIMIT - usedLowRate);
             
-            // Fill remaining low rate with profit
             let profitAtLowRate = Math.min(profit, remainingLowRate);
             let profitAtHighRate = Math.max(0, profit - profitAtLowRate);
 
             bituach = (profitAtLowRate * C.BITUACH_R1) + (profitAtHighRate * C.BITUACH_R2);
 
-            // 5. Income Tax (The Marginal Method)
-            // Calculate tax on (Salary + Profit) MINUS Tax on (Salary)
-            // This isolates the specific tax owed due to the business income.
-            
+            // 5. Income Tax
             let totalIncome = salary + profit;
             let taxOnTotal = calculateTaxForAmount(totalIncome);
             let taxOnSalaryOnly = calculateTaxForAmount(salary);
             
             let businessTaxLiability = taxOnTotal - taxOnSalaryOnly;
 
-            // Apply Credit Points (Only if they weren't fully used by salary)
-            // Usually salary uses them. If salary is 0 or low, we use them here.
-            // We assume Salary (if exists) utilized the points. 
-            // However, to be accurate: We should deduct points from the TOTAL tax liability.
-            
             let points = (gender === 'male' ? 2.25 : 2.75) + children;
             let creditValue = points * C.CREDIT_POINT;
 
-            // Total theoretical tax needed from this person
             let totalTaxNeeded = Math.max(0, taxOnTotal - creditValue);
-            
-            // Assume Salary already paid its share (TaxOnSalary - Credits). 
-            // If Salary was low and paid 0 tax but didn't use all credits, business enjoys remaining credits.
             let taxSalaryShouldPay = Math.max(0, taxOnSalaryOnly - creditValue);
-            
-            // The business needs to cover the difference
             let finalBusinessTax = Math.max(0, totalTaxNeeded - taxSalaryShouldPay);
 
             // 6. Final Sums
             const totalTaxReserve = bituach + finalBusinessTax;
             const net = profit - pension - studyFund - totalTaxReserve;
 
-            // Update DOM
             document.getElementById('res-pension').innerText = Math.round(pension).toLocaleString();
             document.getElementById('res-study').innerText = Math.round(studyFund).toLocaleString();
             document.getElementById('res-tax').innerText = Math.round(totalTaxReserve).toLocaleString();
