@@ -3,192 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ניהול עוסק פטור 2026 | V7.2 Stable</title>
+    <title>ניהול קליניקה | בר עמר-סהר</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Rubik', sans-serif; background-color: #f8fafc; }
-        .card { background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; }
-        .input-group label { display: block; font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 2px; }
-        .input-field { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; outline: none; transition: border 0.2s; }
-        .input-field:focus { border-color: #3b82f6; ring: 2px solid #bfdbfe; }
+        body { font-family: 'Rubik', sans-serif; background-color: #f8fafc; color: #334155; }
         
-        /* Editable Label Style */
-        .editable-label { border-bottom: 1px dashed #94a3b8; cursor: text; color: #334155; font-weight: bold; background: transparent; width: 100%; font-size: 0.8rem; }
-        .editable-label:focus { outline: none; border-bottom: 2px solid #3b82f6; color: #000; }
-
-        /* Modal Styles - Hidden by default with !important to prevent glitches */
-        .modal { display: none !important; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+        /* Brand Colors based on Logo */
+        .text-brand-orange { color: #f97316; } /* Tailwind Orange-500 approx */
+        .bg-brand-orange { background-color: #f97316; }
+        .border-brand-orange { border-color: #f97316; }
+        .hover-brand-orange:hover { background-color: #ea580c; }
+        
+        .card { background: white; border-radius: 16px; box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; }
+        .input-group label { display: block; font-size: 0.85rem; font-weight: 600; color: #64748b; margin-bottom: 4px; }
+        .input-field { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; transition: all 0.2s; background-color: #fff; }
+        .input-field:focus { border-color: #f97316; ring: 2px solid #ffedd5; box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1); }
+        .editable-label { border-bottom: 1px dashed #94a3b8; cursor: text; color: #475569; font-weight: bold; background: transparent; width: 100%; font-size: 0.8rem; }
+        
+        /* Modal Styles */
+        .modal { display: none !important; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(51, 65, 85, 0.6); align-items: center; justify-content: center; backdrop-filter: blur(2px); }
         .modal.active { display: flex !important; }
-        .modal-content { background-color: #fefefe; padding: 24px; border-radius: 16px; width: 90%; max-width: 400px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+        .modal-content { background-color: #ffffff; padding: 24px; border-radius: 20px; width: 90%; max-width: 400px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border-top: 6px solid #f97316; }
     </style>
 </head>
-<body class="p-4 md:p-8 text-slate-800">
+<body class="p-4 md:p-8 min-h-screen">
 
-    <div class="max-w-6xl mx-auto">
-        <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-            <div>
-                <h1 class="text-3xl font-bold text-slate-800 italic">Smart Biz Manager <span class="text-blue-600 text-lg">V7.2</span></h1>
-                <p class="text-xs text-slate-500">מערכת ניהול חכמה לעוסק פטור (גרסה יציבה)</p>
+    <div class="max-w-6xl mx-auto pb-12">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 border-b border-slate-200 pb-6">
+            <div class="text-center md:text-right">
+                <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Bar Amar-Sahar <span class="text-brand-orange text-xl font-medium">| ניהול קליניקה</span></h1>
+                <p class="text-xs text-slate-500 mt-1">מערכת חכמה לניהול פיננסי ומעקב מס</p>
             </div>
-            <div class="flex gap-2">
-                <button onclick="exportToCSV()" class="text-xs bg-white text-slate-700 px-3 py-2 rounded-lg border hover:bg-slate-50 transition shadow-sm">📥 ייצוא דוח</button>
-                <button onclick="clearAllData()" class="text-xs bg-red-50 text-red-600 px-3 py-2 rounded-lg border border-red-100 hover:bg-red-100 transition shadow-sm">🗑️ איפוס מערכת</button>
+            <div class="flex gap-3">
+                <button onclick="exportToCSV()" class="flex items-center gap-2 text-xs font-bold text-slate-600 bg-white px-4 py-2.5 rounded-full border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition shadow-sm">
+                    <span>📥</span> ייצוא דוח
+                </button>
+                <button onclick="clearAllData()" class="flex items-center gap-2 text-xs font-bold text-red-500 bg-red-50 px-4 py-2.5 rounded-full border border-red-100 hover:bg-red-100 transition shadow-sm">
+                    <span>🗑️</span> איפוס
+                </button>
             </div>
         </div>
 
-        <div class="card p-6 mb-8 border-r-8 border-yellow-400 bg-gradient-to-l from-white to-yellow-50">
-            <div class="flex justify-between items-end mb-3">
-                <div>
-                    <h2 class="font-bold text-slate-700 text-lg">מעקב תקרה שנתי (2026)</h2>
-                    <p class="text-[10px] text-slate-500">עד 120,000 ₪ לעוסק פטור</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="md:col-span-2 card p-6 border-r-8 border-brand-orange bg-gradient-to-l from-white to-orange-50">
+                <div class="flex justify-between items-end mb-4">
+                    <div>
+                        <h2 class="font-bold text-slate-700 text-lg">מעקב תקרה שנתי (2026)</h2>
+                        <p class="text-[11px] text-slate-500 font-medium">תקרת עוסק פטור: 120,000 ₪</p>
+                    </div>
+                    <div class="text-2xl font-bold font-mono text-slate-800"><span id="annual-income-display">0</span> <span class="text-sm text-slate-400">/ 120,000 ₪</span></div>
                 </div>
-                <div class="text-xl font-bold font-mono"><span id="annual-income-display">0</span> / 120,000 ₪</div>
+                <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                    <div id="ceiling-progress" class="bg-brand-orange h-full transition-all duration-1000 shadow-lg" style="width: 0%"></div>
+                </div>
             </div>
-            <div class="w-full bg-slate-200 rounded-full h-4 overflow-hidden shadow-inner">
-                <div id="ceiling-progress" class="bg-yellow-400 h-full transition-all duration-1000" style="width: 0%"></div>
+            
+            <div class="card p-5 flex flex-col h-40 md:h-auto">
+                <h3 class="text-xs font-bold text-slate-400 mb-3 uppercase tracking-wider">חודשים שמורים</h3>
+                <div class="overflow-y-auto flex-grow space-y-2 pr-1 custom-scrollbar" id="history-list-container">
+                    <div class="text-xs text-slate-300 italic text-center py-4">טרם נשמרו נתונים</div>
+                </div>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
             <div class="lg:col-span-4 space-y-6">
-                
-                <div class="card p-5">
-                    <h3 class="font-bold border-b pb-2 mb-4 text-slate-700">⚙️ פרופיל לחישוב מס</h3>
-                    <div class="space-y-4">
-                        <div class="grid grid-cols-2 gap-3">
+                <div class="card p-6">
+                    <h3 class="font-bold border-b border-slate-100 pb-3 mb-5 text-slate-700 flex items-center gap-2">
+                        <span class="bg-slate-100 p-1.5 rounded-md">⚙️</span> הגדרות פרופיל
+                    </h3>
+                    <div class="space-y-5">
+                        <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="text-[10px] uppercase font-bold text-slate-500">מין</label>
+                                <label>מין</label>
                                 <select id="gender" class="input-field bg-slate-50" onchange="calculate()">
-                                    <option value="female">אישה</option>
-                                    <option value="male">גבר</option>
+                                    <option value="female">אישה</option><option value="male">גבר</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="text-[10px] uppercase font-bold text-slate-500">ילדים (מתחת ל-18)</label>
+                                <label>ילדים (מתחת ל-18)</label>
                                 <input type="number" id="children" value="0" class="input-field bg-slate-50" oninput="calculate()">
                             </div>
                         </div>
-                        
                         <div>
-                            <label class="text-[10px] uppercase font-bold text-slate-500">ברוטו חודשי כשכיר/ה</label>
-                            <input type="number" id="salary" placeholder="0" class="input-field bg-blue-50 border-blue-200" oninput="calculate()">
+                            <label>ברוטו חודשי כשכיר/ה</label>
+                            <input type="number" id="salary" placeholder="0" class="input-field bg-blue-50 border-blue-100 focus:border-blue-400 focus:ring-blue-100" oninput="calculate()">
                         </div>
-
-                        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2">
-                            <p class="text-[10px] font-bold text-slate-400 mb-1">זיכויים נוספים (משוער):</p>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" id="degree" class="w-4 h-4 text-blue-600 rounded" onchange="calculate()">
-                                <span class="text-xs">זכאות לתואר אקדמי (+1 נק')</span>
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wide">זיכויים נוספים</p>
+                            <label class="flex items-center gap-3 cursor-pointer p-1 hover:bg-white rounded transition">
+                                <input type="checkbox" id="degree" class="w-4 h-4 text-orange-600 rounded focus:ring-orange-500" onchange="calculate()">
+                                <span class="text-xs font-medium text-slate-600">זכאות לתואר אקדמי (+1 נק')</span>
                             </label>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" id="periphery" class="w-4 h-4 text-blue-600 rounded" onchange="calculate()">
-                                <span class="text-xs">תושב פריפריה (הנחת מס)</span>
+                            <label class="flex items-center gap-3 cursor-pointer p-1 hover:bg-white rounded transition">
+                                <input type="checkbox" id="periphery" class="w-4 h-4 text-orange-600 rounded focus:ring-orange-500" onchange="calculate()">
+                                <span class="text-xs font-medium text-slate-600">תושב פריפריה (הנחת מס)</span>
                             </label>
-                            <div class="flex items-center gap-2 mt-2">
-                                <span class="text-xs whitespace-nowrap">נק' נוספות:</span>
-                                <input type="number" id="extraPoints" value="0" min="0" step="0.5" class="w-16 p-1 text-xs border rounded" oninput="calculate()">
-                                <span class="text-[10px] text-slate-400">(עולה חדש/צבא)</span>
+                            <div class="flex items-center gap-2 pt-1 border-t border-slate-200 mt-1">
+                                <span class="text-xs text-slate-500">נק' נוספות:</span>
+                                <input type="number" id="extraPoints" value="0" min="0" step="0.5" class="w-16 p-1 text-xs border rounded text-center bg-white" oninput="calculate()">
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div id="status-card" class="card p-5 bg-slate-800 text-white shadow-lg">
-                    <h3 class="font-bold text-blue-300 mb-3 text-sm flex items-center gap-2">
+                <div id="status-card" class="card p-6 bg-slate-800 text-white shadow-xl ring-4 ring-slate-50">
+                    <h3 class="font-bold text-orange-300 mb-4 text-sm flex items-center gap-2">
                         <span>📊 סטטוס מס בזמן אמת</span>
                     </h3>
                     <div class="space-y-4">
-                        <div class="flex justify-between items-center">
-                            <div class="text-xs text-slate-400">מדרגת מס שולית</div>
+                        <div class="flex justify-between items-center bg-slate-700/50 p-3 rounded-lg">
+                            <div class="text-xs text-slate-300">מדרגת מס שולית</div>
                             <div id="status-tax-bracket" class="text-2xl font-bold text-white">10%</div>
                         </div>
-                        <div class="pt-3 border-t border-slate-700">
-                            <div id="status-next-bracket" class="text-xs text-blue-100 leading-relaxed opacity-90">
-                                טוען נתונים...
-                            </div>
+                        <div class="pt-2">
+                            <div id="status-next-bracket" class="text-xs text-slate-300 leading-relaxed opacity-90">טוען נתונים...</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="lg:col-span-8 space-y-6">
+            <div class="lg:col-span-8 space-y-8">
                 
-                <div class="card p-6 border-t-4 border-green-500">
-                    <h3 class="font-bold text-green-700 mb-4 flex items-center gap-2">
-                        <span>💰 הכנסות החודש</span>
+                <div class="card p-6 border-t-4 border-brand-orange">
+                    <h3 class="font-bold text-slate-700 mb-6 flex items-center gap-2">
+                        <span class="text-brand-orange bg-orange-50 p-1.5 rounded-lg">💰</span> הכנסות החודש
                     </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div class="input-group"><label>טיפולים</label><input type="number" data-group="inc" class="input-field border-green-100 focus:border-green-500" oninput="calculate()"></div>
-                        <div class="input-group"><label>הרצאות</label><input type="number" data-group="inc" class="input-field border-green-100 focus:border-green-500" oninput="calculate()"></div>
-                        <div class="input-group"><label>אבחונים</label><input type="number" data-group="inc" class="input-field border-green-100 focus:border-green-500" oninput="calculate()"></div>
-                        <div class="input-group"><label>הדרכה</label><input type="number" data-group="inc" class="input-field border-green-100 focus:border-green-500" oninput="calculate()"></div>
-                        <div class="input-group"><label>יעוץ מקצועי</label><input type="number" data-group="inc" class="input-field border-green-100 focus:border-green-500" oninput="calculate()"></div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="income-inputs-container">
+                        <div class="input-group"><label>טיפולים</label><input type="number" data-group="inc" class="input-field" oninput="calculate()"></div>
+                        <div class="input-group"><label>הרצאות</label><input type="number" data-group="inc" class="input-field" oninput="calculate()"></div>
+                        <div class="input-group"><label>אבחונים</label><input type="number" data-group="inc" class="input-field" oninput="calculate()"></div>
+                        <div class="input-group"><label>הדרכה</label><input type="number" data-group="inc" class="input-field" oninput="calculate()"></div>
+                        <div class="input-group"><label>יעוץ מקצועי</label><input type="number" data-group="inc" class="input-field" oninput="calculate()"></div>
                         <div class="input-group">
-                            <input type="text" value="אחר (לחץ לעריכה)" class="editable-label text-green-700 mb-1">
-                            <input type="number" data-group="inc" class="input-field border-green-100 focus:border-green-500" oninput="calculate()">
+                            <input type="text" value="אחר (לחץ לעריכה)" class="editable-label text-slate-500 mb-2" id="other-inc-label" oninput="calculate()">
+                            <input type="number" data-group="inc" class="input-field" oninput="calculate()">
                         </div>
                     </div>
-                    <div class="mt-4 text-right font-bold text-green-800 text-sm">סה"כ הכנסות: ₪<span id="total-income-val">0</span></div>
-                </div>
 
-                <div class="card p-6 border-t-4 border-slate-400">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-slate-700">📌 הוצאות קבועות (נשמרות)</h3>
-                        <button onclick="saveFixedExpenses()" class="text-[10px] bg-slate-700 text-white px-3 py-1.5 rounded hover:bg-slate-800 transition">שמור הגדרות קבועות</button>
-                    </div>
-                    <div class="mt-2 mb-4 p-3 bg-amber-50 rounded-lg border border-amber-100 text-[11px] text-amber-800">
-                        <strong>טיפ תזרימי:</strong> מומלץ להזין הוצאות שנתיות (כמו ביטוח) בסכום המלא ולבחור "שנתי". המערכת תחשב אוטומטית את העלות החודשית האמיתית.
-                    </div>
-                    <div id="fixed-exp-container" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4"></div>
-                </div>
-
-                <div class="card p-6 border-t-4 border-red-500">
-                    <h3 class="font-bold text-red-700 mb-4">⚡ הוצאות משתנות (חודשי בלבד)</h3>
-                    <div id="var-exp-container" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4"></div>
-                    <div class="mt-4 p-3 bg-blue-50 text-blue-800 text-xs rounded border border-blue-100 flex gap-2 items-start">
-                        <span class="text-lg">🧮</span>
-                        <div>
-                            <strong>הוצאות מעורבות (רכב/בית):</strong> השתמשי בכפתור המחשבון שליד השדה כדי לחשב את החלק המוכר (למשל 45% לרכב, 25% לבית) לפי המלצת רו"ח.
-                        </div>
-                    </div>
-                    <div id="receipt-reminder" class="hidden mt-2 p-2 bg-red-50 text-red-700 text-xs rounded border border-red-100 italic font-bold">
-                        ⚠️ תזכורת: נא לשמור קבלות ולתעד את ההוצאות הללו במערכת הנהלת החשבונות!
+                    <div class="mt-6 pt-4 border-t border-slate-100 flex justify-between items-center">
+                        <div class="text-xs text-slate-400">סה"כ הכנסות ברוטו</div>
+                        <div class="text-lg font-bold text-slate-800">₪<span id="total-income-val">0</span></div>
                     </div>
                 </div>
 
-                <div id="results-area" class="opacity-0 transition-opacity duration-700 space-y-4 pb-12">
-                    <div class="grid grid-cols-3 gap-3">
-                        <div class="card p-4 bg-orange-50 border border-orange-100 text-center">
-                            <div class="text-[10px] font-bold text-orange-600 uppercase">מיסים וביטוח</div>
-                            <div id="res-tax" class="text-xl font-bold text-slate-800">0</div>
+                <div id="chart-card" class="card p-6 hidden">
+                    <h3 class="font-bold text-slate-700 mb-4 text-sm uppercase tracking-wide">פילוח הכנסות</h3>
+                    <div class="relative h-56 w-full">
+                        <canvas id="incomeChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <div class="card p-5 border-t-4 border-slate-400">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-700 text-sm">📌 קבועות (נשמרות)</h3>
+                            <button onclick="saveFixedExpenses()" class="text-[10px] bg-slate-100 text-slate-600 px-3 py-1.5 rounded-full hover:bg-slate-200 transition font-bold">שמור שינויים</button>
                         </div>
-                        <div class="card p-4 bg-purple-50 border border-purple-100 text-center">
-                            <div class="text-[10px] font-bold text-purple-600 uppercase">פנסיה חובה</div>
-                            <div id="res-pension" class="text-xl font-bold text-slate-800">0</div>
+                        <div id="fixed-exp-container" class="space-y-3"></div>
+                        <div class="mt-4 p-3 bg-slate-50 rounded-lg text-[10px] text-slate-500 leading-tight">
+                            טיפ: הוצאות שנתיות (כמו ביטוח) יחולקו אוטומטית ל-12.
                         </div>
-                        <div class="card p-4 bg-blue-50 border border-blue-100 text-center">
-                            <div class="text-[10px] font-bold text-blue-600 uppercase">קה"ש (המלצה)</div>
-                            <div id="res-study" class="text-xl font-bold text-slate-800">0</div>
+                    </div>
+
+                    <div class="card p-5 border-t-4 border-red-400">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-700 text-sm">⚡ משתנות (חודשי)</h3>
+                        </div>
+                        <div id="var-exp-container" class="space-y-3"></div>
+                        
+                        <div class="mt-4 flex items-center gap-2 p-2 bg-orange-50 rounded-lg border border-orange-100 cursor-help" title="עזרה בחישוב">
+                            <span class="text-lg">🧮</span>
+                            <div class="text-[10px] text-orange-800 leading-tight">
+                                <strong>הוצאות מעורבות?</strong> השתמשי בכפתור המחשבון ליד השדה לחישוב החלק המוכר (רכב/בית).
+                            </div>
+                        </div>
+                        <div id="receipt-reminder" class="hidden mt-2 text-[10px] text-red-500 font-bold text-center">
+                            ⚠️ לא לשכוח לשמור קבלות!
+                        </div>
+                    </div>
+                </div>
+
+                <div id="results-area" class="opacity-0 transition-all duration-700 space-y-5 pb-16">
+                    
+                    <h3 class="text-center text-sm font-bold text-slate-400 uppercase tracking-widest mt-4">סיכום חודשי משוער</h3>
+
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="card p-4 bg-white border border-slate-100 text-center shadow-sm">
+                            <div class="text-[10px] font-bold text-slate-400 uppercase">מיסים</div>
+                            <div class="text-lg font-bold text-slate-700">₪<span id="res-tax">0</span></div>
+                        </div>
+                        <div class="card p-4 bg-white border border-slate-100 text-center shadow-sm">
+                            <div class="text-[10px] font-bold text-slate-400 uppercase">פנסיה</div>
+                            <div class="text-lg font-bold text-slate-700">₪<span id="res-pension">0</span></div>
+                        </div>
+                        <div class="card p-4 bg-white border border-slate-100 text-center shadow-sm">
+                            <div class="text-[10px] font-bold text-slate-400 uppercase">קה"ש</div>
+                            <div class="text-lg font-bold text-slate-700">₪<span id="res-study">0</span></div>
                         </div>
                     </div>
                     
-                    <div class="card bg-slate-800 text-white p-6 shadow-2xl relative overflow-hidden group hover:scale-[1.01] transition-transform">
-                        <div class="absolute top-0 left-0 w-2 h-full bg-green-500"></div>
+                    <div class="card bg-slate-900 text-white p-8 shadow-2xl relative overflow-hidden group transform hover:-translate-y-1 transition duration-300">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-brand-orange rounded-full blur-3xl opacity-20 -mr-10 -mt-10"></div>
+                        <div class="absolute bottom-0 left-0 w-24 h-24 bg-blue-500 rounded-full blur-3xl opacity-10 -ml-10 -mb-10"></div>
+                        
                         <div class="flex justify-between items-center relative z-10">
                             <div>
-                                <h4 class="text-2xl font-bold text-green-400">נטו הביתה</h4>
-                                <p class="text-[11px] text-slate-400 mt-1">אחרי הכל - זה הכסף שלך.</p>
+                                <h4 class="text-3xl font-bold text-white tracking-tight">נטו הביתה</h4>
+                                <p class="text-xs text-slate-400 mt-1">הרווח הנקי שלך החודש</p>
                             </div>
-                            <div class="text-5xl font-bold tracking-tight">₪<span id="res-net">0</span></div>
+                            <div class="text-5xl font-bold tracking-tight text-brand-orange">₪<span id="res-net">0</span></div>
                         </div>
                     </div>
-
-                    <button onclick="saveMonthToHistory()" class="w-full bg-green-600 text-white font-bold py-3.5 rounded-xl hover:bg-green-700 transition shadow-lg flex justify-center items-center gap-2">
-                        <span>✅</span>
-                        <span>שמור חודש זה בסיכום השנתי</span>
-                    </button>
+                    
+                    <div class="flex items-center gap-3 bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
+                        <input type="month" id="save-month-picker" class="p-3 rounded-xl text-sm bg-slate-50 text-slate-700 outline-none focus:ring-2 focus:ring-orange-200 border-none">
+                        <button onclick="saveMonthToHistory()" class="flex-grow bg-brand-orange text-white font-bold py-3.5 rounded-xl hover:bg-orange-600 transition shadow-md flex justify-center items-center gap-2">
+                            <span>✅</span><span>שמור/עדכן ביומן</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -196,126 +234,153 @@
 
     <div id="calcModal" class="modal">
         <div class="modal-content">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-lg text-slate-700">🧮 חישוב הוצאה מוכרת</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-red-500 text-2xl">&times;</button>
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                    <span class="bg-orange-100 text-orange-600 p-1 rounded">🧮</span> חישוב הוצאה מוכרת
+                </h3>
+                <button onclick="closeModal()" class="text-slate-300 hover:text-slate-500 text-2xl transition">&times;</button>
             </div>
-            
-            <div class="space-y-4">
+            <div class="space-y-5">
                 <div>
-                    <label class="block text-xs font-bold mb-1">סכום החשבונית המלא (ש"ח)</label>
-                    <input type="number" id="modal-full-amount" class="input-field text-lg font-bold" placeholder="למשל: 500">
+                    <label class="block text-xs font-bold text-slate-500 mb-1.5">סכום החשבונית המלא (ש"ח)</label>
+                    <input type="number" id="modal-full-amount" class="input-field text-xl font-bold text-slate-800" placeholder="0">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold mb-1">אחוז מוכר (%)</label>
-                    <div class="flex gap-2 mb-2">
-                        <button onclick="setModalPercent(25)" class="bg-blue-50 text-blue-700 text-xs px-3 py-2 rounded border border-blue-100 hover:bg-blue-100 transition">🏠 25% (בית)</button>
-                        <button onclick="setModalPercent(45)" class="bg-blue-50 text-blue-700 text-xs px-3 py-2 rounded border border-blue-100 hover:bg-blue-100 transition">🚗 45% (רכב)</button>
+                    <label class="block text-xs font-bold text-slate-500 mb-2">בחרי סוג הוצאה</label>
+                    <div class="flex gap-3 mb-3">
+                        <button onclick="setModalPercent(25)" class="flex-1 bg-slate-50 text-slate-600 text-xs py-2.5 rounded-lg border border-slate-200 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-200 transition font-medium">🏠 25% (בית)</button>
+                        <button onclick="setModalPercent(45)" class="flex-1 bg-slate-50 text-slate-600 text-xs py-2.5 rounded-lg border border-slate-200 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-200 transition font-medium">🚗 45% (רכב)</button>
                     </div>
-                    <input type="number" id="modal-percent" value="45" class="input-field w-24 text-center">
+                    <div class="flex items-center gap-2">
+                         <span class="text-xs text-slate-400">אחוז מותאם אישית:</span>
+                         <input type="number" id="modal-percent" value="45" class="input-field w-20 text-center py-1 h-8 text-sm">
+                    </div>
                 </div>
                 
-                <div class="bg-slate-100 p-4 rounded-xl text-center border border-slate-200 mt-4">
-                    <div class="text-xs text-slate-500 mb-1">סכום שיירשם כהוצאה:</div>
-                    <div class="text-3xl font-bold text-blue-600">₪<span id="modal-result">0</span></div>
+                <div class="bg-slate-50 p-4 rounded-xl text-center border border-slate-100 mt-2">
+                    <div class="text-xs text-slate-400 mb-1">סכום לרישום:</div>
+                    <div class="text-3xl font-bold text-brand-orange">₪<span id="modal-result">0</span></div>
                 </div>
-
-                <button onclick="applyModalResult()" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold text-sm shadow hover:bg-blue-700 transition">השתמש בסכום זה</button>
+                
+                <button onclick="applyModalResult()" class="w-full bg-brand-orange text-white py-3.5 rounded-xl font-bold text-sm shadow-lg hover:bg-orange-600 hover:shadow-orange-200/50 transition transform active:scale-95">עדכן סכום בשדה</button>
             </div>
         </div>
     </div>
 
     <script>
-        // CONFIG
         const C = {
-            CEILING: 120000,
-            AVG_WAGE: 13683,
-            PENSION_R1: 0.0445, PENSION_R2: 0.1255,
-            STUDY_FUND: 0.045, CREDIT_POINT: 255,
+            CEILING: 120000, AVG_WAGE: 13683,
+            PENSION_R1: 0.0445, PENSION_R2: 0.1255, STUDY_FUND: 0.045, CREDIT_POINT: 255,
             BITUACH_LIMIT: 8210, BITUACH_R1: 0.0597, BITUACH_R2: 0.1783,
-            TAX: [
-                { limit: 7250, rate: 0.10 }, { limit: 10410, rate: 0.14 },
-                { limit: 16710, rate: 0.20 }, { limit: 23230, rate: 0.31 }, { limit: 48000, rate: 0.35 }
-            ]
+            TAX: [{ limit: 7250, rate: 0.10 }, { limit: 10410, rate: 0.14 }, { limit: 16710, rate: 0.20 }, { limit: 23230, rate: 0.31 }, { limit: 48000, rate: 0.35 }]
         };
 
         const FIXED_EXP_LIST = [
-            { id: "acc", label: "רואה חשבון" }, { id: "soft", label: "תוכנות ומנויים" },
-            { id: "rent", label: "שכירות/ארנונה", calc: true }, { id: "assoc", label: "חברות באגודה" },
-            { id: "ins", label: "ביטוחים" }, { id: "clinic", label: "מערכת לניהול קליניקה" },
-            { id: "inv", label: "ממשק חשבוניות" }, { id: "phone", label: "טלפון ותקשורת", calc: true },
-            { id: "train_fix", label: "הדרכה (קבועה)" }, { id: "car_fix", label: "רכב (ביטוח/טסט)", calc: true },
-            { id: "other_fix", label: "אחר (לחץ לשינוי)", editable: true }
+            { id: "acc", label: "רואה חשבון" }, { id: "soft", label: "תוכנות ומנויים" }, { id: "rent", label: "שכירות/ארנונה", calc: true },
+            { id: "assoc", label: "חברות באגודה" }, { id: "ins", label: "ביטוחים" }, { id: "clinic", label: "מערכת ניהול" },
+            { id: "inv", label: "ממשק חשבוניות" }, { id: "phone", label: "טלפון ותקשורת", calc: true }, { id: "train_fix", label: "הדרכה (קבועה)" },
+            { id: "car_fix", label: "רכב (ביטוח/טסט)", calc: true }, { id: "other_fix", label: "אחר (ערוך שם)", editable: true }
         ];
 
         const VAR_EXP_LIST = [
-            { id: "train_var", label: "הדרכה (משתנה)" }, { id: "conf", label: "כנסים/השתלמויות" },
-            { id: "mat", label: "חומרים מתכלים" }, { id: "books", label: "ספרים" },
-            { id: "games", label: "משחקים/עזרים" }, { id: "ads", label: "פרסום ושיווק" },
-            { id: "food", label: "כיבוד" }, { id: "consult", label: "יעוץ עסקי" },
-            { id: "car_var", label: "רכב (דלק/טיפול)", calc: true }, { id: "don", label: "תרומות" },
-            { id: "other_var", label: "אחר (לחץ לשינוי)", editable: true }
+            { id: "train_var", label: "הדרכה (משתנה)" }, { id: "conf", label: "כנסים/השתלמויות" }, { id: "mat", label: "חומרים מתכלים" },
+            { id: "books", label: "ספרים" }, { id: "games", label: "משחקים/עזרים" }, { id: "ads", label: "פרסום ושיווק" },
+            { id: "food", label: "כיבוד" }, { id: "consult", label: "יעוץ עסקי" }, { id: "car_var", label: "רכב (דלק/טיפול)", calc: true },
+            { id: "don", label: "תרומות" }, { id: "other_var", label: "אחר (ערוך שם)", editable: true }
         ];
 
         let history = JSON.parse(localStorage.getItem('osek_history_v7')) || [];
         let savedFixed = JSON.parse(localStorage.getItem('osek_fixed_exp_v7')) || {};
         let currentInputForCalc = null; 
+        let incomeChart = null;
 
         window.onload = () => {
             renderExpenses();
+            initChart();
             calculate();
             updateAnnualDashboard();
+            renderHistoryList();
+            document.getElementById('save-month-picker').value = new Date().toISOString().slice(0, 7);
             document.getElementById('modal-full-amount').addEventListener('input', updateModalCalc);
             document.getElementById('modal-percent').addEventListener('input', updateModalCalc);
         };
 
         function renderExpenses() {
-            const fixContainer = document.getElementById('fixed-exp-container');
-            fixContainer.innerHTML = FIXED_EXP_LIST.map(item => generateExpHTML(item, 'fixed')).join('');
-            const varContainer = document.getElementById('var-exp-container');
-            varContainer.innerHTML = VAR_EXP_LIST.map(item => generateExpHTML(item, 'var')).join('');
+            document.getElementById('fixed-exp-container').innerHTML = FIXED_EXP_LIST.map(item => generateExpHTML(item, 'fixed')).join('');
+            document.getElementById('var-exp-container').innerHTML = VAR_EXP_LIST.map(item => generateExpHTML(item, 'var')).join('');
         }
 
         function generateExpHTML(item, type) {
             const savedVal = type === 'fixed' && savedFixed[item.id] ? savedFixed[item.id].val : "";
             const savedFreq = type === 'fixed' && savedFixed[item.id] ? savedFixed[item.id].freq : "1";
             const savedLabel = type === 'fixed' && savedFixed[item.id] && savedFixed[item.id].customLabel ? savedFixed[item.id].customLabel : item.label;
-
+            
             let labelHTML = `<label class="text-[11px] font-bold text-slate-500">${item.label}</label>`;
-            if (item.editable) {
-                labelHTML = `<input type="text" data-custom-label-id="${item.id}" value="${savedLabel}" class="editable-label mb-1">`;
-            }
-
-            let calcBtn = item.calc ? `<button onclick="openCalculator('${item.id}', '${type}')" class="bg-blue-50 text-blue-600 px-2 rounded hover:bg-blue-100 border border-blue-200" title="מחשבון הוצאה מוכרת">🧮</button>` : '';
-            let freqSelect = '';
-            if (type === 'fixed') {
-                freqSelect = `<select data-freq="${item.id}" class="text-[10px] border rounded bg-slate-50" onchange="calculate()">
-                        <option value="1" ${savedFreq=="1"?'selected':''}>חודשי</option>
-                        <option value="2" ${savedFreq=="2"?'selected':''}>דו-חודשי</option>
-                        <option value="12" ${savedFreq=="12"?'selected':''}>שנתי</option>
-                    </select>`;
-            }
-
+            if (item.editable) labelHTML = `<input type="text" data-custom-label-id="${item.id}" value="${savedLabel}" class="editable-label mb-1">`;
+            
+            let calcBtn = item.calc ? `<button onclick="openCalculator('${item.id}', '${type}')" class="bg-orange-50 text-orange-600 px-2 rounded hover:bg-orange-100 border border-orange-200 transition" title="מחשבון">🧮</button>` : '';
+            let freqSelect = type === 'fixed' ? `<select data-freq="${item.id}" class="text-[10px] border rounded bg-slate-50 outline-none w-16" onchange="calculate()"><option value="1" ${savedFreq=="1"?'selected':''}>חודשי</option><option value="2" ${savedFreq=="2"?'selected':''}>דו-חודשי</option><option value="12" ${savedFreq=="12"?'selected':''}>שנתי</option></select>` : '';
+            
             return `<div class="flex flex-col">${labelHTML}<div class="flex gap-1 h-9"><input type="number" id="inp-${type}-${item.id}" data-group="${type}" data-id="${item.id}" value="${savedVal}" class="input-field text-sm flex-grow" oninput="calculate()">${calcBtn}${freqSelect}</div></div>`;
         }
 
-        function calculateTax(amount) {
-            let tax = 0; let prevLimit = 0;
-            for (let b of C.TAX) {
-                if (amount > prevLimit) {
-                    let taxable = Math.min(amount - prevLimit, b.limit - prevLimit);
-                    tax += taxable * b.rate;
-                    prevLimit = b.limit;
+        function initChart() {
+            const ctx = document.getElementById('incomeChart').getContext('2d');
+            incomeChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['טיפולים', 'הרצאות', 'אבחונים', 'הדרכה', 'יעוץ', 'אחר'],
+                    datasets: [{
+                        data: [0, 0, 0, 0, 0, 0],
+                        // Brand Colors: Orange, Dark Grey, Light Grey, and complementary accents
+                        backgroundColor: ['#f97316', '#334155', '#94a3b8', '#fdba74', '#cbd5e1', '#e2e8f0'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'right', labels: { font: { family: 'Rubik' }, boxWidth: 12, padding: 15 } } },
+                    cutout: '70%'
                 }
-            }
-            if (amount > prevLimit) tax += (amount - prevLimit) * 0.47;
-            return tax;
+            });
+        }
+
+        function updateChartData(values, labels) {
+            if (!incomeChart) return;
+            incomeChart.data.datasets[0].data = values;
+            incomeChart.data.labels = labels;
+            incomeChart.update();
         }
 
         function calculate() {
-            let income = 0;
-            document.querySelectorAll('[data-group="inc"]').forEach(i => income += parseFloat(i.value) || 0);
-            document.getElementById('total-income-val').innerText = income.toLocaleString();
+            let incomeInputs = document.querySelectorAll('[data-group="inc"]');
+            let incomeValues = [];
+            let incomeLabels = ["טיפולים", "הרצאות", "אבחונים", "הדרכה", "יעוץ"];
+            let totalIncome = 0;
+
+            for (let i = 0; i < 5; i++) {
+                let val = parseFloat(incomeInputs[i].value) || 0;
+                incomeValues.push(val);
+                totalIncome += val;
+            }
+            
+            let otherVal = parseFloat(incomeInputs[5].value) || 0;
+            totalIncome += otherVal;
+            incomeValues.push(otherVal);
+            let otherLabel = document.getElementById('other-inc-label').value;
+            incomeLabels.push(otherLabel);
+
+            document.getElementById('total-income-val').innerText = totalIncome.toLocaleString();
+
+            const chartCard = document.getElementById('chart-card');
+            if (totalIncome > 0) {
+                chartCard.classList.remove('hidden');
+                updateChartData(incomeValues, incomeLabels);
+            } else {
+                chartCard.classList.add('hidden');
+            }
 
             let fixedExpTotal = 0;
             document.querySelectorAll('[data-group="fixed"]').forEach(i => {
@@ -326,10 +391,9 @@
 
             let varExpTotal = 0;
             document.querySelectorAll('[data-group="var"]').forEach(i => varExpTotal += parseFloat(i.value) || 0);
-            
             document.getElementById('receipt-reminder').classList.toggle('hidden', varExpTotal === 0);
 
-            const profit = Math.max(0, income - (fixedExpTotal + varExpTotal));
+            const profit = Math.max(0, totalIncome - (fixedExpTotal + varExpTotal));
             const salary = parseFloat(document.getElementById('salary').value) || 0;
             const gender = document.getElementById('gender').value;
             const children = parseInt(document.getElementById('children').value) || 0;
@@ -341,7 +405,7 @@
             const creditValue = points * C.CREDIT_POINT;
             updateStatus(salary, profit, creditValue);
 
-            if (income > 0) {
+            if (totalIncome > 0) {
                 document.getElementById('results-area').classList.replace('opacity-0', 'opacity-100');
                 
                 let pension = 0; const halfAvg = C.AVG_WAGE / 2;
@@ -353,13 +417,10 @@
                 let profitAtLowRate = Math.min(profit, Math.max(0, C.BITUACH_LIMIT - usedLowRate));
                 let bituach = (profitAtLowRate * C.BITUACH_R1) + (Math.max(0, profit - profitAtLowRate) * C.BITUACH_R2);
 
-                let totalIncome = salary + profit;
-                let rawTaxTotal = calculateTax(totalIncome);
+                let totalIncomeCalc = salary + profit;
+                let rawTaxTotal = calculateTax(totalIncomeCalc);
                 let rawTaxSalary = calculateTax(salary);
-                let taxLiabilityTotal = Math.max(0, rawTaxTotal - creditValue);
-                let taxLiabilitySalary = Math.max(0, rawTaxSalary - creditValue);
-                let businessTax = Math.max(0, taxLiabilityTotal - taxLiabilitySalary);
-
+                let businessTax = Math.max(0, Math.max(0, rawTaxTotal - creditValue) - Math.max(0, rawTaxSalary - creditValue));
                 if (document.getElementById('periphery').checked) businessTax = businessTax * 0.90; 
 
                 const totalTaxExpense = bituach + businessTax;
@@ -375,27 +436,33 @@
             }
         }
 
+        function calculateTax(amount) {
+            let tax = 0; let prevLimit = 0;
+            for (let b of C.TAX) {
+                if (amount > prevLimit) {
+                    let taxable = Math.min(amount - prevLimit, b.limit - prevLimit);
+                    tax += taxable * b.rate;
+                    prevLimit = b.limit;
+                }
+            }
+            if (amount > prevLimit) tax += (amount - prevLimit) * 0.47;
+            return tax;
+        }
+
         function updateStatus(salary, currentProfit, creditValue) {
             let currentTotal = salary + currentProfit;
             let bracket = 0.10; let nextLimit = C.TAX[0].limit;
-
             for (let i = 0; i < C.TAX.length; i++) {
                 if (currentTotal > C.TAX[i].limit) {
                     bracket = (i + 1 < C.TAX.length) ? C.TAX[i+1].rate : 0.47;
                     nextLimit = (i + 1 < C.TAX.length) ? C.TAX[i+1].limit : 999999;
-                } else {
-                    bracket = C.TAX[i].rate; nextLimit = C.TAX[i].limit; break;
-                }
+                } else { bracket = C.TAX[i].rate; nextLimit = C.TAX[i].limit; break; }
             }
-
             document.getElementById('status-tax-bracket').innerText = Math.round(bracket * 100) + "%";
             const distance = Math.max(0, nextLimit - currentTotal);
             const rawTax = calculateTax(currentTotal);
             const effectiveTax = Math.max(0, rawTax - creditValue);
-            
-            let msg = "";
-            if (effectiveTax === 0 && currentTotal < 20000) msg = `בפועל את/ה לא משלם/ת מס הכנסה כרגע בזכות נקודות הזיכוי.`;
-            else msg = `מדרגת המס הבאה היא ${(bracket === 0.10 ? 14 : bracket === 0.14 ? 20 : 31)}%. <br> עוד <b>${Math.round(distance).toLocaleString()} ₪</b> רווח תעברי אליה.`;
+            let msg = effectiveTax === 0 && currentTotal < 20000 ? `לא משלמת מס בפועל (נק' זיכוי).` : `עוד <b>${Math.round(distance).toLocaleString()} ₪</b> למדרגת ${(bracket === 0.10 ? 14 : bracket === 0.14 ? 20 : 31)}%.`;
             document.getElementById('status-next-bracket').innerHTML = msg;
         }
 
@@ -403,35 +470,23 @@
             currentInputForCalc = document.getElementById(`inp-${type}-${id}`);
             document.getElementById('modal-full-amount').value = '';
             document.getElementById('modal-result').innerText = '0';
-            document.getElementById('calcModal').classList.add('active'); // Use class for toggle
+            document.getElementById('calcModal').classList.add('active');
             document.getElementById('modal-full-amount').focus();
         }
 
-        function setModalPercent(p) {
-            document.getElementById('modal-percent').value = p;
-            updateModalCalc();
-        }
-
+        function setModalPercent(p) { document.getElementById('modal-percent').value = p; updateModalCalc(); }
         function updateModalCalc() {
             const amount = parseFloat(document.getElementById('modal-full-amount').value) || 0;
             const pct = parseFloat(document.getElementById('modal-percent').value) || 0;
             document.getElementById('modal-result').innerText = Math.round(amount * (pct / 100)).toLocaleString();
         }
-
         function applyModalResult() {
             const amount = parseFloat(document.getElementById('modal-full-amount').value) || 0;
             const pct = parseFloat(document.getElementById('modal-percent').value) || 0;
-            const res = amount * (pct / 100);
-            if (currentInputForCalc) {
-                currentInputForCalc.value = res.toFixed(0);
-                calculate();
-            }
+            if (currentInputForCalc) { currentInputForCalc.value = (amount * (pct / 100)).toFixed(0); calculate(); }
             closeModal();
         }
-
-        function closeModal() {
-            document.getElementById('calcModal').classList.remove('active');
-        }
+        function closeModal() { document.getElementById('calcModal').classList.remove('active'); }
 
         function saveFixedExpenses() {
             let data = {};
@@ -441,17 +496,41 @@
                 data[id] = { val: i.value, freq: document.querySelector(`[data-freq="${id}"]`).value, customLabel: customLabelInput ? customLabelInput.value : null };
             });
             localStorage.setItem('osek_fixed_exp_v7', JSON.stringify(data));
-            alert("הוצאות קבועות נשמרו בהצלחה!");
+            alert("הוצאות קבועות נשמרו!");
         }
 
         function saveMonthToHistory() {
             const income = parseFloat(document.getElementById('total-income-val').innerText.replace(/,/g, ''));
-            const month = new Date().toISOString().slice(0, 7);
+            const month = document.getElementById('save-month-picker').value;
+            if (!month) return alert('נא לבחור חודש');
             history = history.filter(h => h.month !== month);
             history.push({ month, income });
+            history.sort((a, b) => b.month.localeCompare(a.month));
             localStorage.setItem('osek_history_v7', JSON.stringify(history));
             updateAnnualDashboard();
-            alert("החודש נשמר במעקב השנתי!");
+            renderHistoryList();
+            alert("הנתונים לחודש זה נשמרו/עודכנו!");
+        }
+
+        function renderHistoryList() {
+            const container = document.getElementById('history-list-container');
+            if (history.length === 0) { container.innerHTML = '<div class="text-xs text-slate-300 italic text-center py-4">טרם נשמרו נתונים</div>'; return; }
+            container.innerHTML = history.map(h => `
+                <div class="flex justify-between items-center bg-slate-50 p-2 rounded border border-slate-100 hover:bg-white transition">
+                    <div class="text-xs font-bold text-slate-600">${h.month}</div>
+                    <div class="flex items-center gap-3">
+                        <div class="text-xs font-mono font-bold text-brand-orange">₪${h.income.toLocaleString()}</div>
+                        <button onclick="deleteMonth('${h.month}')" class="text-slate-300 hover:text-red-500 transition px-1" title="מחק">✕</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        function deleteMonth(month) {
+            if (confirm(`למחוק את נתוני חודש ${month}?`)) {
+                history = history.filter(h => h.month !== month);
+                localStorage.setItem('osek_history_v7', JSON.stringify(history));
+                updateAnnualDashboard(); renderHistoryList();
+            }
         }
 
         function updateAnnualDashboard() {
@@ -466,22 +545,15 @@
         function exportToCSV() {
             let csv = "Month,Income\n" + history.map(h => `${h.month},${h.income}`).join("\n");
             const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "osek_report_2026.csv";
-            link.click();
+            const link = document.createElement("a"); link.href = URL.createObjectURL(blob);
+            link.download = "osek_report_2026.csv"; link.click();
         }
 
         function clearAllData() {
-            if (confirm("פעולה זו תמחק את כל ההיסטוריה וההגדרות. האם להמשיך?")) {
-                localStorage.clear();
-                location.reload();
-            }
+            if (confirm("פעולה זו תמחק את כל ההיסטוריה וההגדרות. האם להמשיך?")) { localStorage.clear(); location.reload(); }
         }
         
-        window.onclick = function(event) {
-            if (event.target == document.getElementById('calcModal')) closeModal();
-        }
+        window.onclick = function(event) { if (event.target == document.getElementById('calcModal')) closeModal(); }
     </script>
 </body>
 </html>
