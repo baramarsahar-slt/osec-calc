@@ -10,22 +10,27 @@
     <style>
         body { font-family: 'Rubik', sans-serif; background-color: #f8fafc; color: #334155; }
         
-        /* Brand Colors based on Logo */
-        .text-brand-orange { color: #f97316; } /* Tailwind Orange-500 approx */
+        /* Brand Colors */
+        .text-brand-orange { color: #f97316; }
         .bg-brand-orange { background-color: #f97316; }
         .border-brand-orange { border-color: #f97316; }
-        .hover-brand-orange:hover { background-color: #ea580c; }
         
         .card { background: white; border-radius: 16px; box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; }
-        .input-group label { display: block; font-size: 0.85rem; font-weight: 600; color: #64748b; margin-bottom: 4px; }
         .input-field { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; transition: all 0.2s; background-color: #fff; }
-        .input-field:focus { border-color: #f97316; ring: 2px solid #ffedd5; box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1); }
+        .input-field:focus { border-color: #f97316; ring: 2px solid #ffedd5; }
         .editable-label { border-bottom: 1px dashed #94a3b8; cursor: text; color: #475569; font-weight: bold; background: transparent; width: 100%; font-size: 0.8rem; }
+        .editable-label:focus { outline: none; border-bottom: 2px solid #3b82f6; color: #000; }
         
         /* Modal Styles */
         .modal { display: none !important; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(51, 65, 85, 0.6); align-items: center; justify-content: center; backdrop-filter: blur(2px); }
         .modal.active { display: flex !important; }
         .modal-content { background-color: #ffffff; padding: 24px; border-radius: 20px; width: 90%; max-width: 400px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border-top: 6px solid #f97316; }
+
+        /* Status Toggle Switch */
+        .status-toggle { display: flex; background: #f1f5f9; padding: 4px; border-radius: 12px; position: relative; cursor: pointer; }
+        .status-option { flex: 1; text-align: center; padding: 8px; font-size: 0.85rem; font-weight: bold; z-index: 10; color: #64748b; transition: color 0.3s; }
+        .status-option.active { color: #f97316; }
+        .status-slider { position: absolute; top: 4px; bottom: 4px; width: 50%; background: white; border-radius: 8px; shadow: 0 2px 5px rgba(0,0,0,0.1); transition: left 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body class="p-4 md:p-8 min-h-screen">
@@ -34,10 +39,10 @@
         <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 border-b border-slate-200 pb-6">
             <div class="text-center md:text-right">
                 <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Bar Amar-Sahar <span class="text-brand-orange text-xl font-medium">| ניהול קליניקה</span></h1>
-                <p class="text-xs text-slate-500 mt-1">מערכת חכמה לניהול פיננסי ומעקב מס</p>
+                <p class="text-xs text-slate-500 mt-1">גרסה 8.0 (היברידית - פטור/מורשה)</p>
             </div>
             <div class="flex gap-3">
-                <button onclick="exportToCSV()" class="flex items-center gap-2 text-xs font-bold text-slate-600 bg-white px-4 py-2.5 rounded-full border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition shadow-sm">
+                <button onclick="exportToCSV()" class="flex items-center gap-2 text-xs font-bold text-slate-600 bg-white px-4 py-2.5 rounded-full border border-slate-200 hover:bg-slate-50 transition shadow-sm">
                     <span>📥</span> ייצוא דוח
                 </button>
                 <button onclick="clearAllData()" class="flex items-center gap-2 text-xs font-bold text-red-500 bg-red-50 px-4 py-2.5 rounded-full border border-red-100 hover:bg-red-100 transition shadow-sm">
@@ -47,16 +52,44 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="md:col-span-2 card p-6 border-r-8 border-brand-orange bg-gradient-to-l from-white to-orange-50">
-                <div class="flex justify-between items-end mb-4">
-                    <div>
-                        <h2 class="font-bold text-slate-700 text-lg">מעקב תקרה שנתי (2026)</h2>
-                        <p class="text-[11px] text-slate-500 font-medium">תקרת עוסק פטור: 120,000 ₪</p>
+            
+            <div class="md:col-span-2 card p-6 border-r-8 border-brand-orange bg-gradient-to-l from-white to-orange-50 relative overflow-hidden">
+                
+                <div id="dash-patur" class="transition-opacity duration-300">
+                    <div class="flex justify-between items-end mb-4">
+                        <div>
+                            <h2 class="font-bold text-slate-700 text-lg">מעקב תקרה שנתי (2026)</h2>
+                            <p class="text-[11px] text-slate-500 font-medium">תקרת עוסק פטור: 120,000 ₪</p>
+                        </div>
+                        <div class="text-2xl font-bold font-mono text-slate-800"><span id="annual-income-display">0</span> <span class="text-sm text-slate-400">/ 120,000 ₪</span></div>
                     </div>
-                    <div class="text-2xl font-bold font-mono text-slate-800"><span id="annual-income-display">0</span> <span class="text-sm text-slate-400">/ 120,000 ₪</span></div>
+                    <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                        <div id="ceiling-progress" class="bg-brand-orange h-full transition-all duration-1000 shadow-lg" style="width: 0%"></div>
+                    </div>
                 </div>
-                <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
-                    <div id="ceiling-progress" class="bg-brand-orange h-full transition-all duration-1000 shadow-lg" style="width: 0%"></div>
+
+                <div id="dash-murshe" class="hidden transition-opacity duration-300">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h2 class="font-bold text-slate-700 text-lg">מעקב מע"מ (18%)</h2>
+                            <p class="text-[11px] text-slate-500 font-medium">החודש הזה</p>
+                        </div>
+                        <div class="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-bold">עוסק מורשה</div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 mt-2 text-center">
+                        <div class="bg-white/60 p-2 rounded-lg border border-slate-100">
+                            <div class="text-[10px] text-slate-500 uppercase">מע"מ עסקאות (גביתי)</div>
+                            <div class="text-lg font-bold text-slate-800">₪<span id="vat-collected">0</span></div>
+                        </div>
+                        <div class="bg-white/60 p-2 rounded-lg border border-slate-100">
+                            <div class="text-[10px] text-slate-500 uppercase">מע"מ תשומות (קיזזתי)</div>
+                            <div class="text-lg font-bold text-green-600">-₪<span id="vat-deducted">0</span></div>
+                        </div>
+                        <div class="bg-white p-2 rounded-lg border border-orange-200 shadow-sm">
+                            <div class="text-[10px] text-slate-500 uppercase font-bold">לתשלום למע"מ</div>
+                            <div class="text-xl font-bold text-brand-orange">₪<span id="vat-to-pay">0</span></div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -75,53 +108,43 @@
                     <h3 class="font-bold border-b border-slate-100 pb-3 mb-5 text-slate-700 flex items-center gap-2">
                         <span class="bg-slate-100 p-1.5 rounded-md">⚙️</span> הגדרות פרופיל
                     </h3>
+
+                    <div class="mb-6">
+                        <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">סטטוס עוסק</label>
+                        <div class="status-toggle" onclick="toggleStatus()">
+                            <div id="slider" class="status-slider left-1"></div>
+                            <div id="opt-patur" class="status-option active">עוסק פטור</div>
+                            <div id="opt-murshe" class="status-option">עוסק מורשה</div>
+                        </div>
+                        <p id="status-desc" class="text-[10px] text-slate-400 mt-2 text-center">פטור ממע"מ, תקרה 120 א' ש"ח</p>
+                    </div>
+
                     <div class="space-y-5">
                         <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label>מין</label>
-                                <select id="gender" class="input-field bg-slate-50" onchange="calculate()">
-                                    <option value="female">אישה</option><option value="male">גבר</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label>ילדים (מתחת ל-18)</label>
-                                <input type="number" id="children" value="0" class="input-field bg-slate-50" oninput="calculate()">
-                            </div>
+                            <div><label>מין</label><select id="gender" class="input-field bg-slate-50" onchange="calculate()"><option value="female">אישה</option><option value="male">גבר</option></select></div>
+                            <div><label>ילדים (&lt;18)</label><input type="number" id="children" value="0" class="input-field bg-slate-50" oninput="calculate()"></div>
                         </div>
-                        <div>
-                            <label>ברוטו חודשי כשכיר/ה</label>
-                            <input type="number" id="salary" placeholder="0" class="input-field bg-blue-50 border-blue-100 focus:border-blue-400 focus:ring-blue-100" oninput="calculate()">
-                        </div>
+                        <div><label>ברוטו חודשי כשכיר/ה</label><input type="number" id="salary" placeholder="0" class="input-field bg-blue-50 border-blue-100" oninput="calculate()"></div>
+                        
                         <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
-                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wide">זיכויים נוספים</p>
-                            <label class="flex items-center gap-3 cursor-pointer p-1 hover:bg-white rounded transition">
-                                <input type="checkbox" id="degree" class="w-4 h-4 text-orange-600 rounded focus:ring-orange-500" onchange="calculate()">
-                                <span class="text-xs font-medium text-slate-600">זכאות לתואר אקדמי (+1 נק')</span>
-                            </label>
-                            <label class="flex items-center gap-3 cursor-pointer p-1 hover:bg-white rounded transition">
-                                <input type="checkbox" id="periphery" class="w-4 h-4 text-orange-600 rounded focus:ring-orange-500" onchange="calculate()">
-                                <span class="text-xs font-medium text-slate-600">תושב פריפריה (הנחת מס)</span>
-                            </label>
+                            <p class="text-[11px] font-bold text-slate-400 uppercase">זיכויים נוספים</p>
+                            <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" id="degree" class="w-4 h-4 text-orange-600 rounded" onchange="calculate()"><span class="text-xs text-slate-600">תואר אקדמי (+1 נק')</span></label>
+                            <label class="flex items-center gap-3 cursor-pointer"><input type="checkbox" id="periphery" class="w-4 h-4 text-orange-600 rounded" onchange="calculate()"><span class="text-xs text-slate-600">תושב פריפריה</span></label>
                             <div class="flex items-center gap-2 pt-1 border-t border-slate-200 mt-1">
-                                <span class="text-xs text-slate-500">נק' נוספות:</span>
-                                <input type="number" id="extraPoints" value="0" min="0" step="0.5" class="w-16 p-1 text-xs border rounded text-center bg-white" oninput="calculate()">
+                                <span class="text-xs text-slate-500">נק' נוספות:</span><input type="number" id="extraPoints" value="0" min="0" step="0.5" class="w-16 p-1 text-xs border rounded text-center bg-white" oninput="calculate()">
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div id="status-card" class="card p-6 bg-slate-800 text-white shadow-xl ring-4 ring-slate-50">
-                    <h3 class="font-bold text-orange-300 mb-4 text-sm flex items-center gap-2">
-                        <span>📊 סטטוס מס בזמן אמת</span>
-                    </h3>
+                    <h3 class="font-bold text-orange-300 mb-4 text-sm flex items-center gap-2"><span>📊 סטטוס מס הכנסה</span></h3>
                     <div class="space-y-4">
                         <div class="flex justify-between items-center bg-slate-700/50 p-3 rounded-lg">
                             <div class="text-xs text-slate-300">מדרגת מס שולית</div>
                             <div id="status-tax-bracket" class="text-2xl font-bold text-white">10%</div>
                         </div>
-                        <div class="pt-2">
-                            <div id="status-next-bracket" class="text-xs text-slate-300 leading-relaxed opacity-90">טוען נתונים...</div>
-                        </div>
+                        <div class="pt-2"><div id="status-next-bracket" class="text-xs text-slate-300 leading-relaxed opacity-90">טוען נתונים...</div></div>
                     </div>
                 </div>
             </div>
@@ -131,6 +154,7 @@
                 <div class="card p-6 border-t-4 border-brand-orange">
                     <h3 class="font-bold text-slate-700 mb-6 flex items-center gap-2">
                         <span class="text-brand-orange bg-orange-50 p-1.5 rounded-lg">💰</span> הכנסות החודש
+                        <span id="vat-inc-label" class="text-[10px] bg-slate-100 text-slate-500 px-2 py-1 rounded-full ml-auto hidden">כולל מע"מ</span>
                     </h3>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="income-inputs-container">
@@ -146,29 +170,23 @@
                     </div>
 
                     <div class="mt-6 pt-4 border-t border-slate-100 flex justify-between items-center">
-                        <div class="text-xs text-slate-400">סה"כ הכנסות ברוטו</div>
+                        <div class="text-xs text-slate-400">סה"כ מחזור (ברוטו)</div>
                         <div class="text-lg font-bold text-slate-800">₪<span id="total-income-val">0</span></div>
                     </div>
                 </div>
 
                 <div id="chart-card" class="card p-6 hidden">
                     <h3 class="font-bold text-slate-700 mb-4 text-sm uppercase tracking-wide">פילוח הכנסות</h3>
-                    <div class="relative h-56 w-full">
-                        <canvas id="incomeChart"></canvas>
-                    </div>
+                    <div class="relative h-56 w-full"><canvas id="incomeChart"></canvas></div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    
                     <div class="card p-5 border-t-4 border-slate-400">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="font-bold text-slate-700 text-sm">📌 קבועות (נשמרות)</h3>
                             <button onclick="saveFixedExpenses()" class="text-[10px] bg-slate-100 text-slate-600 px-3 py-1.5 rounded-full hover:bg-slate-200 transition font-bold">שמור שינויים</button>
                         </div>
                         <div id="fixed-exp-container" class="space-y-3"></div>
-                        <div class="mt-4 p-3 bg-slate-50 rounded-lg text-[10px] text-slate-500 leading-tight">
-                            טיפ: הוצאות שנתיות (כמו ביטוח) יחולקו אוטומטית ל-12.
-                        </div>
                     </div>
 
                     <div class="card p-5 border-t-4 border-red-400">
@@ -176,22 +194,15 @@
                             <h3 class="font-bold text-slate-700 text-sm">⚡ משתנות (חודשי)</h3>
                         </div>
                         <div id="var-exp-container" class="space-y-3"></div>
-                        
                         <div class="mt-4 flex items-center gap-2 p-2 bg-orange-50 rounded-lg border border-orange-100 cursor-help" title="עזרה בחישוב">
                             <span class="text-lg">🧮</span>
-                            <div class="text-[10px] text-orange-800 leading-tight">
-                                <strong>הוצאות מעורבות?</strong> השתמשי בכפתור המחשבון ליד השדה לחישוב החלק המוכר (רכב/בית).
-                            </div>
-                        </div>
-                        <div id="receipt-reminder" class="hidden mt-2 text-[10px] text-red-500 font-bold text-center">
-                            ⚠️ לא לשכוח לשמור קבלות!
+                            <div class="text-[10px] text-orange-800 leading-tight"><strong>הוצאות מעורבות?</strong> השתמשי בכפתור המחשבון.</div>
                         </div>
                     </div>
                 </div>
 
                 <div id="results-area" class="opacity-0 transition-all duration-700 space-y-5 pb-16">
-                    
-                    <h3 class="text-center text-sm font-bold text-slate-400 uppercase tracking-widest mt-4">סיכום חודשי משוער</h3>
+                    <h3 class="text-center text-sm font-bold text-slate-400 uppercase tracking-widest mt-4">סיכום חודשי (הערכה)</h3>
 
                     <div class="grid grid-cols-3 gap-4">
                         <div class="card p-4 bg-white border border-slate-100 text-center shadow-sm">
@@ -210,12 +221,10 @@
                     
                     <div class="card bg-slate-900 text-white p-8 shadow-2xl relative overflow-hidden group transform hover:-translate-y-1 transition duration-300">
                         <div class="absolute top-0 right-0 w-32 h-32 bg-brand-orange rounded-full blur-3xl opacity-20 -mr-10 -mt-10"></div>
-                        <div class="absolute bottom-0 left-0 w-24 h-24 bg-blue-500 rounded-full blur-3xl opacity-10 -ml-10 -mb-10"></div>
-                        
                         <div class="flex justify-between items-center relative z-10">
                             <div>
                                 <h4 class="text-3xl font-bold text-white tracking-tight">נטו הביתה</h4>
-                                <p class="text-xs text-slate-400 mt-1">הרווח הנקי שלך החודש</p>
+                                <p class="text-xs text-slate-400 mt-1" id="net-desc">הרווח הנקי שלך החודש</p>
                             </div>
                             <div class="text-5xl font-bold tracking-tight text-brand-orange">₪<span id="res-net">0</span></div>
                         </div>
@@ -256,12 +265,10 @@
                          <input type="number" id="modal-percent" value="45" class="input-field w-20 text-center py-1 h-8 text-sm">
                     </div>
                 </div>
-                
                 <div class="bg-slate-50 p-4 rounded-xl text-center border border-slate-100 mt-2">
                     <div class="text-xs text-slate-400 mb-1">סכום לרישום:</div>
                     <div class="text-3xl font-bold text-brand-orange">₪<span id="modal-result">0</span></div>
                 </div>
-                
                 <button onclick="applyModalResult()" class="w-full bg-brand-orange text-white py-3.5 rounded-xl font-bold text-sm shadow-lg hover:bg-orange-600 hover:shadow-orange-200/50 transition transform active:scale-95">עדכן סכום בשדה</button>
             </div>
         </div>
@@ -269,7 +276,7 @@
 
     <script>
         const C = {
-            CEILING: 120000, AVG_WAGE: 13683,
+            CEILING: 120000, AVG_WAGE: 13683, VAT_RATE: 0.18,
             PENSION_R1: 0.0445, PENSION_R2: 0.1255, STUDY_FUND: 0.045, CREDIT_POINT: 255,
             BITUACH_LIMIT: 8210, BITUACH_R1: 0.0597, BITUACH_R2: 0.1783,
             TAX: [{ limit: 7250, rate: 0.10 }, { limit: 10410, rate: 0.14 }, { limit: 16710, rate: 0.20 }, { limit: 23230, rate: 0.31 }, { limit: 48000, rate: 0.35 }]
@@ -289,12 +296,14 @@
             { id: "don", label: "תרומות" }, { id: "other_var", label: "אחר (ערוך שם)", editable: true }
         ];
 
-        let history = JSON.parse(localStorage.getItem('osek_history_v7')) || [];
-        let savedFixed = JSON.parse(localStorage.getItem('osek_fixed_exp_v7')) || {};
+        let history = JSON.parse(localStorage.getItem('osek_history_v8')) || [];
+        let savedFixed = JSON.parse(localStorage.getItem('osek_fixed_exp_v8')) || {};
+        let isMurshe = localStorage.getItem('is_murshe') === 'true'; // false = Patur (default)
         let currentInputForCalc = null; 
         let incomeChart = null;
 
         window.onload = () => {
+            updateStatusUI();
             renderExpenses();
             initChart();
             calculate();
@@ -304,6 +313,44 @@
             document.getElementById('modal-full-amount').addEventListener('input', updateModalCalc);
             document.getElementById('modal-percent').addEventListener('input', updateModalCalc);
         };
+
+        function toggleStatus() {
+            isMurshe = !isMurshe;
+            localStorage.setItem('is_murshe', isMurshe);
+            updateStatusUI();
+            calculate();
+        }
+
+        function updateStatusUI() {
+            const slider = document.getElementById('slider');
+            const optPatur = document.getElementById('opt-patur');
+            const optMurshe = document.getElementById('opt-murshe');
+            const desc = document.getElementById('status-desc');
+            const dashPatur = document.getElementById('dash-patur');
+            const dashMurshe = document.getElementById('dash-murshe');
+            const vatLabel = document.getElementById('vat-inc-label');
+            const netDesc = document.getElementById('net-desc');
+
+            if (isMurshe) {
+                slider.style.left = '50%';
+                optMurshe.classList.add('active');
+                optPatur.classList.remove('active');
+                desc.innerText = "כולל מע\"מ 18%, דיווח דו-חודשי";
+                dashPatur.classList.add('hidden');
+                dashMurshe.classList.remove('hidden');
+                vatLabel.classList.remove('hidden');
+                netDesc.innerText = "הרווח הנקי שלך (בניכוי מע\"מ)";
+            } else {
+                slider.style.left = '4px';
+                optPatur.classList.add('active');
+                optMurshe.classList.remove('active');
+                desc.innerText = "פטור ממע\"מ, תקרה 120 א' ש\"ח";
+                dashPatur.classList.remove('hidden');
+                dashMurshe.classList.add('hidden');
+                vatLabel.classList.add('hidden');
+                netDesc.innerText = "הרווח הנקי שלך החודש";
+            }
+        }
 
         function renderExpenses() {
             document.getElementById('fixed-exp-container').innerHTML = FIXED_EXP_LIST.map(item => generateExpHTML(item, 'fixed')).join('');
@@ -330,20 +377,9 @@
                 type: 'doughnut',
                 data: {
                     labels: ['טיפולים', 'הרצאות', 'אבחונים', 'הדרכה', 'יעוץ', 'אחר'],
-                    datasets: [{
-                        data: [0, 0, 0, 0, 0, 0],
-                        // Brand Colors: Orange, Dark Grey, Light Grey, and complementary accents
-                        backgroundColor: ['#f97316', '#334155', '#94a3b8', '#fdba74', '#cbd5e1', '#e2e8f0'],
-                        borderWidth: 2,
-                        borderColor: '#ffffff'
-                    }]
+                    datasets: [{ data: [0, 0, 0, 0, 0, 0], backgroundColor: ['#f97316', '#334155', '#94a3b8', '#fdba74', '#cbd5e1', '#e2e8f0'], borderWidth: 2, borderColor: '#ffffff' }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'right', labels: { font: { family: 'Rubik' }, boxWidth: 12, padding: 15 } } },
-                    cutout: '70%'
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { font: { family: 'Rubik' }, boxWidth: 12, padding: 15 } } }, cutout: '70%' }
             });
         }
 
@@ -355,33 +391,23 @@
         }
 
         function calculate() {
+            // INCOME
             let incomeInputs = document.querySelectorAll('[data-group="inc"]');
             let incomeValues = [];
             let incomeLabels = ["טיפולים", "הרצאות", "אבחונים", "הדרכה", "יעוץ"];
             let totalIncome = 0;
 
-            for (let i = 0; i < 5; i++) {
-                let val = parseFloat(incomeInputs[i].value) || 0;
-                incomeValues.push(val);
-                totalIncome += val;
-            }
-            
-            let otherVal = parseFloat(incomeInputs[5].value) || 0;
-            totalIncome += otherVal;
-            incomeValues.push(otherVal);
-            let otherLabel = document.getElementById('other-inc-label').value;
-            incomeLabels.push(otherLabel);
+            for (let i = 0; i < 5; i++) { let val = parseFloat(incomeInputs[i].value) || 0; incomeValues.push(val); totalIncome += val; }
+            let otherVal = parseFloat(incomeInputs[5].value) || 0; totalIncome += otherVal; incomeValues.push(otherVal);
+            let otherLabel = document.getElementById('other-inc-label').value; incomeLabels.push(otherLabel);
 
             document.getElementById('total-income-val').innerText = totalIncome.toLocaleString();
 
             const chartCard = document.getElementById('chart-card');
-            if (totalIncome > 0) {
-                chartCard.classList.remove('hidden');
-                updateChartData(incomeValues, incomeLabels);
-            } else {
-                chartCard.classList.add('hidden');
-            }
+            if (totalIncome > 0) { chartCard.classList.remove('hidden'); updateChartData(incomeValues, incomeLabels); } 
+            else { chartCard.classList.add('hidden'); }
 
+            // EXPENSES
             let fixedExpTotal = 0;
             document.querySelectorAll('[data-group="fixed"]').forEach(i => {
                 const id = i.dataset.id;
@@ -391,20 +417,40 @@
 
             let varExpTotal = 0;
             document.querySelectorAll('[data-group="var"]').forEach(i => varExpTotal += parseFloat(i.value) || 0);
-            document.getElementById('receipt-reminder').classList.toggle('hidden', varExpTotal === 0);
+            
+            // VAT & PROFIT LOGIC
+            let profit = 0;
+            
+            if (isMurshe) {
+                // Murshe: Extract VAT from Income AND Expenses (Simplification: assuming expense includes VAT)
+                const revenue = totalIncome / (1 + C.VAT_RATE); 
+                const vatCollected = totalIncome - revenue;
+                
+                const expenseNet = (fixedExpTotal + varExpTotal) / (1 + C.VAT_RATE);
+                const vatDeducted = (fixedExpTotal + varExpTotal) - expenseNet;
+                
+                profit = Math.max(0, revenue - expenseNet);
+                
+                document.getElementById('vat-collected').innerText = Math.round(vatCollected).toLocaleString();
+                document.getElementById('vat-deducted').innerText = Math.round(vatDeducted).toLocaleString();
+                document.getElementById('vat-to-pay').innerText = Math.round(vatCollected - vatDeducted).toLocaleString();
+            } else {
+                // Patur: No VAT logic
+                profit = Math.max(0, totalIncome - (fixedExpTotal + varExpTotal));
+            }
 
-            const profit = Math.max(0, totalIncome - (fixedExpTotal + varExpTotal));
+            // TAX PROFILE
             const salary = parseFloat(document.getElementById('salary').value) || 0;
             const gender = document.getElementById('gender').value;
             const children = parseInt(document.getElementById('children').value) || 0;
-            
             let points = (gender === 'male' ? 2.25 : 2.75) + children;
             if (document.getElementById('degree').checked) points += 1;
             points += parseFloat(document.getElementById('extraPoints').value) || 0;
-            
             const creditValue = points * C.CREDIT_POINT;
+            
             updateStatus(salary, profit, creditValue);
 
+            // FINAL CALCS
             if (totalIncome > 0) {
                 document.getElementById('results-area').classList.replace('opacity-0', 'opacity-100');
                 
@@ -425,6 +471,9 @@
 
                 const totalTaxExpense = bituach + businessTax;
                 const studyFund = profit * C.STUDY_FUND;
+                
+                // For Murshe, NET is what's left after paying VAT and Taxes
+                // Since 'profit' variable already excludes VAT for Murshe, we just subtract taxes
                 const net = profit - pension - studyFund - totalTaxExpense;
 
                 document.getElementById('res-tax').innerText = Math.round(totalTaxExpense).toLocaleString();
@@ -466,6 +515,7 @@
             document.getElementById('status-next-bracket').innerHTML = msg;
         }
 
+        // --- Standard functions (Modal, Storage, etc) ---
         function openCalculator(id, type) {
             currentInputForCalc = document.getElementById(`inp-${type}-${id}`);
             document.getElementById('modal-full-amount').value = '';
@@ -473,7 +523,6 @@
             document.getElementById('calcModal').classList.add('active');
             document.getElementById('modal-full-amount').focus();
         }
-
         function setModalPercent(p) { document.getElementById('modal-percent').value = p; updateModalCalc(); }
         function updateModalCalc() {
             const amount = parseFloat(document.getElementById('modal-full-amount').value) || 0;
@@ -487,7 +536,6 @@
             closeModal();
         }
         function closeModal() { document.getElementById('calcModal').classList.remove('active'); }
-
         function saveFixedExpenses() {
             let data = {};
             document.querySelectorAll('[data-group="fixed"]').forEach(i => {
@@ -495,21 +543,31 @@
                 const customLabelInput = document.querySelector(`input[data-custom-label-id="${id}"]`);
                 data[id] = { val: i.value, freq: document.querySelector(`[data-freq="${id}"]`).value, customLabel: customLabelInput ? customLabelInput.value : null };
             });
-            localStorage.setItem('osek_fixed_exp_v7', JSON.stringify(data));
+            localStorage.setItem('osek_fixed_exp_v8', JSON.stringify(data));
             alert("הוצאות קבועות נשמרו!");
         }
 
         function saveMonthToHistory() {
             const income = parseFloat(document.getElementById('total-income-val').innerText.replace(/,/g, ''));
-            const month = document.getElementById('save-month-picker').value;
-            if (!month) return alert('נא לבחור חודש');
-            history = history.filter(h => h.month !== month);
-            history.push({ month, income });
+            const monthStr = document.getElementById('save-month-picker').value;
+            if (!monthStr) return alert('נא לבחור חודש');
+            
+            history = history.filter(h => h.month !== monthStr);
+            history.push({ month: monthStr, income });
             history.sort((a, b) => b.month.localeCompare(a.month));
-            localStorage.setItem('osek_history_v7', JSON.stringify(history));
+            localStorage.setItem('osek_history_v8', JSON.stringify(history));
             updateAnnualDashboard();
             renderHistoryList();
-            alert("הנתונים לחודש זה נשמרו/עודכנו!");
+            
+            // Reporting Alert for Murshe (Bi-Monthly: Feb, Apr, Jun...)
+            if (isMurshe) {
+                const m = parseInt(monthStr.split('-')[1]);
+                if (m % 2 === 0) {
+                    alert(`📢 שימי לב! סיימת להזין את חודש ${m} (זוגי).\nזה הזמן להעביר את החומרים של החודשיים האחרונים לרואה החשבון לטובת דיווח מע"מ.`);
+                }
+            } else {
+                 alert("הנתונים נשמרו בהצלחה!");
+            }
         }
 
         function renderHistoryList() {
@@ -528,7 +586,7 @@
         function deleteMonth(month) {
             if (confirm(`למחוק את נתוני חודש ${month}?`)) {
                 history = history.filter(h => h.month !== month);
-                localStorage.setItem('osek_history_v7', JSON.stringify(history));
+                localStorage.setItem('osek_history_v8', JSON.stringify(history));
                 updateAnnualDashboard(); renderHistoryList();
             }
         }
