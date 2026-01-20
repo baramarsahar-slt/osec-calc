@@ -10,26 +10,26 @@
     <style>
         body { font-family: 'Rubik', sans-serif; background-color: #f8fafc; color: #334155; }
         
-        /* Brand Colors */
-        .text-brand-orange { color: #f97316; }
-        .bg-brand-orange { background-color: #f97316; }
-        .border-brand-orange { border-color: #f97316; }
+        /* Brand Colors based on Logo */
+        .text-brand-orange { color: #f26522; } /* Matching the logo orange */
+        .bg-brand-orange { background-color: #f26522; }
+        .border-brand-orange { border-color: #f26522; }
         
         .card { background: white; border-radius: 16px; box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; }
         .input-field { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; transition: all 0.2s; background-color: #fff; }
-        .input-field:focus { border-color: #f97316; ring: 2px solid #ffedd5; }
+        .input-field:focus { border-color: #f26522; ring: 2px solid #ffedd5; }
         .editable-label { border-bottom: 1px dashed #94a3b8; cursor: text; color: #475569; font-weight: bold; background: transparent; width: 100%; font-size: 0.8rem; }
         .editable-label:focus { outline: none; border-bottom: 2px solid #3b82f6; color: #000; }
         
         /* Modal Styles */
         .modal { display: none !important; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(51, 65, 85, 0.6); align-items: center; justify-content: center; backdrop-filter: blur(2px); }
         .modal.active { display: flex !important; }
-        .modal-content { background-color: #ffffff; padding: 24px; border-radius: 20px; width: 90%; max-width: 400px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border-top: 6px solid #f97316; }
+        .modal-content { background-color: #ffffff; padding: 24px; border-radius: 20px; width: 90%; max-width: 400px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border-top: 6px solid #f26522; }
 
         /* Status Toggle Switch */
         .status-toggle { display: flex; background: #f1f5f9; padding: 4px; border-radius: 12px; position: relative; cursor: pointer; }
         .status-option { flex: 1; text-align: center; padding: 8px; font-size: 0.85rem; font-weight: bold; z-index: 10; color: #64748b; transition: color 0.3s; }
-        .status-option.active { color: #f97316; }
+        .status-option.active { color: #f26522; }
         .status-slider { position: absolute; top: 4px; bottom: 4px; width: 50%; background: white; border-radius: 8px; shadow: 0 2px 5px rgba(0,0,0,0.1); transition: left 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
     </style>
 </head>
@@ -39,7 +39,7 @@
         <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 border-b border-slate-200 pb-6">
             <div class="text-center md:text-right">
                 <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Bar Amar-Sahar <span class="text-brand-orange text-xl font-medium">| ניהול קליניקה</span></h1>
-                <p class="text-xs text-slate-500 mt-1">גרסה 8.0 (היברידית - פטור/מורשה)</p>
+                <p class="text-xs text-slate-500 mt-1">מערכת חכמה לניהול פיננסי (V8.1)</p>
             </div>
             <div class="flex gap-3">
                 <button onclick="exportToCSV()" class="flex items-center gap-2 text-xs font-bold text-slate-600 bg-white px-4 py-2.5 rounded-full border border-slate-200 hover:bg-slate-50 transition shadow-sm">
@@ -59,9 +59,9 @@
                     <div class="flex justify-between items-end mb-4">
                         <div>
                             <h2 class="font-bold text-slate-700 text-lg">מעקב תקרה שנתי (2026)</h2>
-                            <p class="text-[11px] text-slate-500 font-medium">תקרת עוסק פטור: 120,000 ₪</p>
+                            <p class="text-[11px] text-slate-500 font-medium">תקרת עוסק פטור מעודכנת: 122,833 ₪</p>
                         </div>
-                        <div class="text-2xl font-bold font-mono text-slate-800"><span id="annual-income-display">0</span> <span class="text-sm text-slate-400">/ 120,000 ₪</span></div>
+                        <div class="text-2xl font-bold font-mono text-slate-800"><span id="annual-income-display">0</span> <span class="text-sm text-slate-400">/ 122,833 ₪</span></div>
                     </div>
                     <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
                         <div id="ceiling-progress" class="bg-brand-orange h-full transition-all duration-1000 shadow-lg" style="width: 0%"></div>
@@ -72,7 +72,7 @@
                     <div class="flex justify-between items-start mb-2">
                         <div>
                             <h2 class="font-bold text-slate-700 text-lg">מעקב מע"מ (18%)</h2>
-                            <p class="text-[11px] text-slate-500 font-medium">החודש הזה</p>
+                            <p class="text-[11px] text-slate-500 font-medium">סטטוס חודשי שוטף</p>
                         </div>
                         <div class="bg-orange-100 text-orange-700 px-2 py-1 rounded text-xs font-bold">עוסק מורשה</div>
                     </div>
@@ -116,7 +116,7 @@
                             <div id="opt-patur" class="status-option active">עוסק פטור</div>
                             <div id="opt-murshe" class="status-option">עוסק מורשה</div>
                         </div>
-                        <p id="status-desc" class="text-[10px] text-slate-400 mt-2 text-center">פטור ממע"מ, תקרה 120 א' ש"ח</p>
+                        <p id="status-desc" class="text-[10px] text-slate-400 mt-2 text-center">פטור ממע"מ, תקרה 122,833 ₪</p>
                     </div>
 
                     <div class="space-y-5">
@@ -276,7 +276,8 @@
 
     <script>
         const C = {
-            CEILING: 120000, AVG_WAGE: 13683, VAT_RATE: 0.18,
+            CEILING: 122833, // Updated to official 2026 value
+            AVG_WAGE: 13683, VAT_RATE: 0.18,
             PENSION_R1: 0.0445, PENSION_R2: 0.1255, STUDY_FUND: 0.045, CREDIT_POINT: 255,
             BITUACH_LIMIT: 8210, BITUACH_R1: 0.0597, BITUACH_R2: 0.1783,
             TAX: [{ limit: 7250, rate: 0.10 }, { limit: 10410, rate: 0.14 }, { limit: 16710, rate: 0.20 }, { limit: 23230, rate: 0.31 }, { limit: 48000, rate: 0.35 }]
@@ -344,7 +345,7 @@
                 slider.style.left = '4px';
                 optPatur.classList.add('active');
                 optMurshe.classList.remove('active');
-                desc.innerText = "פטור ממע\"מ, תקרה 120 א' ש\"ח";
+                desc.innerText = "פטור ממע\"מ, תקרה 122,833 ₪";
                 dashPatur.classList.remove('hidden');
                 dashMurshe.classList.add('hidden');
                 vatLabel.classList.add('hidden');
@@ -377,7 +378,7 @@
                 type: 'doughnut',
                 data: {
                     labels: ['טיפולים', 'הרצאות', 'אבחונים', 'הדרכה', 'יעוץ', 'אחר'],
-                    datasets: [{ data: [0, 0, 0, 0, 0, 0], backgroundColor: ['#f97316', '#334155', '#94a3b8', '#fdba74', '#cbd5e1', '#e2e8f0'], borderWidth: 2, borderColor: '#ffffff' }]
+                    datasets: [{ data: [0, 0, 0, 0, 0, 0], backgroundColor: ['#f26522', '#334155', '#94a3b8', '#fdba74', '#cbd5e1', '#e2e8f0'], borderWidth: 2, borderColor: '#ffffff' }]
                 },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { font: { family: 'Rubik' }, boxWidth: 12, padding: 15 } } }, cutout: '70%' }
             });
@@ -472,8 +473,6 @@
                 const totalTaxExpense = bituach + businessTax;
                 const studyFund = profit * C.STUDY_FUND;
                 
-                // For Murshe, NET is what's left after paying VAT and Taxes
-                // Since 'profit' variable already excludes VAT for Murshe, we just subtract taxes
                 const net = profit - pension - studyFund - totalTaxExpense;
 
                 document.getElementById('res-tax').innerText = Math.round(totalTaxExpense).toLocaleString();
