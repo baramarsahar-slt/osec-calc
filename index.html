@@ -3,152 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ניהול עוסק פטור 2026 | Smart Manager</title>
+    <title>ניהול עוסק פטור 2026 | גירסה 6.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Rubik', sans-serif; background-color: #f1f5f9; }
         .card { background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; }
-        .expense-input:focus { border-color: #ef4444; background-color: #fef2f2; }
-        .progress-bar { transition: width 1s ease-in-out; }
+        .input-group label { display: block; font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 2px; }
+        .input-field { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.9rem; outline: none; transition: border 0.2s; }
+        .input-field:focus { border-color: #3b82f6; }
+        .status-badge { padding: 4px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: bold; }
     </style>
 </head>
 <body class="p-4 md:p-8 text-slate-800">
 
-    <div class="max-w-4xl mx-auto">
-        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-            <div>
-                <h1 class="text-3xl font-bold text-slate-800">הניהול הפיננסי שלי</h1>
-                <p class="text-slate-500">עוסק פטור 2026 - דאשבורד חכם</p>
-            </div>
+    <div class="max-w-5xl mx-auto">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-slate-800 italic">Smart Biz Manager 2026</h1>
             <div class="flex gap-2">
-                <button onclick="exportToCSV()" class="bg-white text-slate-600 px-4 py-2 rounded-lg border hover:bg-slate-50 text-sm font-medium">📥 ייצוא לאקסל</button>
-                <button onclick="clearHistory()" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg border border-red-100 hover:bg-red-100 text-sm font-medium">🗑️ איפוס הכל</button>
+                <button onclick="exportToCSV()" class="text-xs bg-white px-3 py-2 rounded-lg border hover:bg-slate-50">📥 ייצוא דוח</button>
+                <button onclick="clearAllData()" class="text-xs bg-red-50 text-red-600 px-3 py-2 rounded-lg border border-red-100 hover:bg-red-100">🗑️ איפוס</button>
             </div>
         </div>
 
-        <div class="card p-6 mb-8 border-b-4 border-yellow-400">
-            <div class="flex justify-between items-end mb-2">
-                <h2 class="font-bold text-slate-700 underline decoration-yellow-400 decoration-4 underline-offset-4">מעקב תקרת עוסק פטור שנתי</h2>
-                <div class="text-sm font-bold"><span id="annual-total-display">0</span> / 120,000 ₪</div>
+        <div class="card p-6 mb-8 border-r-8 border-yellow-400">
+            <div class="flex justify-between items-end mb-3">
+                <h2 class="font-bold text-slate-700">מעקב שנתי לעוסק פטור</h2>
+                <div class="text-sm font-bold"><span id="annual-income-display">0</span> / 120,000 ₪</div>
             </div>
-            <div class="w-full bg-slate-200 rounded-full h-4 overflow-hidden">
-                <div id="ceiling-progress" class="progress-bar bg-yellow-400 h-full" style="width: 0%"></div>
+            <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                <div id="ceiling-progress" class="bg-yellow-400 h-full transition-all duration-1000" style="width: 0%"></div>
             </div>
-            <p id="ceiling-alert" class="text-xs text-slate-500 mt-2 italic">מתחילים שנה חדשה? המערכת תתריע כשתתקרבי לתקרה.</p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
-            <div class="space-y-6">
-                <div class="card p-6">
-                    <h3 class="font-bold mb-4 border-b pb-2">⚙️ הגדרות קבועות</h3>
+            <div class="lg:col-span-4 space-y-6">
+                <div class="card p-5">
+                    <h3 class="font-bold border-b pb-2 mb-4">⚙️ הגדרות ופרופיל</h3>
                     <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><label class="text-[10px] uppercase font-bold text-slate-500">מין</label>
+                            <select id="gender" class="input-field" onchange="calculate()">
+                                <option value="female">אישה</option><option value="male">גבר</option>
+                            </select></div>
+                            <div><label class="text-[10px] uppercase font-bold text-slate-500">ילדים</label>
+                            <input type="number" id="children" value="0" class="input-field" oninput="calculate()"></div>
+                        </div>
+                        <div><label class="text-[10px] uppercase font-bold text-slate-500">ברוטו חודשי כשכיר/ה</label>
+                        <input type="number" id="salary" placeholder="0" class="input-field bg-blue-50" oninput="calculate()"></div>
+                    </div>
+                </div>
+
+                <div id="status-card" class="card p-5 bg-slate-800 text-white">
+                    <h3 class="font-bold text-blue-300 mb-3 text-sm">סטטוס מס נוכחי:</h3>
+                    <div class="space-y-3">
                         <div>
-                            <label class="text-xs font-bold block mb-1">מין</label>
-                            <select id="gender" class="w-full p-2 border rounded-md text-sm" onchange="calculateResults()">
-                                <option value="female">אישה</option>
-                                <option value="male">גבר</option>
-                            </select>
+                            <div class="text-[10px] text-slate-400">מדרגת מס שולית</div>
+                            <div id="status-tax-bracket" class="text-xl font-bold">10%</div>
                         </div>
-                        <div>
-                            <label class="text-xs font-bold block mb-1">ילדים (&lt;18)</label>
-                            <input type="number" id="children" value="0" class="w-full p-2 border rounded-md text-sm" oninput="calculateResults()">
-                        </div>
-                        <div>
-                            <label class="text-xs font-bold block mb-1">כרית ביטחון לחיסכון (%)</label>
-                            <input type="number" id="buffer-percent" value="10" class="w-full p-2 border rounded-md text-sm" oninput="calculateResults()">
-                            <span class="text-[10px] text-slate-400">סכום שיופרש מהנטו לטובת חודשים חלשים.</span>
-                        </div>
-                        <div class="flex items-center gap-2 pt-2">
-                            <input type="checkbox" id="isEmployee" onchange="toggleEmployeeFields()">
-                            <label for="isEmployee" class="text-xs font-bold cursor-pointer">אני גם שכיר/ה</label>
-                        </div>
-                        <div id="employeeField" class="hidden">
-                            <input type="number" id="salary" placeholder="ברוטו חודשי" class="w-full p-2 border border-blue-200 rounded-md text-sm bg-blue-50" oninput="calculateResults()">
-                            <div id="taxBracketInfo" class="hidden mt-2 text-[10px] text-blue-700 leading-tight">
-                                מדרגת מס שולית: <span id="bracketPercent" class="font-bold">10%</span>.
+                        <div class="pt-2 border-t border-slate-700">
+                            <div id="status-next-bracket" class="text-xs text-blue-200 leading-relaxed italic">
+                                טוען נתונים...
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <div id="smart-tip" class="bg-indigo-600 text-white p-6 rounded-2xl shadow-lg hidden">
-                    <div class="flex gap-2 mb-2">
-                        <span class="text-xl">💡</span>
-                        <h4 class="font-bold">טיפ אופטימיזציה</h4>
-                    </div>
-                    <p id="tip-text" class="text-xs leading-relaxed opacity-90"></p>
-                </div>
             </div>
 
-            <div class="lg:col-span-2 space-y-6">
-                <div class="card p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="font-bold text-lg italic">הזנת נתונים לחודש הנוכחי</h3>
-                        <input type="month" id="current-month" class="text-sm p-1 border rounded" onchange="calculateResults()">
+            <div class="lg:col-span-8 space-y-6">
+                
+                <div class="card p-6 border-t-4 border-green-500">
+                    <h3 class="font-bold text-green-700 mb-4 italic">פילוח הכנסות החודש</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="input-group"><label>טיפולים</label><input type="number" data-group="inc" class="input-field border-green-200" oninput="calculate()"></div>
+                        <div class="input-group"><label>הרצאות</label><input type="number" data-group="inc" class="input-field border-green-200" oninput="calculate()"></div>
+                        <div class="input-group"><label>אבחונים</label><input type="number" data-group="inc" class="input-field border-green-200" oninput="calculate()"></div>
+                        <div class="input-group"><label>הדרכה</label><input type="number" data-group="inc" class="input-field border-green-200" oninput="calculate()"></div>
+                        <div class="input-group"><label>יעוץ מקצועי</label><input type="number" data-group="inc" class="input-field border-green-200" oninput="calculate()"></div>
+                        <div class="input-group"><label>אחר</label><input type="number" data-group="inc" class="input-field border-green-200" oninput="calculate()"></div>
                     </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div class="bg-green-50 p-4 rounded-xl border border-green-100">
-                            <label class="text-xs font-bold text-green-700 block mb-1 uppercase">הכנסות העסק</label>
-                            <input type="number" id="income" placeholder="0" class="w-full bg-transparent text-3xl font-bold text-green-800 outline-none" oninput="calculateResults()">
-                        </div>
-                        <div class="bg-red-50 p-4 rounded-xl border border-red-100">
-                            <label class="text-xs font-bold text-red-700 block mb-1 uppercase">סה"כ הוצאות מוכרות</label>
-                            <div class="text-3xl font-bold text-red-800">₪<span id="totalExpensesDisplay">0</span></div>
-                        </div>
-                    </div>
-
-                    <details class="group border rounded-lg overflow-hidden mb-6">
-                        <summary class="flex justify-between items-center p-3 bg-slate-50 cursor-pointer hover:bg-slate-100">
-                            <span class="text-sm font-bold">פירוט הוצאות (לחצי לפתיחה)</span>
-                            <span class="text-xs transition-transform group-open:rotate-180">▼</span>
-                        </summary>
-                        <div class="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 border-t bg-white">
-                            <div><label class="text-[10px] text-slate-500 uppercase">משרד/דיור</label><input type="number" data-group="exp" class="expense-input w-full p-2 border rounded text-sm" oninput="calculateResults()"></div>
-                            <div><label class="text-[10px] text-slate-500 uppercase">תשתיות</label><input type="number" data-group="exp" class="expense-input w-full p-2 border rounded text-sm" oninput="calculateResults()"></div>
-                            <div><label class="text-[10px] text-slate-500 uppercase">מנויים/AI</label><input type="number" data-group="exp" class="expense-input w-full p-2 border rounded text-sm" oninput="calculateResults()"></div>
-                            <div><label class="text-[10px] text-slate-500 uppercase">הכשרה/הדרכה</label><input type="number" data-group="exp" class="expense-input w-full p-2 border rounded text-sm" oninput="calculateResults()"></div>
-                            <div><label class="text-[10px] text-slate-500 uppercase">שיווק</label><input type="number" data-group="exp" class="expense-input w-full p-2 border rounded text-sm" oninput="calculateResults()"></div>
-                            <div><label class="text-[10px] text-slate-500 uppercase">רכב/נסיעות</label><input type="number" data-group="exp" class="expense-input w-full p-2 border rounded text-sm" oninput="calculateResults()"></div>
-                            <div><label class="text-[10px] text-slate-500 uppercase">ציוד/משחקים</label><input type="number" data-group="exp" class="expense-input w-full p-2 border rounded text-sm" oninput="calculateResults()"></div>
-                            <div><label class="text-[10px] text-slate-500 uppercase">כיבוד</label><input type="number" data-group="exp" class="expense-input w-full p-2 border rounded text-sm" oninput="calculateResults()"></div>
-                        </div>
-                    </details>
-
-                    <button onclick="saveMonth()" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-700 transition-colors shadow-lg">✅ שמור חודש זה בהיסטוריה</button>
+                    <div class="mt-4 text-right font-bold text-green-800">סה"כ הכנסות: ₪<span id="total-income-val">0</span></div>
                 </div>
 
-                <div id="results" class="opacity-0 transition-opacity duration-500">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <div class="bg-white p-4 rounded-xl border border-slate-200">
-                            <div class="text-[10px] font-bold text-orange-600 uppercase">מיסים וביטוח לאומי</div>
-                            <div class="text-xl font-bold">₪<span id="res-tax">0</span></div>
-                        </div>
-                        <div class="bg-white p-4 rounded-xl border border-slate-200">
-                            <div class="text-[10px] font-bold text-purple-600 uppercase">פנסיה חובה</div>
-                            <div class="text-xl font-bold">₪<span id="res-pension">0</span></div>
-                        </div>
-                        <div class="bg-white p-4 rounded-xl border border-slate-200">
-                            <div class="text-[10px] font-bold text-blue-600 uppercase">קרן השתלמות</div>
-                            <div class="text-xl font-bold">₪<span id="res-study">0</span></div>
-                        </div>
+                <div class="card p-6 border-t-4 border-slate-400">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-slate-700">הוצאות קבועות (נשמרות)</h3>
+                        <button onclick="saveFixedExpenses()" class="text-[10px] bg-slate-800 text-white px-3 py-1 rounded shadow">שמור הוצאות קבועות</button>
                     </div>
+                    <div id="fixed-exp-container" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
+                        </div>
+                </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="card p-5 border-dashed border-2 border-indigo-200 bg-indigo-50">
-                            <h4 class="text-sm font-bold text-indigo-700 mb-1">כרית ביטחון (חיסכון בצד)</h4>
-                            <div class="text-3xl font-bold text-indigo-800">₪<span id="res-buffer">0</span></div>
-                            <p class="text-[10px] text-indigo-500 mt-1">סכום זה הופרש מהנטו שלך לחירום.</p>
+                <div class="card p-6 border-t-4 border-red-500">
+                    <h3 class="font-bold text-red-700 mb-4">הוצאות משתנות (חודשיות בלבד)</h3>
+                    <div id="var-exp-container" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
                         </div>
-                        <div class="card bg-green-600 text-white p-5 shadow-xl">
-                            <h4 class="text-sm font-bold opacity-90 mb-1">נטו לשימוש פרטי חופשי</h4>
-                            <div class="text-4xl font-bold">₪<span id="res-net">0</span></div>
-                            <p class="text-[10px] opacity-75 mt-1">אחרי כל המיסים, ההפרשות והחיסכון.</p>
-                        </div>
+                    <div id="receipt-reminder" class="hidden mt-4 p-2 bg-red-50 text-red-700 text-xs rounded border border-red-100 italic">
+                        💡 אל תשכחי לשמור קבלות ולתעד את ההוצאות הללו במערכת הנהלת החשבונות!
                     </div>
                 </div>
+
+                <div id="results-area" class="opacity-0 space-y-4 pb-10">
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="card p-4 bg-orange-50 border border-orange-100 text-center">
+                            <div class="text-[10px] font-bold text-orange-600">מיסים וביטוח לאומי</div>
+                            <div id="res-tax" class="text-xl font-bold">0</div>
+                        </div>
+                        <div class="card p-4 bg-purple-50 border border-purple-100 text-center">
+                            <div class="text-[10px] font-bold text-purple-600">פנסיה חובה</div>
+                            <div id="res-pension" class="text-xl font-bold">0</div>
+                        </div>
+                        <div class="card p-4 bg-blue-50 border border-blue-100 text-center">
+                            <div class="text-[10px] font-bold text-blue-600">קרן השתלמות</div>
+                            <div id="res-study" class="text-xl font-bold">0</div>
+                        </div>
+                    </div>
+                    <div class="card bg-slate-800 text-white p-6 shadow-2xl flex justify-between items-center">
+                        <div>
+                            <h4 class="text-xl font-bold text-green-400">נטו להעברה הביתה</h4>
+                            <p class="text-[10px] text-slate-400">אחרי כל ההפרשות והמיסים</p>
+                        </div>
+                        <div class="text-5xl font-bold">₪<span id="res-net">0</span></div>
+                    </div>
+                    <button onclick="saveMonthToHistory()" class="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition">שמור חודש זה במעקב השנתי ✅</button>
+                </div>
+
             </div>
         </div>
     </div>
@@ -160,153 +140,193 @@
             PENSION_R1: 0.0445, PENSION_R2: 0.1255,
             STUDY_FUND: 0.045, CREDIT_POINT: 255,
             BITUACH_LIMIT: 8210, BITUACH_R1: 0.0597, BITUACH_R2: 0.1783,
-            TAX_B1: 7250, TAX_B2: 10410, TAX_B3: 16710, TAX_B4: 23230
+            TAX: [
+                { limit: 7250, rate: 0.10 },
+                { limit: 10410, rate: 0.14 },
+                { limit: 16710, rate: 0.20 },
+                { limit: 23230, rate: 0.31 },
+                { limit: 48000, rate: 0.35 }
+            ]
         };
 
-        let history = JSON.parse(localStorage.getItem('osek_history')) || [];
+        const FIXED_EXP_LIST = ["רואה חשבון", "משרד/תוכנות", "שכירות", "חברות באגודה", "ביטוחים", "ניהול קליניקה", "חשבוניות", "טלפון/תקשורת", "הדרכה", "רכב", "אחר"];
+        const VAR_EXP_LIST = ["הדרכה (משתנה)", "כנסים/השתלמויות", "חומרים מתכלים", "ספרים", "משחקים", "פרסום ושיווק", "כיבוד", "יעוץ עסקי", "רכב (משתנה)", "תרומות", "אחר"];
+
+        let history = JSON.parse(localStorage.getItem('osek_history_v6')) || [];
+        let savedFixed = JSON.parse(localStorage.getItem('osek_fixed_exp')) || {};
 
         window.onload = () => {
-            const today = new Date();
-            document.getElementById('current-month').value = today.toISOString().slice(0, 7);
-            updateAnnualDashboard();
+            initInputs();
+            calculate();
         };
 
-        function toggleEmployeeFields() {
-            const isEmployee = document.getElementById('isEmployee').checked;
-            document.getElementById('employeeField').classList.toggle('hidden', !isEmployee);
-            calculateResults();
+        function initInputs() {
+            const fixedCont = document.getElementById('fixed-exp-container');
+            FIXED_EXP_LIST.forEach(name => {
+                const val = savedFixed[name]?.val || "";
+                const freq = savedFixed[name]?.freq || "1";
+                fixedCont.innerHTML += `
+                    <div class="flex flex-col">
+                        <label class="text-[10px] font-bold text-slate-500">${name}</label>
+                        <div class="flex gap-1">
+                            <input type="number" data-group="fixed" data-name="${name}" value="${val}" class="input-field text-xs" oninput="calculate()">
+                            <select data-freq="${name}" class="text-[10px] border rounded" onchange="calculate()">
+                                <option value="1" ${freq=="1"?'selected':''}>חודשי</option>
+                                <option value="2" ${freq=="2"?'selected':''}>דו-חודשי</option>
+                                <option value="12" ${freq=="12"?'selected':''}>שנתי</option>
+                            </select>
+                        </div>
+                    </div>`;
+            });
+
+            const varCont = document.getElementById('var-exp-container');
+            VAR_EXP_LIST.forEach(name => {
+                varCont.innerHTML += `
+                    <div class="flex flex-col">
+                        <label class="text-[10px] font-bold text-slate-500">${name}</label>
+                        <input type="number" data-group="var" class="input-field text-xs" oninput="calculate()">
+                    </div>`;
+            });
         }
 
-        function calculateTaxForAmount(amount) {
+        function calculateTax(amount) {
             let tax = 0;
-            if (amount <= 0) return 0;
-            let taxable = Math.min(amount, C.TAX_B1); tax += taxable * 0.10; amount -= taxable;
-            if (amount > 0) { taxable = Math.min(amount, C.TAX_B2 - C.TAX_B1); tax += taxable * 0.14; amount -= taxable; }
-            if (amount > 0) { taxable = Math.min(amount, C.TAX_B3 - C.TAX_B2); tax += taxable * 0.20; amount -= taxable; }
-            if (amount > 0) { taxable = Math.min(amount, C.TAX_B4 - C.TAX_B3); tax += taxable * 0.31; amount -= taxable; }
-            if (amount > 0) tax += amount * 0.35;
+            let prevLimit = 0;
+            for (let b of C.TAX) {
+                if (amount > prevLimit) {
+                    let taxable = Math.min(amount - prevLimit, b.limit - prevLimit);
+                    tax += taxable * b.rate;
+                    prevLimit = b.limit;
+                }
+            }
+            if (amount > prevLimit) tax += (amount - prevLimit) * 0.47;
             return tax;
         }
 
-        function calculateResults() {
-            const income = parseFloat(document.getElementById('income').value) || 0;
-            let expenses = 0;
-            document.querySelectorAll('[data-group="exp"]').forEach(i => expenses += parseFloat(i.value) || 0);
-            document.getElementById('totalExpensesDisplay').innerText = expenses.toLocaleString();
+        function calculate() {
+            // Income
+            let income = 0;
+            document.querySelectorAll('[data-group="inc"]').forEach(i => income += parseFloat(i.value) || 0);
+            document.getElementById('total-income-val').innerText = income.toLocaleString();
 
+            // Expenses
+            let fixedExpTotal = 0;
+            document.querySelectorAll('[data-group="fixed"]').forEach(i => {
+                const name = i.dataset.name;
+                const freq = parseFloat(document.querySelector(`[data-freq="${name}"]`).value);
+                fixedExpTotal += (parseFloat(i.value) || 0) / freq;
+            });
+
+            let varExpTotal = 0;
+            document.querySelectorAll('[data-group="var"]').forEach(i => varExpTotal += parseFloat(i.value) || 0);
+            
+            document.getElementById('receipt-reminder').classList.toggle('hidden', varExpTotal === 0);
+
+            const profit = Math.max(0, income - (fixedExpTotal + varExpTotal));
+            const salary = parseFloat(document.getElementById('salary').value) || 0;
             const gender = document.getElementById('gender').value;
             const children = parseInt(document.getElementById('children').value) || 0;
-            const salary = parseFloat(document.getElementById('salary').value) || 0;
-            const bufferRate = (parseFloat(document.getElementById('buffer-percent').value) || 0) / 100;
 
-            const resultsDiv = document.getElementById('results');
-            if (income > 0) resultsDiv.classList.replace('opacity-0', 'opacity-100');
-            else { resultsDiv.classList.replace('opacity-100', 'opacity-0'); return; }
+            // Update Status Card
+            updateStatus(salary, profit);
 
-            const profit = Math.max(0, income - expenses);
+            if (income > 0) {
+                document.getElementById('results-area').classList.replace('opacity-0', 'opacity-100');
+                
+                // Pension
+                let pension = 0;
+                const halfAvg = C.AVG_WAGE / 2;
+                if (profit <= halfAvg) pension = profit * C.PENSION_R1;
+                else if (profit <= C.AVG_WAGE) pension = (halfAvg * C.PENSION_R1) + ((profit - halfAvg) * C.PENSION_R2);
+                else pension = (halfAvg * C.PENSION_R1) + ((C.AVG_WAGE - halfAvg) * C.PENSION_R2);
 
-            // Pension
-            let pension = 0;
-            const halfAvg = C.AVG_WAGE / 2;
-            if (profit <= halfAvg) pension = profit * C.PENSION_R1;
-            else if (profit <= C.AVG_WAGE) pension = (halfAvg * C.PENSION_R1) + ((profit - halfAvg) * C.PENSION_R2);
-            else pension = (halfAvg * C.PENSION_R1) + ((C.AVG_WAGE - halfAvg) * C.PENSION_R2);
+                // Bituach Leumi
+                let usedLowRate = Math.min(salary, C.BITUACH_LIMIT);
+                let profitAtLowRate = Math.min(profit, Math.max(0, C.BITUACH_LIMIT - usedLowRate));
+                let bituach = (profitAtLowRate * C.BITUACH_R1) + (Math.max(0, profit - profitAtLowRate) * C.BITUACH_R2);
 
-            // Study Fund
-            const studyFund = profit * C.STUDY_FUND;
+                // Tax
+                let points = (gender === 'male' ? 2.25 : 2.75) + children;
+                let creditValue = points * C.CREDIT_POINT;
+                let businessTax = Math.max(0, (calculateTax(salary + profit) - creditValue) - Math.max(0, calculateTax(salary) - creditValue));
 
-            // Bituach Leumi
-            let usedLowRate = Math.min(salary, C.BITUACH_LIMIT);
-            let profitAtLowRate = Math.min(profit, Math.max(0, C.BITUACH_LIMIT - usedLowRate));
-            let bituach = (profitAtLowRate * C.BITUACH_R1) + (Math.max(0, profit - profitAtLowRate) * C.BITUACH_R2);
+                const taxes = bituach + businessTax;
+                const study = profit * C.STUDY_FUND;
+                const net = profit - pension - study - taxes;
 
-            // Income Tax
-            let totalIncome = salary + profit;
-            let points = (gender === 'male' ? 2.25 : 2.75) + children;
-            let creditValue = points * C.CREDIT_POINT;
-            let finalBusinessTax = Math.max(0, (calculateTaxForAmount(totalIncome) - creditValue) - Math.max(0, calculateTaxForAmount(salary) - creditValue));
-
-            // Marginal Tax Tip
-            let marginalRate = (salary <= C.TAX_B1) ? 10 : (salary <= C.TAX_B2) ? 14 : (salary <= C.TAX_B3) ? 20 : 31;
-            document.getElementById('bracketPercent').innerText = marginalRate + "%";
-            
-            // Smart Tips Logic
-            const tipBox = document.getElementById('smart-tip');
-            const tipText = document.getElementById('tip-text');
-            if (marginalRate >= 20 && profit > 5000) {
-                tipBox.classList.remove('hidden');
-                tipText.innerText = `את/ה במדרגת מס של ${marginalRate}%. זה זמן מצוין לרכוש ציוד מקצועי או ספרות רפואית שתיכננת - כל הוצאה כזו תחסוך לך ${marginalRate}% מס בפועל.`;
-            } else if (profit > 10000) {
-                tipBox.classList.remove('hidden');
-                tipText.innerText = "הרווח החודשי שלך גבוה. וודא/י שהפקדת את המקסימום לקרן השתלמות כדי להנות מפטור ממס רווחי הון בעתיד.";
+                document.getElementById('res-tax').innerText = Math.round(taxes).toLocaleString();
+                document.getElementById('res-pension').innerText = Math.round(pension).toLocaleString();
+                document.getElementById('res-study').innerText = Math.round(study).toLocaleString();
+                document.getElementById('res-net').innerText = Math.round(net).toLocaleString();
             } else {
-                tipBox.classList.add('hidden');
+                document.getElementById('results-area').classList.replace('opacity-100', 'opacity-0');
             }
-
-            const totalTaxes = bituach + finalBusinessTax;
-            const potentialNet = profit - pension - studyFund - totalTaxes;
-            const bufferAmount = potentialNet * bufferRate;
-            const finalNet = potentialNet - bufferAmount;
-
-            document.getElementById('res-tax').innerText = Math.round(totalTaxes).toLocaleString();
-            document.getElementById('res-pension').innerText = Math.round(pension).toLocaleString();
-            document.getElementById('res-study').innerText = Math.round(studyFund).toLocaleString();
-            document.getElementById('res-buffer').innerText = Math.round(bufferAmount).toLocaleString();
-            document.getElementById('res-net').innerText = Math.round(finalNet).toLocaleString();
+            updateAnnualDashboard();
         }
 
-        function saveMonth() {
-            const data = {
-                month: document.getElementById('current-month').value,
-                income: parseFloat(document.getElementById('income').value) || 0,
-                expenses: parseFloat(document.getElementById('totalExpensesDisplay').innerText.replace(/,/g, '')) || 0,
-                profit: parseFloat(document.getElementById('income').value) - parseFloat(document.getElementById('totalExpensesDisplay').innerText.replace(/,/g, ''))
-            };
-            
-            // Overwrite if same month exists
-            history = history.filter(h => h.month !== data.month);
-            history.push(data);
-            localStorage.setItem('osek_history', JSON.stringify(history));
+        function updateStatus(salary, currentProfit) {
+            let bracket = 0.10;
+            let nextLimit = C.TAX[0].limit;
+            let currentTotal = salary + currentProfit;
+
+            for (let i = 0; i < C.TAX.length; i++) {
+                if (currentTotal > C.TAX[i].limit) {
+                    bracket = (i + 1 < C.TAX.length) ? C.TAX[i+1].rate : 0.47;
+                    nextLimit = (i + 1 < C.TAX.length) ? C.TAX[i+1].limit : 999999;
+                } else {
+                    bracket = C.TAX[i].rate;
+                    nextLimit = C.TAX[i].limit;
+                    break;
+                }
+            }
+
+            document.getElementById('status-tax-bracket').innerText = (bracket * 100) + "%";
+            const distance = Math.max(0, nextLimit - currentTotal);
+            document.getElementById('status-next-bracket').innerHTML = 
+                `מדרגת המס הבאה שלך היא ${(bracket === 0.10 ? 14 : bracket === 0.14 ? 20 : 31)}%. <br> נשאר לך עוד <b>${Math.round(distance).toLocaleString()} ₪</b> רווח החודש לפני שתעברי אליה.`;
+        }
+
+        function saveFixedExpenses() {
+            let data = {};
+            document.querySelectorAll('[data-group="fixed"]').forEach(i => {
+                const name = i.dataset.name;
+                data[name] = { val: i.value, freq: document.querySelector(`[data-freq="${name}"]`).value };
+            });
+            localStorage.setItem('osek_fixed_exp', JSON.stringify(data));
+            alert("הוצאות קבועות נשמרו!");
+        }
+
+        function saveMonthToHistory() {
+            const income = parseFloat(document.getElementById('total-income-val').innerText.replace(/,/g, ''));
+            const month = new Date().toISOString().slice(0, 7);
+            history = history.filter(h => h.month !== month);
+            history.push({ month, income });
+            localStorage.setItem('osek_history_v6', JSON.stringify(history));
             updateAnnualDashboard();
-            alert("הנתונים נשמרו בהצלחה!");
+            alert("החודש נשמר במעקב השנתי!");
         }
 
         function updateAnnualDashboard() {
-            const currentYear = new Date().getFullYear().toString();
-            const yearData = history.filter(h => h.month.startsWith(currentYear));
-            const annualTotal = yearData.reduce((sum, h) => sum + h.income, 0);
-            
-            document.getElementById('annual-total-display').innerText = annualTotal.toLocaleString();
+            const annualTotal = history.reduce((sum, h) => sum + h.income, 0);
+            document.getElementById('annual-income-display').innerText = annualTotal.toLocaleString();
             const percent = Math.min(100, (annualTotal / C.CEILING) * 100);
             document.getElementById('ceiling-progress').style.width = percent + "%";
+        }
 
-            const alertText = document.getElementById('ceiling-alert');
-            if (percent > 90) {
-                alertText.innerText = "⚠️ שים לב! את/ה קרוב/ה מאוד לתקרת העוסק הפטור. התייעץ/י עם רואה חשבון לגבי מעבר לעוסק מורשה.";
-                alertText.classList.replace('text-slate-500', 'text-red-600');
-            } else {
-                alertText.innerText = `ניצלת ${Math.round(percent)}% מהתקרה השנתית. נשאר לך עוד ${(C.CEILING - annualTotal).toLocaleString()} ₪ השנה.`;
-                alertText.classList.replace('text-red-600', 'text-slate-500');
+        function clearAllData() {
+            if (confirm("לאפס את כל הנתונים וההיסטוריה?")) {
+                localStorage.clear();
+                location.reload();
             }
         }
 
         function exportToCSV() {
-            if (history.length === 0) return alert("אין נתונים לשמירה");
-            let csv = "חודש,הכנסות,הוצאות,רווח\n";
-            history.forEach(h => csv += `${h.month},${h.income},${h.expenses},${h.profit}\n`);
+            let csv = "Month,Income\n" + history.map(h => `${h.month},${h.income}`).join("\n");
             const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = `osek_report_${new Date().getFullYear()}.csv`;
+            link.download = "osek_report_2026.csv";
             link.click();
-        }
-
-        function clearHistory() {
-            if (confirm("האם למחוק את כל היסטוריית ההכנסות? פעולה זו אינה הפיכה.")) {
-                localStorage.removeItem('osek_history');
-                history = [];
-                updateAnnualDashboard();
-            }
         }
     </script>
 </body>
