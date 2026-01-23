@@ -6,32 +6,26 @@
     <title>ניהול קליניקה | בר עמר-סהר</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Rubik', sans-serif; background-color: #f8fafc; color: #334155; }
-        
-        /* Brand Colors */
         .text-brand-orange { color: #f26522; }
         .bg-brand-orange { background-color: #f26522; }
         .border-brand-orange { border-color: #f26522; }
-        
         .card { background: white; border-radius: 16px; box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; }
         .input-field { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; transition: all 0.2s; background-color: #fff; }
         .input-field:focus { border-color: #f26522; ring: 2px solid #ffedd5; }
         .editable-label { border-bottom: 1px dashed #94a3b8; cursor: text; color: #475569; font-weight: bold; background: transparent; width: 100%; font-size: 0.8rem; margin-bottom: 4px; display: block; }
         .editable-label:focus { outline: none; border-bottom: 2px solid #3b82f6; color: #000; }
-        
-        /* Modal Styles */
+        .editable-label:empty:before { content: attr(placeholder); color: #94a3b8; }
         .modal { display: none !important; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(51, 65, 85, 0.6); align-items: center; justify-content: center; backdrop-filter: blur(2px); }
         .modal.active { display: flex !important; }
         .modal-content { background-color: #ffffff; padding: 24px; border-radius: 20px; width: 90%; max-width: 400px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border-top: 6px solid #f26522; }
-
-        /* Status Toggle */
         .status-toggle { display: flex; background: #f1f5f9; padding: 4px; border-radius: 12px; position: relative; cursor: pointer; }
         .status-option { flex: 1; text-align: center; padding: 8px; font-size: 0.85rem; font-weight: bold; z-index: 10; color: #64748b; transition: color 0.3s; }
         .status-option.active { color: #f26522; }
         .status-slider { position: absolute; top: 4px; bottom: 4px; width: 50%; background: white; border-radius: 8px; shadow: 0 2px 5px rgba(0,0,0,0.1); transition: left 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        
         .dynamic-row { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -42,11 +36,16 @@
         <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 border-b border-slate-200 pb-6">
             <div class="text-center md:text-right">
                 <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Bar Amar-Sahar <span class="text-brand-orange text-xl font-medium">| ניהול קליניקה</span></h1>
-                <p class="text-xs text-slate-500 mt-1">גרסה 9.1 (מתוקנת - שורות אינסופיות)</p>
+                <p class="text-xs text-slate-500 mt-1">גרסה 10.0 (ייבוא אקסל חכם)</p>
             </div>
-            <div class="flex gap-3">
+            <div class="flex gap-2 flex-wrap justify-center">
+                <label class="flex items-center gap-2 text-xs font-bold text-slate-600 bg-slate-100 px-4 py-2.5 rounded-full border border-slate-200 hover:bg-slate-200 transition shadow-sm cursor-pointer">
+                    <span>📥</span> ייבוא הוצאות מאקסל
+                    <input type="file" id="excel-file-input" accept=".xlsx, .xls" class="hidden" onchange="handleExcelUpload(this)">
+                </label>
+                
                 <button onclick="exportToCSV()" class="flex items-center gap-2 text-xs font-bold text-slate-600 bg-white px-4 py-2.5 rounded-full border border-slate-200 hover:bg-slate-50 transition shadow-sm">
-                    <span>📥</span> ייצוא דוח
+                    <span>📤</span> ייצוא דוח
                 </button>
                 <button onclick="clearAllData()" class="flex items-center gap-2 text-xs font-bold text-red-500 bg-red-50 px-4 py-2.5 rounded-full border border-red-100 hover:bg-red-100 transition shadow-sm">
                     <span>🗑️</span> איפוס
@@ -90,7 +89,6 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            
             <div class="lg:col-span-4 space-y-6">
                 <div class="card p-6">
                     <h3 class="font-bold border-b border-slate-100 pb-3 mb-5 text-slate-700 flex items-center gap-2">
@@ -145,7 +143,6 @@
                         <div class="input-group"><label>אבחונים</label><input type="number" data-group="inc" class="input-field" oninput="calculate()"></div>
                         <div class="input-group"><label>הדרכה</label><input type="number" data-group="inc" class="input-field" oninput="calculate()"></div>
                         <div class="input-group"><label>יעוץ מקצועי</label><input type="number" data-group="inc" class="input-field" oninput="calculate()"></div>
-                        
                         <div id="dynamic-income-wrapper" class="contents"></div>
                     </div>
                     <div class="mt-6 pt-4 border-t border-slate-100 flex justify-between items-center">
@@ -305,7 +302,6 @@
             savedDynamic[type].forEach((field, index) => {
                 wrapper.appendChild(createDynamicRow(type, index, field.label, field.val, field.freq));
             });
-            
             wrapper.appendChild(createDynamicRow(type, savedDynamic[type].length, '', '', '1'));
         }
 
@@ -364,6 +360,87 @@
             localStorage.setItem('osek_dynamic_v9', JSON.stringify(savedDynamic));
         }
 
+        // --- EXCEL IMPORT LOGIC ---
+        function handleExcelUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const json = XLSX.utils.sheet_to_json(worksheet);
+                processExcelData(json);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function processExcelData(data) {
+            let addedCount = 0;
+            let totalAmount = 0;
+
+            data.forEach(row => {
+                const category = row['Category'] || row['קטגוריה'];
+                const amount = parseFloat(row['Amount'] || row['סכום']) || 0;
+                const typeRaw = (row['Type'] || row['סוג'] || '').toLowerCase();
+                const percent = parseFloat(row['Percent'] || row['אחוז הכרה']) || 100;
+                
+                // Calculate recognized amount
+                const finalAmount = amount * (percent / 100);
+                if (finalAmount === 0 || !category) return;
+
+                // Determine type (fixed/var) - Default to Var if unknown
+                const type = (typeRaw.includes('fixed') || typeRaw.includes('קבועה')) ? 'fixed' : 'var';
+
+                // 1. Try to find in Static List
+                let found = false;
+                const staticList = type === 'fixed' ? FIXED_EXP_LIST : VAR_EXP_LIST;
+                const staticItem = staticList.find(i => i.label === category);
+                
+                if (staticItem) {
+                    const inputId = `inp-${type}-${staticItem.id}`;
+                    const input = document.getElementById(inputId);
+                    if (input) {
+                        const currentVal = parseFloat(input.value) || 0;
+                        input.value = Math.round(currentVal + finalAmount);
+                        // Save static data
+                        const id = input.dataset.id;
+                        savedFixed[id] = { val: input.value, freq: savedFixed[id]?.freq || '1' };
+                        found = true;
+                    }
+                }
+
+                // 2. If not found, add to Dynamic List
+                if (!found) {
+                    const list = savedDynamic[type];
+                    // Check if dynamic category already exists
+                    let dynItem = list.find(i => i.label === category);
+                    if (dynItem) {
+                        dynItem.val = (parseFloat(dynItem.val) || 0) + finalAmount;
+                    } else {
+                        list.push({ label: category, val: finalAmount, freq: '1' });
+                    }
+                }
+
+                addedCount++;
+                totalAmount += finalAmount;
+            });
+
+            // Save and Rerender
+            localStorage.setItem('osek_fixed_exp_v9', JSON.stringify(savedFixed));
+            localStorage.setItem('osek_dynamic_v9', JSON.stringify(savedDynamic));
+            
+            renderStaticExpenses();
+            renderDynamicInputs('fixed');
+            renderDynamicInputs('var');
+            calculate();
+            
+            alert(`ייבוא הושלם בהצלחה!\nנקלטו ${addedCount} שורות.\nסך הוצאות שנוספו: ₪${Math.round(totalAmount).toLocaleString()}`);
+        }
+
+        // --- CHART & CALC ---
         function initChart() {
             const ctx = document.getElementById('incomeChart').getContext('2d');
             incomeChart = new Chart(ctx, {
@@ -384,9 +461,9 @@
 
         function calculate() {
             let totalIncome = 0;
-            let incomeValues = [0,0,0,0,0,0]; // 5 static + 1 aggregate dynamic
+            let incomeValues = [0,0,0,0,0,0];
 
-            // Static Income (Fix: Safely loop only 5 items)
+            // Static Income
             const incomeInputs = document.querySelectorAll('[data-group="inc"]');
             for (let i = 0; i < 5; i++) {
                 if (incomeInputs[i] && !incomeInputs[i].closest('.dynamic-row')) {
