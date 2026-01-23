@@ -20,6 +20,8 @@
         .status-option { flex: 1; text-align: center; padding: 8px; font-size: 0.85rem; font-weight: bold; z-index: 10; color: #64748b; }
         .status-option.active { color: #f26522; }
         .status-slider { position: absolute; top: 4px; bottom: 4px; width: 50%; background: white; border-radius: 8px; transition: left 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .dynamic-row { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="p-4 md:p-8 min-h-screen">
@@ -28,7 +30,7 @@
         <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 border-b border-slate-200 pb-6">
             <div class="text-center md:text-right">
                 <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Bar Amar-Sahar <span class="text-brand-orange text-xl font-medium">| ניהול קליניקה</span></h1>
-                <p class="text-xs text-slate-500 mt-1">גרסה 12.0 (מחוברת ל-Morning)</p>
+                <p class="text-xs text-slate-500 mt-1">גרסה 12.1 (תואם Morning ב-100%)</p>
             </div>
             <div class="flex gap-3">
                 <button onclick="clearAllData()" class="text-xs font-bold text-red-500 bg-red-50 px-4 py-2.5 rounded-full border border-red-100 hover:bg-red-100">🗑️ איפוס נתונים</button>
@@ -105,8 +107,8 @@
                         <input type="file" id="morning-csv-input" accept=".csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleMorningUpload(this)">
                         <div>
                             <span class="text-4xl mb-2 block">📄</span>
-                            <h4 class="font-bold text-slate-700">ייבוא דו"ח הוצאות מ-Morning</h4>
-                            <p class="text-xs text-slate-400 mt-1">גררי לכאן את קובץ ה-CSV שהורדת מהתוכנה</p>
+                            <h4 class="font-bold text-slate-700">ייבוא דו"ח מ-Morning (חשבונית ירוקה)</h4>
+                            <p class="text-xs text-slate-400 mt-1">יש להוסיף עמודת Logic לפני ההעלאה</p>
                         </div>
                     </div>
 
@@ -117,10 +119,14 @@
                             <div id="dynamic-fixed-wrapper" class="space-y-3 mt-3"></div>
                             <div id="fixed-chart-wrapper" class="mt-4 pt-4 border-t hidden"><div class="h-32"><canvas id="fixedChart"></canvas></div></div>
                         </div>
+                        
                         <div class="card p-5 border-t-4 border-red-400">
                             <h3 class="font-bold text-slate-700 text-sm mb-4">⚡ הוצאות משתנות</h3>
                             <div id="var-exp-container" class="space-y-3"></div>
                             <div id="dynamic-var-wrapper" class="space-y-3 mt-3"></div>
+                            <div class="mt-4 flex items-center gap-2 p-2 bg-orange-50 rounded-lg border border-orange-100 cursor-help" title="עזרה בחישוב">
+                                <span class="text-lg">🧮</span><div class="text-[10px] text-orange-800 leading-tight"><strong>המערכת מזהה אחוזים אוטומטית</strong><br>(דלק 45%, אינטרנט 25% וכו')</div>
+                            </div>
                             <div id="var-chart-wrapper" class="mt-4 pt-4 border-t hidden"><div class="h-32"><canvas id="varChart"></canvas></div></div>
                         </div>
                     </div>
@@ -146,20 +152,55 @@
     </div>
 
     <script>
-        // Mappings from Classifications.csv and UI synonyms
+        // --- 1. MAPPING DICTIONARY (Based on Classifications.csv) ---
         const PERCENT_MAP = {
-            'הוצאות דלק': 45, 'אחזקת רכב (ללא דלק)': 45, 'אינטרנט': 25, 'ארנונה': 25, 'הוצאות תקשורת וטלפון': 25, 'חשמל מים גז': 25,
-            'שכירות': 100, 'רו"ח': 100, 'הדרכה': 100, 'יעוץ עסקי': 100, 'פרסום ושיווק': 100, 'תוכנות, מנויים': 100
+            'הוצאות דלק': 45,
+            'אחזקת רכב (ללא דלק)': 45,
+            'אינטרנט': 25,
+            'הוצאות תקשורת וטלפון': 25,
+            'חשמל מים גז': 25,
+            'ארנונה': 25,
+            'שכירות': 100,
+            'רו"ח': 100,
+            'תוכנות, מנויים': 100,
+            'ביטוחים': 100,
+            'חומרים מתכלים וציוד מתכלה': 100,
+            'כיבודים, מתנות, תרומות, קנסות': 100,
+            'כנסים השתלמויות וספרות מקצועית': 100,
+            'משחקים/עזרים/ספרים': 100,
+            'ריהוט קליניקה': 100,
+            'הדרכה': 100,
+            'יעוץ עסקי': 100,
+            'פרסום ושיווק': 100,
+            'הוצאות אחזקה ותיקונים': 100,
+            'עלויות אחרות': 100
         };
-        const SYNONYMS = { 'רואה חשבון': ['רו"ח', 'רואה חשבון'], 'רכב': ['הוצאות דלק', 'אחזקת רכב'], 'תקשורת': ['אינטרנט', 'טלפון', 'תקשורת'] };
+
+        // --- 2. STATIC UI LISTS (Matched One-to-One to CSV) ---
+        const FIXED_DEFAULTS = [
+            { id: "acc", label: 'רו"ח' },
+            { id: "soft", label: 'תוכנות, מנויים' },
+            { id: "rent", label: 'שכירות' },
+            { id: "comm", label: 'הוצאות תקשורת וטלפון' },
+            { id: "ins", label: 'ביטוחים' },
+            { id: "city_tax", label: 'ארנונה' },
+            { id: "util", label: 'חשמל מים גז' }
+        ];
+
+        const VAR_DEFAULTS = [
+            { id: "fuel", label: 'הוצאות דלק' },
+            { id: "car_maint", label: 'אחזקת רכב (ללא דלק)' },
+            { id: "supplies", label: 'חומרים מתכלים וציוד מתכלה' },
+            { id: "refreshments", label: 'כיבודים, מתנות, תרומות, קנסות' },
+            { id: "conf", label: 'כנסים השתלמויות וספרות מקצועית' },
+            { id: "games", label: 'משחקים/עזרים/ספרים' }
+        ];
 
         const C = { CEILING: 122833, AVG_WAGE: 13683, VAT_RATE: 0.18, CREDIT_POINT: 255, BITUACH_LIMIT: 8210, TAX: [{ limit: 7250, rate: 0.10 }, { limit: 10410, rate: 0.14 }, { limit: 16710, rate: 0.20 }, { limit: 23230, rate: 0.31 }, { limit: 48000, rate: 0.35 }] };
-        const FIXED_DEFAULTS = [{ id: "acc", label: "רואה חשבון" }, { id: "soft", label: "תוכנות ומנויים" }, { id: "rent", label: "שכירות/ארנונה" }, { id: "phone", label: "טלפון ותקשורת" }];
-        const VAR_DEFAULTS = [{ id: "car_var", label: "רכב (דלק/טיפול)" }, { id: "mat", label: "חומרים מתכלים" }, { id: "food", label: "כיבוד" }];
 
-        let history = JSON.parse(localStorage.getItem('osek_history_v12')) || [];
-        let savedFixed = JSON.parse(localStorage.getItem('osek_fixed_v12')) || {};
-        let savedDynamic = JSON.parse(localStorage.getItem('osek_dynamic_v12')) || { inc: [], fixed: [], var: [] };
+        let history = JSON.parse(localStorage.getItem('osek_history_v12_1')) || [];
+        let savedFixed = JSON.parse(localStorage.getItem('osek_fixed_v12_1')) || {};
+        let savedDynamic = JSON.parse(localStorage.getItem('osek_dynamic_v12_1')) || { inc: [], fixed: [], var: [] };
         let isMurshe = localStorage.getItem('is_murshe') === 'true';
         let incomeChart = null, fixedChart = null, varChart = null;
 
@@ -181,9 +222,14 @@
         }
 
         function renderExpenses() {
-            const gen = (item, type) => `<div class="flex flex-col"><label class="text-[11px] font-bold text-slate-500">${item.label}</label><div class="flex gap-1 h-9"><input type="number" id="inp-${type}-${item.id}" data-group="${type}" data-id="${item.id}" value="${savedFixed[item.id]?.val || ''}" class="input-field text-sm flex-grow" oninput="calculate()"><select data-freq="${item.id}" class="text-[10px] border rounded w-16" onchange="calculate()"><option value="1" ${savedFixed[item.id]?.freq=='1'?'selected':''}>חודשי</option><option value="12" ${savedFixed[item.id]?.freq=='12'?'selected':''}>שנתי</option></select></div></div>`;
+            const gen = (item, type) => `<div class="flex flex-col"><label class="text-[11px] font-bold text-slate-500">${item.label}</label><div class="flex gap-1 h-9"><input type="number" id="inp-${type}-${item.id}" data-group="${type}" data-id="${item.id}" value="${savedFixed[item.id]?.val || ''}" class="input-field text-sm flex-grow" oninput="calculate()"><select data-freq="${item.id}" class="text-[10px] border rounded w-16" onchange="calculate()"><option value="1" ${savedFixed[item.id]?.freq=='1'?'selected':''}>חודשי</option><option value="2" ${savedFixed[item.id]?.freq=='2'?'selected':''}>דו-חודשי</option><option value="12" ${savedFixed[item.id]?.freq=='12'?'selected':''}>שנתי</option></select></div></div>`;
             document.getElementById('fixed-exp-container').innerHTML = FIXED_DEFAULTS.map(i => gen(i, 'fixed')).join('');
-            document.getElementById('var-exp-container').innerHTML = VAR_DEFAULTS.map(i => `<div class="flex flex-col"><label class="text-[11px] font-bold text-slate-500">${i.label}</label><input type="number" data-group="var" class="input-field text-sm h-9" oninput="calculate()">`).join('');
+            document.getElementById('var-exp-container').innerHTML = VAR_DEFAULTS.map(i => `<div class="flex flex-col"><label class="text-[11px] font-bold text-slate-500">${i.label}</label><input type="number" id="inp-var-${i.id}" data-id="${i.id}" data-group="var" class="input-field text-sm h-9" value="${savedFixed[i.id]?.val || ''}" oninput="saveVar('${i.id}', this.value); calculate()">`).join('');
+        }
+
+        function saveVar(id, val) {
+            savedFixed[id] = { val: val, freq: '1' };
+            localStorage.setItem('osek_fixed_v12_1', JSON.stringify(savedFixed));
         }
 
         function renderDynamicInputs(type) {
@@ -196,13 +242,13 @@
         function createRow(type, idx, l, v, f) {
             const div = document.createElement('div'); div.className = 'flex flex-col dynamic-row';
             const inputLabel = `<input type="text" placeholder="אחר..." value="${l}" class="editable-label text-xs font-bold" oninput="saveDyn('${type}',${idx},'label',this.value)">`;
-            const inputs = `<div class="flex gap-1 h-9"><input type="number" value="${v}" class="input-field text-sm flex-grow" oninput="saveDyn('${type}',${idx},'val',this.value);calculate()">${type==='fixed'?'<select class="text-[10px] border rounded w-16" onchange="saveDyn(\'fixed\','+idx+',\'freq\',this.value);calculate()"><option value="1" '+(f=='1'?'selected':'')+'>חודשי</option><option value="12" '+(f=='12'?'selected':'')+'>שנתי</option></select>':''}</div>`;
+            const inputs = `<div class="flex gap-1 h-9"><input type="number" value="${v}" class="input-field text-sm flex-grow" oninput="saveDyn('${type}',${idx},'val',this.value);calculate()">${type==='fixed'?'<select class="text-[10px] border rounded w-16" onchange="saveDyn(\'fixed\','+idx+',\'freq\',this.value);calculate()"><option value="1" '+(f=='1'?'selected':'')+'>חודשי</option><option value="2" '+(f=='2'?'selected':'')+'>דו-חודשי</option><option value="12" '+(f=='12'?'selected':'')+'>שנתי</option></select>':''}</div>`;
             div.innerHTML = inputLabel + inputs; return div;
         }
 
         function saveDyn(t, i, k, v) { 
             if(!savedDynamic[t][i]) { savedDynamic[t][i] = {label:'', val:'', freq:'1'}; renderDynamicInputs(t); }
-            savedDynamic[t][i][k] = v; localStorage.setItem('osek_dynamic_v12', JSON.stringify(savedDynamic));
+            savedDynamic[t][i][k] = v; localStorage.setItem('osek_dynamic_v12_1', JSON.stringify(savedDynamic));
         }
 
         function handleMorningUpload(input) {
@@ -219,36 +265,62 @@
 
         function processMorningData(data) {
             let count = 0;
+            // Clear current month values before adding import (optional - can also append)
+            // savedFixed = {}; savedDynamic = { inc: [], fixed: [], var: [] }; 
+
             data.forEach(row => {
-                const rawCat = row['תיאור חשבון הוצאה'] || row['Category'];
-                const amount = parseFloat(row['סכום כולל'] || row['סכום כולל מע״מ'] || row['Amount']) || 0;
+                const rawCat = row['תיאור חשבון הוצאה'];
+                // Fix: Morning amount might be "סכום כולל" or "סכום כולל מע״מ"
+                const amount = parseFloat(row['סכום כולל'] || row['סכום כולל מע״מ'] || 0);
                 const logic = (row['Logic'] || 'משתנה').trim();
+                
+                if(!rawCat || amount === 0) return;
+
+                // Automatic Percent Recognition
                 const pct = PERCENT_MAP[rawCat] || 100;
                 const finalAmount = amount * (pct / 100);
-                if(finalAmount === 0 || !rawCat) return;
 
-                let type = logic.includes('קבועה') ? 'fixed' : 'var';
-                let freq = logic.includes('שנתי') ? '12' : '1';
+                let type = 'var';
+                let freq = '1';
 
-                // Try matching to UI
+                if (logic === 'קבועה-חודשית') { type = 'fixed'; freq = '1'; }
+                else if (logic === 'קבועה-דו-חודשית') { type = 'fixed'; freq = '2'; }
+                else if (logic === 'קבועה-שנתית') { type = 'fixed'; freq = '12'; }
+                else { type = 'var'; freq = '1'; }
+
+                // Try matching to UI Fixed/Var Defaults
                 let matched = false;
                 [...FIXED_DEFAULTS, ...VAR_DEFAULTS].forEach(def => {
-                    if(def.label === rawCat || (SYNONYMS[def.label] && SYNONYMS[def.label].includes(rawCat))) {
-                        const inp = document.querySelector(`[data-id="${def.id}"]`) || document.querySelector(`[data-group="var"]`);
-                        if(inp) { inp.value = Math.round((parseFloat(inp.value)||0) + finalAmount); matched = true; }
+                    if(def.label === rawCat) {
+                        const id = def.id;
+                        // Accumulate if exists
+                        const currentVal = parseFloat(savedFixed[id]?.val) || 0;
+                        savedFixed[id] = { val: currentVal + finalAmount, freq: freq };
+                        matched = true;
                     }
                 });
 
                 if(!matched) {
                     let dyn = savedDynamic[type].find(d => d.label === rawCat);
-                    if(dyn) dyn.val = (parseFloat(dyn.val)||0) + finalAmount;
-                    else savedDynamic[type].push({ label: rawCat, val: finalAmount, freq: freq });
+                    if(dyn) {
+                        dyn.val = (parseFloat(dyn.val)||0) + finalAmount;
+                        dyn.freq = freq; // Override freq with latest import logic
+                    } else {
+                        savedDynamic[type].push({ label: rawCat, val: finalAmount, freq: freq });
+                    }
                 }
                 count++;
             });
-            localStorage.setItem('osek_dynamic_v12', JSON.stringify(savedDynamic));
-            renderDynamicInputs('fixed'); renderDynamicInputs('var'); calculate();
-            alert(`נקלטו ${count} שורות מהדו"ח של Morning!`);
+
+            localStorage.setItem('osek_fixed_v12_1', JSON.stringify(savedFixed));
+            localStorage.setItem('osek_dynamic_v12_1', JSON.stringify(savedDynamic));
+            
+            // Re-render UI
+            renderExpenses();
+            renderDynamicInputs('fixed'); 
+            renderDynamicInputs('var'); 
+            calculate();
+            alert(`נקלטו ${count} שורות בהצלחה!\nכל החישובים בוצעו לפי האחוזים המוכרים.`);
         }
 
         function calculate() {
@@ -257,11 +329,36 @@
             savedDynamic.inc.forEach(d => { const v = parseFloat(d.val)||0; if(v>0){ tInc+=v; incVs.push(v); incLs.push(d.label||"אחר"); }});
             
             let tFix = 0, fixVs = [], fixLs = [];
-            document.querySelectorAll('[data-group="fixed"]').forEach(i => { const f = parseFloat(document.querySelector(`[data-freq="${i.dataset.id}"]`).value); const v = (parseFloat(i.value)||0)/f; tFix+=v; if(v>0){ fixVs.push(v); fixLs.push(i.parentElement.previousElementSibling.innerText); }});
+            // Calc Static Fixed
+            FIXED_DEFAULTS.forEach(item => {
+                const data = savedFixed[item.id];
+                if(data && data.val > 0) {
+                    const monthly = parseFloat(data.val) / parseFloat(data.freq || 1);
+                    tFix += monthly;
+                    fixVs.push(monthly); fixLs.push(item.label);
+                    // Update input view if not currently focused
+                    const input = document.getElementById(`inp-fixed-${item.id}`);
+                    if(input && document.activeElement !== input) input.value = Math.round(data.val);
+                    const select = document.querySelector(`select[data-freq="${item.id}"]`);
+                    if(select) select.value = data.freq || '1';
+                }
+            });
+            // Calc Dynamic Fixed
             savedDynamic.fixed.forEach(d => { const v = (parseFloat(d.val)||0)/(parseFloat(d.freq)||1); tFix+=v; if(v>0){ fixVs.push(v); fixLs.push(d.label||"אחר"); }});
 
             let tVar = 0, varVs = [], varLs = [];
-            document.querySelectorAll('[data-group="var"]').forEach(i => { const v = parseFloat(i.value)||0; tVar+=v; if(v>0){ varVs.push(v); varLs.push(i.previousElementSibling.innerText); }});
+            // Calc Static Var
+            VAR_DEFAULTS.forEach(item => {
+                const data = savedFixed[item.id];
+                if(data && data.val > 0) {
+                    const v = parseFloat(data.val);
+                    tVar += v;
+                    varVs.push(v); varLs.push(item.label);
+                    const input = document.getElementById(`inp-var-${item.id}`);
+                    if(input && document.activeElement !== input) input.value = Math.round(v);
+                }
+            });
+            // Calc Dynamic Var
             savedDynamic.var.forEach(d => { const v = parseFloat(d.val)||0; tVar+=v; if(v>0){ varVs.push(v); varLs.push(d.label||"אחר"); }});
 
             document.getElementById('total-income-val').innerText = tInc.toLocaleString();
@@ -312,7 +409,7 @@
         function saveMonthToHistory() {
             const inc = parseFloat(document.getElementById('total-income-val').innerText.replace(/,/g,'')), m = new Date().toISOString().slice(0,7);
             history = history.filter(h => h.month !== m); history.push({month:m, income:inc});
-            localStorage.setItem('osek_history_v12', JSON.stringify(history)); updateAnnualDashboard(); renderHistoryList(); alert("נשמר!");
+            localStorage.setItem('osek_history_v12_1', JSON.stringify(history)); updateAnnualDashboard(); renderHistoryList(); alert("נשמר!");
         }
         function clearAllData() { if(confirm("למחוק הכל?")){ localStorage.clear(); location.reload(); } }
     </script>
