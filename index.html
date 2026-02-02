@@ -30,10 +30,17 @@
         <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 border-b border-slate-200 pb-6">
             <div class="text-center md:text-right">
                 <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Bar Amar-Sahar <span class="text-brand-orange text-xl font-medium">| ניהול קליניקה</span></h1>
-                <p class="text-xs text-slate-500 mt-1">גרסה 12.2 (סיכומי הוצאות)</p>
+                <p class="text-xs text-slate-500 mt-1">גרסה 13.0 (יציבה + גיבויים)</p>
             </div>
-            <div class="flex gap-3">
-                <button onclick="clearAllData()" class="text-xs font-bold text-red-500 bg-red-50 px-4 py-2.5 rounded-full border border-red-100 hover:bg-red-100">🗑️ איפוס נתונים</button>
+            <div class="flex gap-2 flex-wrap justify-center">
+                <button onclick="backupData()" class="flex items-center gap-2 text-xs font-bold text-white bg-slate-700 px-4 py-2.5 rounded-full hover:bg-slate-800 transition shadow-sm">
+                    <span>💾</span> שמור גיבוי למחשב
+                </button>
+                <label class="flex items-center gap-2 text-xs font-bold text-slate-600 bg-white px-4 py-2.5 rounded-full border border-slate-200 hover:bg-slate-50 transition shadow-sm cursor-pointer">
+                    <span>📂</span> שחזר מגיבוי
+                    <input type="file" accept=".json" class="hidden" onchange="restoreData(this)">
+                </label>
+                <button onclick="clearAllData()" class="text-xs font-bold text-red-500 bg-red-50 px-4 py-2.5 rounded-full border border-red-100 hover:bg-red-100">🗑️ איפוס</button>
             </div>
         </div>
 
@@ -108,7 +115,7 @@
                         <div>
                             <span class="text-4xl mb-2 block">📄</span>
                             <h4 class="font-bold text-slate-700">ייבוא דו"ח הוצאות מ-Morning</h4>
-                            <p class="text-xs text-slate-400 mt-1">יש להוסיף עמודת Logic לפני ההעלאה</p>
+                            <p class="text-xs text-slate-400 mt-1">או גררי לכאן את הקובץ</p>
                         </div>
                     </div>
 
@@ -164,25 +171,99 @@
     </div>
 
     <script>
+        // --- 1. MAPPING & CONFIG ---
         const PERCENT_MAP = { 'הוצאות דלק': 45, 'אחזקת רכב (ללא דלק)': 45, 'אינטרנט': 25, 'הוצאות תקשורת וטלפון': 25, 'חשמל מים גז': 25, 'ארנונה': 25, 'שכירות': 100, 'רו"ח': 100, 'תוכנות, מנויים': 100, 'ביטוחים': 100, 'חומרים מתכלים וציוד מתכלה': 100, 'כיבודים, מתנות, תרומות, קנסות': 100, 'כנסים השתלמויות וספרות מקצועית': 100, 'משחקים/עזרים/ספרים': 100, 'ריהוט קליניקה': 100, 'הדרכה': 100, 'יעוץ עסקי': 100, 'פרסום ושיווק': 100, 'הוצאות אחזקה ותיקונים': 100, 'עלויות אחרות': 100 };
         const FIXED_DEFAULTS = [{ id: "acc", label: 'רו"ח' }, { id: "soft", label: 'תוכנות, מנויים' }, { id: "rent", label: 'שכירות' }, { id: "comm", label: 'הוצאות תקשורת וטלפון' }, { id: "ins", label: 'ביטוחים' }, { id: "city_tax", label: 'ארנונה' }, { id: "util", label: 'חשמל מים גז' }];
         const VAR_DEFAULTS = [{ id: "fuel", label: 'הוצאות דלק' }, { id: "car_maint", label: 'אחזקת רכב (ללא דלק)' }, { id: "supplies", label: 'חומרים מתכלים וציוד מתכלה' }, { id: "refreshments", label: 'כיבודים, מתנות, תרומות, קנסות' }, { id: "conf", label: 'כנסים השתלמויות וספרות מקצועית' }, { id: "games", label: 'משחקים/עזרים/ספרים' }];
         const C = { CEILING: 122833, AVG_WAGE: 13683, VAT_RATE: 0.18, CREDIT_POINT: 255, BITUACH_LIMIT: 8210, TAX: [{ limit: 7250, rate: 0.10 }, { limit: 10410, rate: 0.14 }, { limit: 16710, rate: 0.20 }, { limit: 23230, rate: 0.31 }, { limit: 48000, rate: 0.35 }] };
 
-        let history = JSON.parse(localStorage.getItem('osek_history_v12_2')) || [];
-        let savedFixed = JSON.parse(localStorage.getItem('osek_fixed_v12_2')) || {};
-        let savedDynamic = JSON.parse(localStorage.getItem('osek_dynamic_v12_2')) || { inc: [], fixed: [], var: [] };
+        // --- 2. STABLE STORAGE KEYS (V13+) ---
+        const KEYS = { HISTORY: 'osek_history_stable', FIXED: 'osek_fixed_stable', DYNAMIC: 'osek_dynamic_stable' };
+
+        // --- 3. AUTO-RECOVERY LOGIC ---
+        function attemptRecovery() {
+            // If we already have stable data, do nothing
+            if(localStorage.getItem(KEYS.HISTORY)) return;
+
+            // List of old keys to hunt for (newest first)
+            const legacyKeys = ['v12_2', 'v12_1', 'v12', 'v11', 'v9'];
+            
+            for (let ver of legacyKeys) {
+                const oldHistory = localStorage.getItem(`osek_history_${ver}`);
+                if (oldHistory) {
+                    // Found it! Migrate to stable keys
+                    localStorage.setItem(KEYS.HISTORY, oldHistory);
+                    localStorage.setItem(KEYS.FIXED, localStorage.getItem(`osek_fixed_${ver}`) || '{}');
+                    localStorage.setItem(KEYS.DYNAMIC, localStorage.getItem(`osek_dynamic_${ver}`) || '{"inc":[],"fixed":[],"var":[]}');
+                    alert(`נמצאו ושוחזרו נתונים מגרסה ישנה (${ver})! המידע הועבר לאחסון קבוע.`);
+                    return; // Stop after finding newest data
+                }
+            }
+        }
+
+        // Initialize Data
+        let history = [], savedFixed = {}, savedDynamic = { inc: [], fixed: [], var: [] };
         let isMurshe = localStorage.getItem('is_murshe') === 'true';
         let incomeChart = null, fixedChart = null, varChart = null;
 
         window.onload = () => {
+            attemptRecovery(); // Run recovery first
+            
+            // Load from Stable Keys
+            history = JSON.parse(localStorage.getItem(KEYS.HISTORY)) || [];
+            savedFixed = JSON.parse(localStorage.getItem(KEYS.FIXED)) || {};
+            savedDynamic = JSON.parse(localStorage.getItem(KEYS.DYNAMIC)) || { inc: [], fixed: [], var: [] };
+
             renderExpenses(); renderDynamicInputs('inc'); initCharts(); updateStatusUI(); calculate(); updateAnnualDashboard(); renderHistoryList();
+            
             const dropZone = document.getElementById('drop-zone');
             dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
             dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
             dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); handleMorningUpload({ files: e.dataTransfer.files }); });
         };
 
+        // --- BACKUP & RESTORE ---
+        function backupData() {
+            const data = {
+                history: history,
+                fixed: savedFixed,
+                dynamic: savedDynamic,
+                settings: {
+                    isMurshe: isMurshe,
+                    salary: document.getElementById('salary').value,
+                    children: document.getElementById('children').value,
+                    gender: document.getElementById('gender').value,
+                    degree: document.getElementById('degree').checked,
+                    periphery: document.getElementById('periphery').checked
+                }
+            };
+            const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `osek_backup_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+        }
+
+        function restoreData(input) {
+            const file = input.files[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if(data.history) localStorage.setItem(KEYS.HISTORY, JSON.stringify(data.history));
+                    if(data.fixed) localStorage.setItem(KEYS.FIXED, JSON.stringify(data.fixed));
+                    if(data.dynamic) localStorage.setItem(KEYS.DYNAMIC, JSON.stringify(data.dynamic));
+                    if(data.settings) {
+                        localStorage.setItem('is_murshe', data.settings.isMurshe);
+                        // Reload page to apply
+                        alert("הנתונים שוחזרו בהצלחה! העמוד ירענן את עצמו.");
+                        location.reload();
+                    }
+                } catch(err) { alert("שגיאה בקובץ הגיבוי"); }
+            };
+            reader.readAsText(file);
+        }
+
+        // --- APP LOGIC (Same as V12.2 but using Stable Keys) ---
         function toggleStatus() { isMurshe = !isMurshe; localStorage.setItem('is_murshe', isMurshe); updateStatusUI(); calculate(); }
         function updateStatusUI() {
             document.getElementById('slider').style.left = isMurshe ? '50%' : '4px';
@@ -196,7 +277,7 @@
             document.getElementById('fixed-exp-container').innerHTML = FIXED_DEFAULTS.map(i => gen(i, 'fixed')).join('');
             document.getElementById('var-exp-container').innerHTML = VAR_DEFAULTS.map(i => `<div class="flex flex-col"><label class="text-[11px] font-bold text-slate-500">${i.label}</label><input type="number" id="inp-var-${i.id}" data-id="${i.id}" data-group="var" class="input-field text-sm h-9" value="${savedFixed[i.id]?.val || ''}" oninput="saveVar('${i.id}', this.value); calculate()">`).join('');
         }
-        function saveVar(id, val) { savedFixed[id] = { val: val, freq: '1' }; localStorage.setItem('osek_fixed_v12_2', JSON.stringify(savedFixed)); }
+        function saveVar(id, val) { savedFixed[id] = { val: val, freq: '1' }; localStorage.setItem(KEYS.FIXED, JSON.stringify(savedFixed)); }
 
         function renderDynamicInputs(type) {
             const wrapper = document.getElementById(type === 'inc' ? 'dynamic-income-wrapper' : (type === 'fixed' ? 'dynamic-fixed-wrapper' : 'dynamic-var-wrapper'));
@@ -209,7 +290,7 @@
             const inputs = `<div class="flex gap-1 h-9"><input type="number" value="${v}" class="input-field text-sm flex-grow" oninput="saveDyn('${type}',${idx},'val',this.value);calculate()">${type==='fixed'?'<select class="text-[10px] border rounded w-16" onchange="saveDyn(\'fixed\','+idx+',\'freq\',this.value);calculate()"><option value="1" '+(f=='1'?'selected':'')+'>חודשי</option><option value="2" '+(f=='2'?'selected':'')+'>דו-חודשי</option><option value="12" '+(f=='12'?'selected':'')+'>שנתי</option></select>':''}</div>`;
             div.innerHTML = `<input type="text" placeholder="אחר..." value="${l}" class="editable-label text-xs font-bold" oninput="saveDyn('${type}',${idx},'label',this.value)">` + inputs; return div;
         }
-        function saveDyn(t, i, k, v) { if(!savedDynamic[t][i]) { savedDynamic[t][i] = {label:'', val:'', freq:'1'}; renderDynamicInputs(t); } savedDynamic[t][i][k] = v; localStorage.setItem('osek_dynamic_v12_2', JSON.stringify(savedDynamic)); }
+        function saveDyn(t, i, k, v) { if(!savedDynamic[t][i]) { savedDynamic[t][i] = {label:'', val:'', freq:'1'}; renderDynamicInputs(t); } savedDynamic[t][i][k] = v; localStorage.setItem(KEYS.DYNAMIC, JSON.stringify(savedDynamic)); }
 
         function handleMorningUpload(input) {
             const file = input.files[0]; if(!file) return;
@@ -253,8 +334,8 @@
                 }
                 count++;
             });
-            localStorage.setItem('osek_fixed_v12_2', JSON.stringify(savedFixed));
-            localStorage.setItem('osek_dynamic_v12_2', JSON.stringify(savedDynamic));
+            localStorage.setItem(KEYS.FIXED, JSON.stringify(savedFixed));
+            localStorage.setItem(KEYS.DYNAMIC, JSON.stringify(savedDynamic));
             renderExpenses(); renderDynamicInputs('fixed'); renderDynamicInputs('var'); calculate();
             alert(`נקלטו ${count} שורות בהצלחה!`);
         }
@@ -341,7 +422,7 @@
         function saveMonthToHistory() {
             const inc = parseFloat(document.getElementById('total-income-val').innerText.replace(/,/g,'')), m = new Date().toISOString().slice(0,7);
             history = history.filter(h => h.month !== m); history.push({month:m, income:inc});
-            localStorage.setItem('osek_history_v12_2', JSON.stringify(history)); updateAnnualDashboard(); renderHistoryList(); alert("נשמר!");
+            localStorage.setItem(KEYS.HISTORY, JSON.stringify(history)); updateAnnualDashboard(); renderHistoryList(); alert("נשמר!");
         }
         function clearAllData() { if(confirm("למחוק הכל?")){ localStorage.clear(); location.reload(); } }
     </script>
