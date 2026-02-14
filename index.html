@@ -13,7 +13,7 @@
         .text-brand-orange { color: #f26522; } .bg-brand-orange { background-color: #f26522; }
         .card { background: white; border-radius: 16px; box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; }
         .input-field { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; transition: all 0.2s; background-color: #fff; }
-        .input-field:focus { border-color: #f26522; ring: 2px solid #ffedd5; }
+        .input-field:focus { border-color: #f26522; outline: none; }
         .drop-zone { border: 2px dashed #cbd5e1; border-radius: 12px; transition: all 0.3s; background-color: #f8fafc; }
         .drop-zone.dragover { border-color: #f26522; background-color: #fff7ed; }
         .status-toggle { display: flex; background: #f1f5f9; padding: 4px; border-radius: 12px; position: relative; cursor: pointer; }
@@ -22,6 +22,9 @@
         .status-slider { position: absolute; top: 4px; bottom: 4px; width: 50%; background: white; border-radius: 8px; transition: left 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .dynamic-row { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .modal { display: none !important; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(51, 65, 85, 0.6); align-items: center; justify-content: center; }
+        .modal.active { display: flex !important; }
+        .modal-content { background-color: #ffffff; padding: 24px; border-radius: 20px; width: 90%; max-width: 500px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border-top: 6px solid #f26522; max-height: 90vh; overflow-y: auto; }
     </style>
 </head>
 <body class="p-4 md:p-8 min-h-screen">
@@ -30,83 +33,53 @@
         <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 border-b border-slate-200 pb-6">
             <div class="text-center md:text-right">
                 <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Bar Amar-Sahar <span class="text-brand-orange text-xl font-medium">| ניהול קליניקה</span></h1>
-                <p class="text-xs text-slate-500 mt-1">גרסה 14.0 (כולל סימולטור תכנון)</p>
+                <p class="text-xs text-slate-500 mt-1">גרסה 15.0 (דיוק מירבי - הגדרות 101)</p>
             </div>
             <div class="flex gap-2 flex-wrap justify-center">
-                <button onclick="backupData()" class="flex items-center gap-2 text-xs font-bold text-white bg-slate-700 px-4 py-2.5 rounded-full hover:bg-slate-800 transition shadow-sm"><span>💾</span> שמור גיבוי</button>
-                <label class="flex items-center gap-2 text-xs font-bold text-slate-600 bg-white px-4 py-2.5 rounded-full border border-slate-200 hover:bg-slate-50 transition shadow-sm cursor-pointer">
+                <button onclick="backupData()" class="flex items-center gap-2 text-xs font-bold text-white bg-slate-700 px-4 py-2.5 rounded-full hover:bg-slate-800 transition"><span>💾</span> שמור גיבוי</button>
+                <label class="flex items-center gap-2 text-xs font-bold text-slate-600 bg-white px-4 py-2.5 rounded-full border border-slate-200 cursor-pointer">
                     <span>📂</span> שחזר גיבוי<input type="file" accept=".json" class="hidden" onchange="restoreData(this)">
                 </label>
-                <button onclick="clearAllData()" class="text-xs font-bold text-red-500 bg-red-50 px-4 py-2.5 rounded-full border border-red-100 hover:bg-red-100">🗑️ איפוס</button>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div class="md:col-span-2 card p-6 border-r-8 border-brand-orange bg-gradient-to-l from-white to-orange-50 relative overflow-hidden">
-                <div id="dash-patur">
-                    <div class="flex justify-between items-end mb-4">
-                        <div><h2 class="font-bold text-slate-700 text-lg">מעקב תקרה שנתי (2026)</h2><p class="text-[11px] text-slate-500">תקרה מעודכנת: 122,833 ₪</p></div>
-                        <div class="text-2xl font-bold font-mono text-slate-800"><span id="annual-income-display">0</span> <span class="text-sm text-slate-400">/ 122,833 ₪</span></div>
-                    </div>
-                    <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden"><div id="ceiling-progress" class="bg-brand-orange h-full transition-all duration-1000 shadow-lg" style="width: 0%"></div></div>
-                </div>
-                <div id="dash-murshe" class="hidden">
-                     <h2 class="font-bold text-slate-700 text-lg mb-2">מעקב מע"מ (18%)</h2>
-                     <div class="grid grid-cols-3 gap-4 text-center">
-                        <div class="bg-white/60 p-2 rounded-lg"> <p class="text-[10px] text-slate-500 uppercase">עסקאות</p> <p class="text-lg font-bold">₪<span id="vat-collected">0</span></p> </div>
-                        <div class="bg-white/60 p-2 rounded-lg"> <p class="text-[10px] text-slate-500 uppercase">תשומות</p> <p class="text-lg font-bold text-green-600">-₪<span id="vat-deducted">0</span></p> </div>
-                        <div class="bg-white p-2 rounded-lg border border-orange-200"> <p class="text-[10px] text-slate-500 font-bold">לתשלום</p> <p class="text-xl font-bold text-brand-orange">₪<span id="vat-to-pay">0</span></p> </div>
-                     </div>
-                </div>
-            </div>
-            <div class="card p-5 flex flex-col h-40 md:h-auto overflow-hidden">
-                <h3 class="text-xs font-bold text-slate-400 mb-3 uppercase">חודשים שמורים</h3>
-                <div class="overflow-y-auto flex-grow space-y-2 pr-1" id="history-list-container"></div>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div class="lg:col-span-4 space-y-6">
                 <div class="card p-6">
-                    <h3 class="font-bold border-b pb-3 mb-5 text-slate-700">⚙️ פרופיל מס</h3>
-                    <div class="mb-6">
+                    <div class="flex justify-between items-center mb-5 border-b pb-3">
+                        <h3 class="font-bold text-slate-700">⚙️ פרופיל מס 101</h3>
+                        <button onclick="open101Modal()" class="text-[10px] bg-slate-100 px-3 py-1.5 rounded-full font-bold text-slate-600 hover:bg-slate-200">עריכה</button>
+                    </div>
+                    <div class="mb-5">
                         <div class="status-toggle" onclick="toggleStatus()">
                             <div id="slider" class="status-slider left-1"></div>
                             <div id="opt-patur" class="status-option active">עוסק פטור</div>
                             <div id="opt-murshe" class="status-option">עוסק מורשה</div>
                         </div>
                     </div>
-                    <div class="space-y-4">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div><label class="text-xs font-bold text-slate-500">ילדים (&lt;18)</label><input type="number" id="children" value="0" class="input-field" oninput="calculate(); calcSim();"></div>
-                            <div><label class="text-xs font-bold text-slate-500">מין</label><select id="gender" class="input-field" onchange="calculate(); calcSim();"><option value="female">אישה</option><option value="male">גבר</option></select></div>
-                        </div>
-                        <div><label class="text-xs font-bold text-slate-500">ברוטו כשכיר/ה</label><input type="number" id="salary" value="0" class="input-field bg-blue-50" oninput="calculate(); calcSim();"></div>
-                        <div class="flex flex-col gap-2 p-3 bg-slate-50 rounded-lg">
-                            <label class="flex items-center gap-2 text-xs"><input type="checkbox" id="degree" onchange="calculate(); calcSim();"> תואר אקדמי (+1 נק')</label>
-                            <label class="flex items-center gap-2 text-xs"><input type="checkbox" id="periphery" onchange="calculate(); calcSim();"> יישוב מוטב (פריפריה)</label>
-                        </div>
+                    <div class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <div class="flex justify-between text-sm"><span class="text-slate-500">נקודות זיכוי:</span><span id="display-pts" class="font-bold text-slate-800">2.25</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-slate-500">הטבת פריפריה:</span><span id="display-periphery" class="font-bold text-slate-800">ללא</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-slate-500">סטטוס בט"ל:</span><span id="display-btl" class="font-bold text-slate-800">עונה להגדרה</span></div>
                     </div>
                 </div>
 
                 <div class="card p-6 border-t-4 border-blue-400">
-                    <h3 class="font-bold text-slate-700 mb-2 flex items-center gap-2">🔮 סימולטור תכנון</h3>
-                    <p class="text-[11px] text-slate-500 mb-4 leading-tight">בדקי השפעה של חופשה או קנייה גדולה על הנטו, ללא פגיעה בנתוני החודש האמיתיים.</p>
+                    <h3 class="font-bold text-slate-700 mb-2">🔮 סימולטור תכנון</h3>
                     <div class="space-y-3">
-                        <div><label class="text-xs font-bold text-slate-500">הכנסה משוערת (₪)</label><input type="number" id="sim-inc" placeholder="0" class="input-field border-blue-200 focus:border-blue-500" oninput="calcSim()"></div>
-                        <div><label class="text-xs font-bold text-slate-500">הוצאה מוכרת (₪)</label><input type="number" id="sim-exp" placeholder="0" class="input-field border-blue-200 focus:border-blue-500" oninput="calcSim()"></div>
+                        <div><label class="text-xs font-bold text-slate-500">הכנסה משוערת (₪)</label><input type="number" id="sim-inc" placeholder="0" class="input-field border-blue-200" oninput="calcSim()"></div>
+                        <div><label class="text-xs font-bold text-slate-500">הוצאה מוכרת (₪)</label><input type="number" id="sim-exp" placeholder="0" class="input-field border-blue-200" oninput="calcSim()"></div>
                     </div>
-                    <div class="mt-4 p-4 bg-slate-50 rounded-xl space-y-2 text-sm border border-slate-100">
+                    <div class="mt-4 p-4 bg-slate-50 rounded-xl space-y-2 text-sm">
                         <div class="flex justify-between"><span class="text-slate-500 text-xs">מס הכנסה ובט"ל:</span><span class="font-bold text-red-500">₪<span id="sim-tax">0</span></span></div>
-                        <div class="flex justify-between"><span class="text-slate-500 text-xs">הפרשות (פנסיה+קה"ש):</span><span class="font-bold text-orange-500">₪<span id="sim-pens">0</span></span></div>
-                        <div class="flex justify-between pt-2 border-t border-slate-200 mt-2 items-center"><span class="font-bold text-slate-700">נטו למשיכה:</span><span class="font-bold text-green-600 text-xl">₪<span id="sim-net">0</span></span></div>
+                        <div class="flex justify-between pt-2 border-t items-center"><span class="font-bold text-slate-700">נטו למשיכה:</span><span class="font-bold text-green-600 text-xl">₪<span id="sim-net">0</span></span></div>
                     </div>
                 </div>
             </div>
 
             <div class="lg:col-span-8 space-y-8">
                 <div class="card p-6 border-t-4 border-brand-orange">
-                    <h3 class="font-bold text-slate-700 mb-6 flex items-center gap-2">💰 הכנסות <span id="vat-inc-label" class="text-[10px] text-slate-400 hidden">(כולל מע"מ)</span></h3>
+                    <h3 class="font-bold text-slate-700 mb-6 flex items-center gap-2">💰 הכנסות</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="income-inputs-container">
                         <div class="input-group"><label class="text-xs font-bold text-slate-400">טיפולים</label><input type="number" data-group="inc" class="input-field" oninput="calculate()"></div>
                         <div class="input-group"><label class="text-xs font-bold text-slate-400">הרצאות</label><input type="number" data-group="inc" class="input-field" oninput="calculate()"></div>
@@ -121,32 +94,21 @@
 
                 <div class="space-y-6">
                     <div class="drop-zone p-10 text-center cursor-pointer relative" id="drop-zone">
-                        <input type="file" id="morning-csv-input" accept=".csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleMorningUpload(this)">
+                        <input type="file" accept=".csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleMorningUpload(this)">
                         <div>
                             <span class="text-4xl mb-2 block">📄</span>
                             <h4 class="font-bold text-slate-700">ייבוא דו"ח הוצאות מ-Morning</h4>
-                            <p class="text-xs text-slate-400 mt-1">או גררי לכאן את הקובץ (כולל עמודת Logic)</p>
+                            <p class="text-xs text-slate-400 mt-1">או גררי לכאן את הקובץ</p>
                         </div>
                     </div>
-
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="card p-5 border-t-4 border-slate-400">
-                            <h3 class="font-bold text-slate-700 text-sm mb-4">📌 הוצאות קבועות</h3>
-                            <div id="fixed-exp-container" class="space-y-3"></div>
-                            <div id="dynamic-fixed-wrapper" class="space-y-3 mt-3"></div>
-                            <div id="fixed-chart-wrapper" class="mt-4 pt-4 border-t hidden">
-                                <div class="flex justify-between items-center mb-2 text-xs font-bold text-slate-500"><span>פילוח קבועות</span><span>סה"כ: ₪<span id="total-fixed-display" class="text-slate-800 text-sm">0</span></span></div>
-                                <div class="h-32"><canvas id="fixedChart"></canvas></div>
-                            </div>
+                            <h3 class="font-bold text-slate-700 text-sm mb-4">📌 קבועות</h3>
+                            <div id="fixed-exp-container" class="space-y-3"></div><div id="dynamic-fixed-wrapper" class="space-y-3 mt-3"></div>
                         </div>
                         <div class="card p-5 border-t-4 border-red-400">
-                            <h3 class="font-bold text-slate-700 text-sm mb-4">⚡ הוצאות משתנות</h3>
-                            <div id="var-exp-container" class="space-y-3"></div>
-                            <div id="dynamic-var-wrapper" class="space-y-3 mt-3"></div>
-                            <div id="var-chart-wrapper" class="mt-4 pt-4 border-t hidden">
-                                <div class="flex justify-between items-center mb-2 text-xs font-bold text-slate-500"><span>פילוח משתנות</span><span>סה"כ: ₪<span id="total-var-display" class="text-slate-800 text-sm">0</span></span></div>
-                                <div class="h-32"><canvas id="varChart"></canvas></div>
-                            </div>
+                            <h3 class="font-bold text-slate-700 text-sm mb-4">⚡ משתנות</h3>
+                            <div id="var-exp-container" class="space-y-3"></div><div id="dynamic-var-wrapper" class="space-y-3 mt-3"></div>
                         </div>
                     </div>
                 </div>
@@ -160,239 +122,210 @@
                     <div class="card bg-slate-900 text-white p-8 relative overflow-hidden">
                         <div class="absolute top-0 right-0 w-32 h-32 bg-brand-orange rounded-full blur-3xl opacity-20"></div>
                         <div class="flex justify-between items-center relative z-10">
-                            <div><h4 class="text-3xl font-bold">נטו הביתה</h4><p class="text-xs text-slate-400 mt-1">אחרי הכל - זה הכסף שלך</p></div>
+                            <div><h4 class="text-3xl font-bold">נטו הביתה</h4></div>
                             <div class="text-5xl font-bold text-brand-orange">₪<span id="res-net">0</span></div>
                         </div>
                     </div>
-                    <button onclick="saveMonthToHistory()" class="w-full bg-brand-orange text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-orange-600 transition">✅ שמור חודש זה ביומן השנתי</button>
+                    <button onclick="saveMonthToHistory()" class="w-full bg-brand-orange text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-orange-600 transition">✅ שמור חודש זה ביומן</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-101" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-bold text-xl text-slate-800">הגדרות טופס 101</h3>
+                <button onclick="close101Modal()" class="text-slate-400 hover:text-slate-800 text-2xl">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="text-xs font-bold text-slate-500">מין</label><select id="p-gender" class="input-field"><option value="female">אישה</option><option value="male">גבר</option></select></div>
+                    <div><label class="text-xs font-bold text-slate-500">סטטוס</label><select id="p-status" class="input-field"><option value="married">נשוי/ה</option><option value="single_parent">הורה יחיד</option><option value="single">רווק/ה</option></select></div>
+                </div>
+                <div><label class="text-xs font-bold text-slate-500">שנות לידה של ילדים (מופרד בפסיק, למשל: 2021, 2024)</label><input type="text" id="p-kids" placeholder="ללא ילדים" class="input-field text-left" dir="ltr"></div>
+                <div><label class="text-xs font-bold text-slate-500">יישוב מוטב (פריפריה)</label><select id="p-periphery" class="input-field"><option value="none">ללא / יישוב רגיל</option><option value="akko">עכו (11%)</option><option value="nahariya">נהריה (12%)</option><option value="k8">קריית שמונה (20%)</option><option value="sdrot">שדרות (20%)</option><option value="eilat">אילת (10%)</option></select></div>
+                <div class="bg-blue-50 p-3 rounded-lg"><label class="flex items-center gap-2 text-sm font-bold text-slate-700"><input type="checkbox" id="p-bituach" checked class="w-4 h-4"> מוכרת כ"עצמאית" בביטוח לאומי (עונה להגדרה)</label><p class="text-[10px] text-slate-500 mt-1">ביטול הסימון יישם פטור מדמי בט"ל על הכנסה של עד 25% מהשכר הממוצע.</p></div>
+                <div class="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+                    <div><label class="text-xs font-bold text-slate-500">הפקדה חודשית לפנסיה</label><input type="number" id="p-pension" value="0" class="input-field"></div>
+                    <div><label class="text-xs font-bold text-slate-500">הפקדה חודשית לקה"ש</label><input type="number" id="p-study" value="0" class="input-field"></div>
+                </div>
+                <div><label class="text-xs font-bold text-slate-500">משכורת כשכיר/ה (ברוטו)</label><input type="number" id="p-salary" value="0" class="input-field"></div>
+                <label class="flex items-center gap-2 text-xs font-bold"><input type="checkbox" id="p-degree"> בעל/ת תואר אקדמי ראשון (עד 3 שנים מסיום)</label>
+                <button onclick="save101()" class="w-full bg-brand-orange text-white font-bold py-3 rounded-xl mt-4">שמור וחשב</button>
             </div>
         </div>
     </div>
 
     <script>
         const PERCENT_MAP = { 'הוצאות דלק': 45, 'אחזקת רכב (ללא דלק)': 45, 'אינטרנט': 25, 'הוצאות תקשורת וטלפון': 25, 'חשמל מים גז': 25, 'ארנונה': 25, 'שכירות': 100, 'רו"ח': 100, 'תוכנות, מנויים': 100, 'ביטוחים': 100, 'חומרים מתכלים וציוד מתכלה': 100, 'כיבודים, מתנות, תרומות, קנסות': 100, 'כנסים השתלמויות וספרות מקצועית': 100, 'משחקים/עזרים/ספרים': 100, 'ריהוט קליניקה': 100, 'הדרכה': 100, 'יעוץ עסקי': 100, 'פרסום ושיווק': 100, 'הוצאות אחזקה ותיקונים': 100, 'עלויות אחרות': 100 };
-        const FIXED_DEFAULTS = [{ id: "acc", label: 'רו"ח' }, { id: "soft", label: 'תוכנות, מנויים' }, { id: "rent", label: 'שכירות' }, { id: "comm", label: 'הוצאות תקשורת וטלפון' }, { id: "ins", label: 'ביטוחים' }, { id: "city_tax", label: 'ארנונה' }, { id: "util", label: 'חשמל מים גז' }];
-        const VAR_DEFAULTS = [{ id: "fuel", label: 'הוצאות דלק' }, { id: "car_maint", label: 'אחזקת רכב (ללא דלק)' }, { id: "supplies", label: 'חומרים מתכלים וציוד מתכלה' }, { id: "refreshments", label: 'כיבודים, מתנות, תרומות, קנסות' }, { id: "conf", label: 'כנסים השתלמויות וספרות מקצועית' }, { id: "games", label: 'משחקים/עזרים/ספרים' }];
+        const FIXED_DEFAULTS = [{ id: "acc", label: 'רו"ח' }, { id: "soft", label: 'תוכנות, מנויים' }, { id: "rent", label: 'שכירות' }, { id: "comm", label: 'הוצאות תקשורת וטלפון' }];
+        const VAR_DEFAULTS = [{ id: "fuel", label: 'הוצאות דלק' }, { id: "supplies", label: 'חומרים מתכלים וציוד מתכלה' }, { id: "conf", label: 'כנסים השתלמויות' }];
         const C = { CEILING: 122833, AVG_WAGE: 13683, VAT_RATE: 0.18, CREDIT_POINT: 255, BITUACH_LIMIT: 8210, TAX: [{ limit: 7250, rate: 0.10 }, { limit: 10410, rate: 0.14 }, { limit: 16710, rate: 0.20 }, { limit: 23230, rate: 0.31 }, { limit: 48000, rate: 0.35 }] };
-        const KEYS = { HISTORY: 'osek_history_stable', FIXED: 'osek_fixed_stable', DYNAMIC: 'osek_dynamic_stable' };
-
-        function attemptRecovery() {
-            if(localStorage.getItem(KEYS.HISTORY)) return;
-            const legacyKeys = ['v12_2', 'v12_1', 'v12', 'v11', 'v9'];
-            for (let ver of legacyKeys) {
-                const oldHistory = localStorage.getItem(`osek_history_${ver}`);
-                if (oldHistory) {
-                    localStorage.setItem(KEYS.HISTORY, oldHistory);
-                    localStorage.setItem(KEYS.FIXED, localStorage.getItem(`osek_fixed_${ver}`) || '{}');
-                    localStorage.setItem(KEYS.DYNAMIC, localStorage.getItem(`osek_dynamic_${ver}`) || '{"inc":[],"fixed":[],"var":[]}');
-                    alert(`נמצאו נתונים מגרסה קודמת (${ver})! המידע הועבר לאחסון קבוע.`); return;
-                }
-            }
-        }
+        const PERIPHERY = { 'none': {rate: 0, ceil: 0, name:'ללא'}, 'akko': {rate: 0.11, ceil: 180000, name:'עכו'}, 'nahariya': {rate: 0.12, ceil: 204000, name:'נהריה'}, 'k8': {rate: 0.20, ceil: 241080, name:'ק.שמונה'}, 'sdrot': {rate: 0.20, ceil: 241080, name:'שדרות'}, 'eilat': {rate: 0.10, ceil: 168000, name:'אילת'} };
+        const KEYS = { HISTORY: 'osek_history_15', FIXED: 'osek_fixed_15', DYNAMIC: 'osek_dynamic_15', PROFILE: 'osek_profile_15' };
 
         let history = [], savedFixed = {}, savedDynamic = { inc: [], fixed: [], var: [] };
+        let profile = { gender:'female', status:'married', kids:'', periphery:'none', bituach:true, pension:0, study:0, salary:0, degree:false };
         let isMurshe = localStorage.getItem('is_murshe') === 'true';
-        let incomeChart = null, fixedChart = null, varChart = null;
+        let incomeChart = null;
 
         window.onload = () => {
-            attemptRecovery();
             history = JSON.parse(localStorage.getItem(KEYS.HISTORY)) || [];
             savedFixed = JSON.parse(localStorage.getItem(KEYS.FIXED)) || {};
             savedDynamic = JSON.parse(localStorage.getItem(KEYS.DYNAMIC)) || { inc: [], fixed: [], var: [] };
+            profile = JSON.parse(localStorage.getItem(KEYS.PROFILE)) || profile;
 
-            renderExpenses(); renderDynamicInputs('inc'); initCharts(); updateStatusUI(); calculate(); updateAnnualDashboard(); renderHistoryList();
-            
-            const dropZone = document.getElementById('drop-zone');
-            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
-            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-            dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); handleMorningUpload({ files: e.dataTransfer.files }); });
+            renderExpenses(); renderDynamicInputs('inc'); renderDynamicInputs('fixed'); renderDynamicInputs('var');
+            initCharts(); updateStatusUI(); updateProfileUI(); calculate();
         };
 
-        function backupData() {
-            const data = { history, fixed: savedFixed, dynamic: savedDynamic, settings: { isMurshe, salary: document.getElementById('salary').value, children: document.getElementById('children').value, gender: document.getElementById('gender').value, degree: document.getElementById('degree').checked, periphery: document.getElementById('periphery').checked } };
-            const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `osek_backup_${new Date().toISOString().slice(0,10)}.json`; a.click();
+        function open101Modal() {
+            document.getElementById('p-gender').value = profile.gender; document.getElementById('p-status').value = profile.status;
+            document.getElementById('p-kids').value = profile.kids; document.getElementById('p-periphery').value = profile.periphery;
+            document.getElementById('p-bituach').checked = profile.bituach; document.getElementById('p-pension').value = profile.pension;
+            document.getElementById('p-study').value = profile.study; document.getElementById('p-salary').value = profile.salary;
+            document.getElementById('p-degree').checked = profile.degree;
+            document.getElementById('modal-101').classList.add('active');
+        }
+        function close101Modal() { document.getElementById('modal-101').classList.remove('active'); }
+        function save101() {
+            profile = {
+                gender: document.getElementById('p-gender').value, status: document.getElementById('p-status').value,
+                kids: document.getElementById('p-kids').value, periphery: document.getElementById('p-periphery').value,
+                bituach: document.getElementById('p-bituach').checked, pension: parseFloat(document.getElementById('p-pension').value)||0,
+                study: parseFloat(document.getElementById('p-study').value)||0, salary: parseFloat(document.getElementById('p-salary').value)||0,
+                degree: document.getElementById('p-degree').checked
+            };
+            localStorage.setItem(KEYS.PROFILE, JSON.stringify(profile));
+            updateProfileUI(); calculate(); calcSim(); close101Modal();
         }
 
-        function restoreData(input) {
-            const file = input.files[0]; if(!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if(data.history) localStorage.setItem(KEYS.HISTORY, JSON.stringify(data.history));
-                    if(data.fixed) localStorage.setItem(KEYS.FIXED, JSON.stringify(data.fixed));
-                    if(data.dynamic) localStorage.setItem(KEYS.DYNAMIC, JSON.stringify(data.dynamic));
-                    if(data.settings) localStorage.setItem('is_murshe', data.settings.isMurshe);
-                    alert("הנתונים שוחזרו! העמוד יתרענן."); location.reload();
-                } catch(err) { alert("שגיאה בקובץ הגיבוי"); }
-            }; reader.readAsText(file);
+        function getCreditPoints() {
+            let pts = profile.gender === 'female' ? 2.75 : 2.25;
+            if (profile.status === 'single_parent') pts += 1;
+            if (profile.degree) pts += 1;
+            if (profile.kids) {
+                const currentYear = new Date().getFullYear();
+                const years = profile.kids.split(',').map(y => parseInt(y.trim())).filter(y => !isNaN(y));
+                years.forEach(y => {
+                    const age = currentYear - y;
+                    if (profile.gender === 'female') { if (age <= 5) pts += 1.5; else if (age <= 18) pts += 1; }
+                    else { if (age <= 3) pts += 1.5; else if (age <= 5) pts += 1; }
+                });
+            }
+            return pts;
         }
 
+        function updateProfileUI() {
+            document.getElementById('display-pts').innerText = getCreditPoints();
+            document.getElementById('display-periphery').innerText = PERIPHERY[profile.periphery].name;
+            document.getElementById('display-btl').innerText = profile.bituach ? "עונה להגדרה" : "לא עונה להגדרה";
+        }
+
+        // Standard Functions (Render, Save, CSV Import)
         function toggleStatus() { isMurshe = !isMurshe; localStorage.setItem('is_murshe', isMurshe); updateStatusUI(); calculate(); calcSim(); }
         function updateStatusUI() {
             document.getElementById('slider').style.left = isMurshe ? '50%' : '4px';
             document.getElementById('dash-patur').classList.toggle('hidden', isMurshe);
             document.getElementById('dash-murshe').classList.toggle('hidden', !isMurshe);
-            document.getElementById('vat-inc-label').classList.toggle('hidden', !isMurshe);
         }
 
         function renderExpenses() {
-            const gen = (item, type) => `<div class="flex flex-col"><label class="text-[11px] font-bold text-slate-500">${item.label}</label><div class="flex gap-1 h-9"><input type="number" id="inp-${type}-${item.id}" data-group="${type}" data-id="${item.id}" value="${savedFixed[item.id]?.val || ''}" class="input-field text-sm flex-grow" oninput="calculate()"><select data-freq="${item.id}" class="text-[10px] border rounded w-16" onchange="calculate()"><option value="1" ${savedFixed[item.id]?.freq=='1'?'selected':''}>חודשי</option><option value="2" ${savedFixed[item.id]?.freq=='2'?'selected':''}>דו-חודשי</option><option value="12" ${savedFixed[item.id]?.freq=='12'?'selected':''}>שנתי</option></select></div></div>`;
-            document.getElementById('fixed-exp-container').innerHTML = FIXED_DEFAULTS.map(i => gen(i, 'fixed')).join('');
-            document.getElementById('var-exp-container').innerHTML = VAR_DEFAULTS.map(i => `<div class="flex flex-col"><label class="text-[11px] font-bold text-slate-500">${i.label}</label><input type="number" id="inp-var-${i.id}" data-id="${i.id}" data-group="var" class="input-field text-sm h-9" value="${savedFixed[i.id]?.val || ''}" oninput="saveVar('${i.id}', this.value); calculate()">`).join('');
+            document.getElementById('fixed-exp-container').innerHTML = FIXED_DEFAULTS.map(i => `<div class="flex flex-col"><label class="text-[11px] font-bold text-slate-500">${i.label}</label><div class="flex gap-1 h-9"><input type="number" id="inp-fixed-${i.id}" data-group="fixed" data-id="${i.id}" value="${savedFixed[i.id]?.val||''}" class="input-field text-sm flex-grow" oninput="saveVar('${i.id}', this.value, document.querySelector(\`select[data-freq='${i.id}']\`).value); calculate()"><select data-freq="${i.id}" class="text-[10px] border rounded w-16" onchange="saveVar('${i.id}', document.getElementById('inp-fixed-${i.id}').value, this.value); calculate()"><option value="1" ${savedFixed[i.id]?.freq=='1'?'selected':''}>חודשי</option><option value="12" ${savedFixed[i.id]?.freq=='12'?'selected':''}>שנתי</option></select></div></div>`).join('');
+            document.getElementById('var-exp-container').innerHTML = VAR_DEFAULTS.map(i => `<div class="flex flex-col"><label class="text-[11px] font-bold text-slate-500">${i.label}</label><input type="number" id="inp-var-${i.id}" data-id="${i.id}" data-group="var" class="input-field text-sm h-9" value="${savedFixed[i.id]?.val||''}" oninput="saveVar('${i.id}', this.value, '1'); calculate()">`).join('');
         }
-        function saveVar(id, val) { savedFixed[id] = { val: val, freq: '1' }; localStorage.setItem(KEYS.FIXED, JSON.stringify(savedFixed)); }
+        function saveVar(id, val, freq) { savedFixed[id] = { val: val, freq: freq }; localStorage.setItem(KEYS.FIXED, JSON.stringify(savedFixed)); }
 
         function renderDynamicInputs(type) {
-            const wrapper = document.getElementById(type === 'inc' ? 'dynamic-income-wrapper' : (type === 'fixed' ? 'dynamic-fixed-wrapper' : 'dynamic-var-wrapper'));
-            wrapper.innerHTML = ''; savedDynamic[type].forEach((f, idx) => wrapper.appendChild(createRow(type, idx, f.label, f.val, f.freq)));
+            const wrapper = document.getElementById(`dynamic-${type}-wrapper`); wrapper.innerHTML = '';
+            savedDynamic[type].forEach((f, idx) => wrapper.appendChild(createRow(type, idx, f.label, f.val, f.freq)));
             wrapper.appendChild(createRow(type, savedDynamic[type].length, '', '', '1'));
         }
         function createRow(type, idx, l, v, f) {
             const div = document.createElement('div'); div.className = 'flex flex-col dynamic-row';
-            const inputs = `<div class="flex gap-1 h-9"><input type="number" value="${v}" class="input-field text-sm flex-grow" oninput="saveDyn('${type}',${idx},'val',this.value);calculate()">${type==='fixed'?'<select class="text-[10px] border rounded w-16" onchange="saveDyn(\'fixed\','+idx+',\'freq\',this.value);calculate()"><option value="1" '+(f=='1'?'selected':'')+'>חודשי</option><option value="2" '+(f=='2'?'selected':'')+'>דו-חודשי</option><option value="12" '+(f=='12'?'selected':'')+'>שנתי</option></select>':''}</div>`;
-            div.innerHTML = `<input type="text" placeholder="אחר..." value="${l}" class="editable-label text-xs font-bold" oninput="saveDyn('${type}',${idx},'label',this.value)">` + inputs; return div;
+            div.innerHTML = `<input type="text" placeholder="אחר..." value="${l}" class="editable-label text-xs font-bold" oninput="saveDyn('${type}',${idx},'label',this.value)"><div class="flex gap-1 h-9"><input type="number" value="${v}" class="input-field text-sm flex-grow" oninput="saveDyn('${type}',${idx},'val',this.value);calculate()">${type==='fixed'?`<select class="text-[10px] border rounded w-16" onchange="saveDyn('fixed',${idx},'freq',this.value);calculate()"><option value="1" ${f=='1'?'selected':''}>חודשי</option><option value="12" ${f=='12'?'selected':''}>שנתי</option></select>`:''}</div>`;
+            return div;
         }
         function saveDyn(t, i, k, v) { if(!savedDynamic[t][i]) { savedDynamic[t][i] = {label:'', val:'', freq:'1'}; renderDynamicInputs(t); } savedDynamic[t][i][k] = v; localStorage.setItem(KEYS.DYNAMIC, JSON.stringify(savedDynamic)); }
 
-        function handleMorningUpload(input) {
-            const file = input.files[0]; if(!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                processMorningData(XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]));
-            }; reader.readAsArrayBuffer(file);
-        }
-
-        function processMorningData(data) {
-            let count = 0;
-            data.forEach(row => {
-                const rawCat = row['תיאור חשבון הוצאה'], amount = parseFloat(row['סכום כולל'] || row['סכום כולל מע״מ'] || 0), logic = (row['Logic'] || 'משתנה').trim();
-                if(!rawCat || amount === 0) return;
-                const finalAmount = amount * ((PERCENT_MAP[rawCat] || 100) / 100);
-                let type = 'var', freq = '1';
-                if (logic === 'קבועה-חודשית') { type = 'fixed'; freq = '1'; }
-                else if (logic === 'קבועה-דו-חודשית') { type = 'fixed'; freq = '2'; }
-                else if (logic === 'קבועה-שנתית') { type = 'fixed'; freq = '12'; }
-
-                let matched = false;
-                [...FIXED_DEFAULTS, ...VAR_DEFAULTS].forEach(def => {
-                    if(def.label === rawCat) { savedFixed[def.id] = { val: (parseFloat(savedFixed[def.id]?.val)||0) + finalAmount, freq: freq }; matched = true; }
-                });
-                if(!matched) {
-                    let dyn = savedDynamic[type].find(d => d.label === rawCat);
-                    if(dyn) { dyn.val = (parseFloat(dyn.val)||0) + finalAmount; dyn.freq = freq; }
-                    else savedDynamic[type].push({ label: rawCat, val: finalAmount, freq: freq });
-                }
-                count++;
-            });
-            localStorage.setItem(KEYS.FIXED, JSON.stringify(savedFixed)); localStorage.setItem(KEYS.DYNAMIC, JSON.stringify(savedDynamic));
-            renderExpenses(); renderDynamicInputs('fixed'); renderDynamicInputs('var'); calculate(); alert(`נקלטו ${count} שורות בהצלחה!`);
-        }
-
-        function calcTax(n) { let t=0, p=0; for(let b of C.TAX){ if(n>p){ t+=Math.min(n-p, b.limit-p)*b.rate; p=b.limit; } } if(n>p) t+=(n-p)*0.47; return t; }
-        
-        // --- NEW: SIMULATOR LOGIC ---
-        function calcSim() {
-            const tInc = parseFloat(document.getElementById('sim-inc').value) || 0;
-            const tExp = parseFloat(document.getElementById('sim-exp').value) || 0;
-            
-            let profit = isMurshe ? (tInc/1.18 - tExp/1.18) : (tInc - tExp);
-            profit = Math.max(0, profit);
-
-            const sal = parseFloat(document.getElementById('salary').value)||0;
-            const pts = (document.getElementById('gender').value==='male'?2.25:2.75) + parseInt(document.getElementById('children').value||0) + (document.getElementById('degree').checked?1:0);
-            
-            const rawTax = calcTax(sal + profit) - calcTax(sal);
-            const netTax = Math.max(0, rawTax - (pts * C.CREDIT_POINT));
-            const bituach = Math.min(profit, C.BITUACH_LIMIT)*0.0597 + Math.max(0, profit-C.BITUACH_LIMIT)*0.1783;
-            const pens = Math.min(profit, 13683)*0.12, study = profit*0.045;
-
-            document.getElementById('sim-tax').innerText = Math.round(netTax + bituach).toLocaleString();
-            document.getElementById('sim-pens').innerText = Math.round(pens + study).toLocaleString();
-            document.getElementById('sim-net').innerText = Math.round(profit - netTax - bituach - pens - study).toLocaleString();
-        }
-
         function calculate() {
-            let tInc = 0, incVs = [], incLs = [];
-            document.querySelectorAll('[data-group="inc"]').forEach(i => { const v = parseFloat(i.value)||0; if(v>0){ tInc+=v; incVs.push(v); incLs.push(i.previousElementSibling.innerText); }});
-            savedDynamic.inc.forEach(d => { const v = parseFloat(d.val)||0; if(v>0){ tInc+=v; incVs.push(v); incLs.push(d.label||"אחר"); }});
+            let tInc = 0, tFix = 0, tVar = 0, incVs=[], incLs=[];
+            document.querySelectorAll('[data-group="inc"]').forEach(i => { const v = parseFloat(i.value)||0; tInc+=v; if(v>0){incVs.push(v); incLs.push(i.previousElementSibling.innerText);} });
+            savedDynamic.inc.forEach(d => { const v = parseFloat(d.val)||0; tInc+=v; if(v>0){incVs.push(v); incLs.push(d.label);} });
             
-            let tFix = 0, fixVs = [], fixLs = [];
-            FIXED_DEFAULTS.forEach(item => {
-                const data = savedFixed[item.id];
-                if(data && data.val > 0) {
-                    const monthly = parseFloat(data.val) / parseFloat(data.freq || 1);
-                    tFix += monthly; fixVs.push(monthly); fixLs.push(item.label);
-                    const input = document.getElementById(`inp-fixed-${item.id}`);
-                    if(input && document.activeElement !== input) input.value = Math.round(data.val);
-                    const select = document.querySelector(`select[data-freq="${item.id}"]`);
-                    if(select) select.value = data.freq || '1';
-                }
-            });
-            savedDynamic.fixed.forEach(d => { const v = (parseFloat(d.val)||0)/(parseFloat(d.freq)||1); tFix+=v; if(v>0){ fixVs.push(v); fixLs.push(d.label||"אחר"); }});
-
-            let tVar = 0, varVs = [], varLs = [];
-            VAR_DEFAULTS.forEach(item => {
-                const data = savedFixed[item.id];
-                if(data && data.val > 0) {
-                    const v = parseFloat(data.val); tVar += v; varVs.push(v); varLs.push(item.label);
-                    const input = document.getElementById(`inp-var-${item.id}`);
-                    if(input && document.activeElement !== input) input.value = Math.round(v);
-                }
-            });
-            savedDynamic.var.forEach(d => { const v = parseFloat(d.val)||0; tVar+=v; if(v>0){ varVs.push(v); varLs.push(d.label||"אחר"); }});
+            document.querySelectorAll('[data-group="fixed"]').forEach(i => { const f = parseFloat(document.querySelector(`select[data-freq="${i.dataset.id}"]`).value); tFix+=(parseFloat(i.value)||0)/f; });
+            savedDynamic.fixed.forEach(d => { tFix+=(parseFloat(d.val)||0)/(parseFloat(d.freq)||1); });
+            
+            document.querySelectorAll('[data-group="var"]').forEach(i => { tVar+=parseFloat(i.value)||0; });
+            savedDynamic.var.forEach(d => { tVar+=parseFloat(d.val)||0; });
 
             document.getElementById('total-income-val').innerText = tInc.toLocaleString();
-            document.getElementById('income-chart-wrapper').classList.toggle('hidden', tInc===0); updateChart(incomeChart, incVs, incLs);
-            document.getElementById('total-fixed-display').innerText = Math.round(tFix).toLocaleString();
-            document.getElementById('fixed-chart-wrapper').classList.toggle('hidden', tFix===0); updateChart(fixedChart, fixVs, fixLs);
-            document.getElementById('total-var-display').innerText = Math.round(tVar).toLocaleString();
-            document.getElementById('var-chart-wrapper').classList.toggle('hidden', tVar===0); updateChart(varChart, varVs, varLs);
+            document.getElementById('income-chart-wrapper').classList.toggle('hidden', tInc===0);
+            if(incomeChart) { incomeChart.data.labels=incLs; incomeChart.data.datasets[0].data=incVs; incomeChart.update(); }
 
             let profit = isMurshe ? (tInc/1.18 - (tFix+tVar)/1.18) : (tInc - (tFix+tVar));
-            if(isMurshe) {
-                const vCol = tInc - tInc/1.18, vDed = (tFix+tVar) - (tFix+tVar)/1.18;
-                document.getElementById('vat-collected').innerText = Math.round(vCol).toLocaleString();
-                document.getElementById('vat-deducted').innerText = Math.round(vDed).toLocaleString();
-                document.getElementById('vat-to-pay').innerText = Math.round(vCol - vDed).toLocaleString();
+            profit = Math.max(0, profit);
+
+            // Core 101 Tax Calculation
+            const pts = getCreditPoints();
+            const salary = profile.salary;
+            
+            // Deductions (Sec 47) - Reduces taxable income
+            const allowedPensionDeduction = Math.min(profile.pension, profit * 0.11); 
+            const taxableProfit = Math.max(0, profit - allowedPensionDeduction);
+            
+            let rawTax = calcTax(salary + taxableProfit) - calcTax(salary);
+            
+            // Credits (Sec 45a) - Reduces tax directly
+            const pensionCredit = profile.pension * 0.35;
+            let netTax = Math.max(0, rawTax - (pts * C.CREDIT_POINT) - pensionCredit);
+            
+            // Periphery discount
+            const peri = PERIPHERY[profile.periphery];
+            if(peri.rate > 0) {
+                const maxPeriDiscount = (peri.ceil / 12) * peri.rate;
+                const actualDiscount = Math.min(taxableProfit * peri.rate, maxPeriDiscount);
+                netTax = Math.max(0, netTax - actualDiscount);
             }
-            
-            const sal = parseFloat(document.getElementById('salary').value)||0;
-            const pts = (document.getElementById('gender').value==='male'?2.25:2.75) + parseInt(document.getElementById('children').value||0) + (document.getElementById('degree').checked?1:0);
-            const rawTax = calcTax(sal + profit) - calcTax(sal);
-            const netTax = Math.max(0, rawTax - (pts * C.CREDIT_POINT));
-            const bituach = Math.min(profit, C.BITUACH_LIMIT)*0.0597 + Math.max(0, profit-C.BITUACH_LIMIT)*0.1783;
-            const pens = Math.min(profit, 13683)*0.12, study = profit*0.045;
-            
+
+            // Bituach Leumi
+            let bituach = 0;
+            if(profile.bituach) {
+                bituach = Math.min(profit, C.BITUACH_LIMIT)*0.0597 + Math.max(0, profit-C.BITUACH_LIMIT)*0.1783;
+            } else {
+                const exempt = C.AVG_WAGE * 0.25;
+                if(profit > exempt) { bituach = (profit-exempt)*0.0975; } // Simplified Lo-Ona calculation
+            }
+
+            // Real deductions out of pocket
+            const outOfPocketPens = profile.pension || Math.min(profit, 13683)*0.12; // Fallback to mandatory if no actual
+            const outOfPocketStudy = profile.study;
+
             document.getElementById('res-tax').innerText = Math.round(netTax + bituach).toLocaleString();
-            document.getElementById('res-pension').innerText = Math.round(pens).toLocaleString();
-            document.getElementById('res-study').innerText = Math.round(study).toLocaleString();
-            document.getElementById('res-net').innerText = Math.round(profit - netTax - bituach - pens - study).toLocaleString();
+            document.getElementById('res-pension').innerText = Math.round(outOfPocketPens).toLocaleString();
+            document.getElementById('res-study').innerText = Math.round(outOfPocketStudy).toLocaleString();
+            document.getElementById('res-net').innerText = Math.round(profit - netTax - bituach - outOfPocketPens - outOfPocketStudy).toLocaleString();
             document.getElementById('results-area').style.opacity = tInc > 0 ? "1" : "0";
         }
 
-        function initCharts() {
-            const conf = (id) => new Chart(document.getElementById(id).getContext('2d'), { type:'doughnut', data:{labels:[],datasets:[{data:[],backgroundColor:['#f26522','#334155','#94a3b8','#fdba74','#cbd5e1','#e2e8f0']}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{family:'Rubik',size:10},boxWidth:8}}}}});
-            incomeChart = conf('incomeChart'); fixedChart = conf('fixedChart'); varChart = conf('varChart');
+        function calcSim() {
+            const tInc = parseFloat(document.getElementById('sim-inc').value) || 0;
+            const tExp = parseFloat(document.getElementById('sim-exp').value) || 0;
+            let profit = isMurshe ? (tInc/1.18 - tExp/1.18) : (tInc - tExp); profit = Math.max(0, profit);
+            const pts = getCreditPoints();
+            const taxableProfit = Math.max(0, profit - profile.pension);
+            let rawTax = calcTax(profile.salary + taxableProfit) - calcTax(profile.salary);
+            let netTax = Math.max(0, rawTax - (pts * C.CREDIT_POINT) - (profile.pension * 0.35));
+            const peri = PERIPHERY[profile.periphery];
+            if(peri.rate > 0) netTax = Math.max(0, netTax - Math.min(taxableProfit * peri.rate, (peri.ceil / 12) * peri.rate));
+            let bituach = profile.bituach ? (Math.min(profit, C.BITUACH_LIMIT)*0.0597 + Math.max(0, profit-C.BITUACH_LIMIT)*0.1783) : (profit > C.AVG_WAGE*0.25 ? (profit-C.AVG_WAGE*0.25)*0.0975 : 0);
+            document.getElementById('sim-tax').innerText = Math.round(netTax + bituach).toLocaleString();
+            document.getElementById('sim-net').innerText = Math.round(profit - netTax - bituach - profile.pension - profile.study).toLocaleString();
         }
-        function updateChart(c, v, l) { if(!c)return; c.data.labels=l; c.data.datasets[0].data=v; c.update(); }
-        function updateAnnualDashboard() {
-            const total = history.filter(h => h.month.startsWith('2026')).reduce((s, h) => s + h.income, 0);
-            document.getElementById('annual-income-display').innerText = total.toLocaleString();
-            document.getElementById('ceiling-progress').style.width = Math.min(100, (total/C.CEILING)*100) + "%";
-        }
-        function renderHistoryList() {
-            document.getElementById('history-list-container').innerHTML = history.length ? history.map(h => `<div class="flex justify-between text-[10px] bg-slate-50 p-1.5 rounded"><b>${h.month}</b><span class="text-brand-orange font-bold">₪${h.income.toLocaleString()}</span></div>`).join('') : '<p class="text-center text-xs text-slate-400">ריק</p>';
-        }
-        function saveMonthToHistory() {
-            const inc = parseFloat(document.getElementById('total-income-val').innerText.replace(/,/g,'')), m = new Date().toISOString().slice(0,7);
-            history = history.filter(h => h.month !== m); history.push({month:m, income:inc});
-            localStorage.setItem(KEYS.HISTORY, JSON.stringify(history)); updateAnnualDashboard(); renderHistoryList(); alert("נשמר!");
-        }
+
+        function calcTax(n) { let t=0, p=0; for(let b of C.TAX){ if(n>p){ t+=Math.min(n-p, b.limit-p)*b.rate; p=b.limit; } } if(n>p) t+=(n-p)*0.47; return t; }
+        function initCharts() { incomeChart = new Chart(document.getElementById('incomeChart').getContext('2d'), { type:'doughnut', data:{labels:[],datasets:[{data:[],backgroundColor:['#f26522','#334155','#94a3b8']}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{family:'Rubik'},boxWidth:8}}}}}); }
         function clearAllData() { if(confirm("למחוק הכל?")){ localStorage.clear(); location.reload(); } }
     </script>
 </body>
