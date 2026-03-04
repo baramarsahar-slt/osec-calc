@@ -33,7 +33,7 @@
         <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 border-b border-slate-200 pb-6">
             <div class="text-center md:text-right">
                 <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Bar Amar-Sahar <span class="text-brand-orange text-xl font-medium">| ניהול קליניקה</span></h1>
-                <p class="text-xs text-slate-500 mt-1">גרסה 15.0 (דיוק מירבי - הגדרות 101)</p>
+                <p class="text-xs text-slate-500 mt-1">גרסה 15.1 (יציבה ותקינה)</p>
             </div>
             <div class="flex gap-2 flex-wrap justify-center">
                 <button onclick="backupData()" class="flex items-center gap-2 text-xs font-bold text-white bg-slate-700 px-4 py-2.5 rounded-full hover:bg-slate-800 transition"><span>💾</span> שמור גיבוי</button>
@@ -145,13 +145,13 @@
                 </div>
                 <div><label class="text-xs font-bold text-slate-500">שנות לידה של ילדים (מופרד בפסיק, למשל: 2021, 2024)</label><input type="text" id="p-kids" placeholder="ללא ילדים" class="input-field text-left" dir="ltr"></div>
                 <div><label class="text-xs font-bold text-slate-500">יישוב מוטב (פריפריה)</label><select id="p-periphery" class="input-field"><option value="none">ללא / יישוב רגיל</option><option value="akko">עכו (11%)</option><option value="nahariya">נהריה (12%)</option><option value="k8">קריית שמונה (20%)</option><option value="sdrot">שדרות (20%)</option><option value="eilat">אילת (10%)</option></select></div>
-                <div class="bg-blue-50 p-3 rounded-lg"><label class="flex items-center gap-2 text-sm font-bold text-slate-700"><input type="checkbox" id="p-bituach" checked class="w-4 h-4"> מוכרת כ"עצמאית" בביטוח לאומי (עונה להגדרה)</label><p class="text-[10px] text-slate-500 mt-1">ביטול הסימון יישם פטור מדמי בט"ל על הכנסה של עד 25% מהשכר הממוצע.</p></div>
+                <div class="bg-blue-50 p-3 rounded-lg"><label class="flex items-center gap-2 text-sm font-bold text-slate-700"><input type="checkbox" id="p-bituach" checked class="w-4 h-4"> מוכרת כ"עצמאית" בביטוח לאומי</label></div>
                 <div class="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
                     <div><label class="text-xs font-bold text-slate-500">הפקדה חודשית לפנסיה</label><input type="number" id="p-pension" value="0" class="input-field"></div>
                     <div><label class="text-xs font-bold text-slate-500">הפקדה חודשית לקה"ש</label><input type="number" id="p-study" value="0" class="input-field"></div>
                 </div>
                 <div><label class="text-xs font-bold text-slate-500">משכורת כשכיר/ה (ברוטו)</label><input type="number" id="p-salary" value="0" class="input-field"></div>
-                <label class="flex items-center gap-2 text-xs font-bold"><input type="checkbox" id="p-degree"> בעל/ת תואר אקדמי ראשון (עד 3 שנים מסיום)</label>
+                <label class="flex items-center gap-2 text-xs font-bold"><input type="checkbox" id="p-degree"> בעל/ת תואר אקדמי ראשון (עד 3 שנים)</label>
                 <button onclick="save101()" class="w-full bg-brand-orange text-white font-bold py-3 rounded-xl mt-4">שמור וחשב</button>
             </div>
         </div>
@@ -163,7 +163,7 @@
         const VAR_DEFAULTS = [{ id: "fuel", label: 'הוצאות דלק' }, { id: "supplies", label: 'חומרים מתכלים וציוד מתכלה' }, { id: "conf", label: 'כנסים השתלמויות' }];
         const C = { CEILING: 122833, AVG_WAGE: 13683, VAT_RATE: 0.18, CREDIT_POINT: 255, BITUACH_LIMIT: 8210, TAX: [{ limit: 7250, rate: 0.10 }, { limit: 10410, rate: 0.14 }, { limit: 16710, rate: 0.20 }, { limit: 23230, rate: 0.31 }, { limit: 48000, rate: 0.35 }] };
         const PERIPHERY = { 'none': {rate: 0, ceil: 0, name:'ללא'}, 'akko': {rate: 0.11, ceil: 180000, name:'עכו'}, 'nahariya': {rate: 0.12, ceil: 204000, name:'נהריה'}, 'k8': {rate: 0.20, ceil: 241080, name:'ק.שמונה'}, 'sdrot': {rate: 0.20, ceil: 241080, name:'שדרות'}, 'eilat': {rate: 0.10, ceil: 168000, name:'אילת'} };
-        const KEYS = { HISTORY: 'osek_history_15', FIXED: 'osek_fixed_15', DYNAMIC: 'osek_dynamic_15', PROFILE: 'osek_profile_15' };
+        const KEYS = { HISTORY: 'osek_history_15_1', FIXED: 'osek_fixed_15_1', DYNAMIC: 'osek_dynamic_15_1', PROFILE: 'osek_profile_15_1' };
 
         let history = [], savedFixed = {}, savedDynamic = { inc: [], fixed: [], var: [] };
         let profile = { gender:'female', status:'married', kids:'', periphery:'none', bituach:true, pension:0, study:0, salary:0, degree:false };
@@ -177,7 +177,12 @@
             profile = JSON.parse(localStorage.getItem(KEYS.PROFILE)) || profile;
 
             renderExpenses(); renderDynamicInputs('inc'); renderDynamicInputs('fixed'); renderDynamicInputs('var');
-            initCharts(); updateStatusUI(); updateProfileUI(); calculate();
+            initCharts(); updateStatusUI(); updateProfileUI(); calculate(); calcSim();
+
+            const dropZone = document.getElementById('drop-zone');
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+            dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); handleMorningUpload({ files: e.dataTransfer.files }); });
         };
 
         function open101Modal() {
@@ -223,7 +228,6 @@
             document.getElementById('display-btl').innerText = profile.bituach ? "עונה להגדרה" : "לא עונה להגדרה";
         }
 
-        // Standard Functions (Render, Save, CSV Import)
         function toggleStatus() { isMurshe = !isMurshe; localStorage.setItem('is_murshe', isMurshe); updateStatusUI(); calculate(); calcSim(); }
         function updateStatusUI() {
             document.getElementById('slider').style.left = isMurshe ? '50%' : '4px';
@@ -232,27 +236,88 @@
         }
 
         function renderExpenses() {
-            document.getElementById('fixed-exp-container').innerHTML = FIXED_DEFAULTS.map(i => `<div class="flex flex-col"><label class="text-[11px] font-bold text-slate-500">${i.label}</label><div class="flex gap-1 h-9"><input type="number" id="inp-fixed-${i.id}" data-group="fixed" data-id="${i.id}" value="${savedFixed[i.id]?.val||''}" class="input-field text-sm flex-grow" oninput="saveVar('${i.id}', this.value, document.querySelector(\`select[data-freq='${i.id}']\`).value); calculate()"><select data-freq="${i.id}" class="text-[10px] border rounded w-16" onchange="saveVar('${i.id}', document.getElementById('inp-fixed-${i.id}').value, this.value); calculate()"><option value="1" ${savedFixed[i.id]?.freq=='1'?'selected':''}>חודשי</option><option value="12" ${savedFixed[i.id]?.freq=='12'?'selected':''}>שנתי</option></select></div></div>`).join('');
-            document.getElementById('var-exp-container').innerHTML = VAR_DEFAULTS.map(i => `<div class="flex flex-col"><label class="text-[11px] font-bold text-slate-500">${i.label}</label><input type="number" id="inp-var-${i.id}" data-id="${i.id}" data-group="var" class="input-field text-sm h-9" value="${savedFixed[i.id]?.val||''}" oninput="saveVar('${i.id}', this.value, '1'); calculate()">`).join('');
+            const fixGen = (i) => {
+                const val = savedFixed[i.id]?.val || ''; const freq = savedFixed[i.id]?.freq || '1';
+                return `<div class="flex flex-col"><label class="text-[11px] font-bold text-slate-500">${i.label}</label><div class="flex gap-1 h-9"><input type="number" id="inp-fixed-${i.id}" data-group="fixed" data-id="${i.id}" value="${val}" class="input-field text-sm flex-grow" oninput="saveVar('${i.id}', this.value, this.nextElementSibling.value); calculate()"><select data-freq="${i.id}" class="text-[10px] border rounded w-16" onchange="saveVar('${i.id}', this.previousElementSibling.value, this.value); calculate()"><option value="1" ${freq=='1'?'selected':''}>חודשי</option><option value="2" ${freq=='2'?'selected':''}>דו-חודשי</option><option value="12" ${freq=='12'?'selected':''}>שנתי</option></select></div></div>`;
+            };
+            const varGen = (i) => {
+                const val = savedFixed[i.id]?.val || '';
+                return `<div class="flex flex-col"><label class="text-[11px] font-bold text-slate-500">${i.label}</label><input type="number" id="inp-var-${i.id}" data-id="${i.id}" data-group="var" class="input-field text-sm h-9" value="${val}" oninput="saveVar('${i.id}', this.value, '1'); calculate()"></div>`;
+            };
+            document.getElementById('fixed-exp-container').innerHTML = FIXED_DEFAULTS.map(fixGen).join('');
+            document.getElementById('var-exp-container').innerHTML = VAR_DEFAULTS.map(varGen).join('');
         }
+
         function saveVar(id, val, freq) { savedFixed[id] = { val: val, freq: freq }; localStorage.setItem(KEYS.FIXED, JSON.stringify(savedFixed)); }
 
         function renderDynamicInputs(type) {
-            const wrapper = document.getElementById(`dynamic-${type}-wrapper`); wrapper.innerHTML = '';
+            const id = type === 'inc' ? 'dynamic-income-wrapper' : `dynamic-${type}-wrapper`;
+            const wrapper = document.getElementById(id);
+            wrapper.innerHTML = '';
             savedDynamic[type].forEach((f, idx) => wrapper.appendChild(createRow(type, idx, f.label, f.val, f.freq)));
             wrapper.appendChild(createRow(type, savedDynamic[type].length, '', '', '1'));
         }
+
         function createRow(type, idx, l, v, f) {
-            const div = document.createElement('div'); div.className = 'flex flex-col dynamic-row';
-            div.innerHTML = `<input type="text" placeholder="אחר..." value="${l}" class="editable-label text-xs font-bold" oninput="saveDyn('${type}',${idx},'label',this.value)"><div class="flex gap-1 h-9"><input type="number" value="${v}" class="input-field text-sm flex-grow" oninput="saveDyn('${type}',${idx},'val',this.value);calculate()">${type==='fixed'?`<select class="text-[10px] border rounded w-16" onchange="saveDyn('fixed',${idx},'freq',this.value);calculate()"><option value="1" ${f=='1'?'selected':''}>חודשי</option><option value="12" ${f=='12'?'selected':''}>שנתי</option></select>`:''}</div>`;
+            const div = document.createElement('div'); 
+            div.className = type === 'inc' ? 'input-group dynamic-row' : 'flex flex-col dynamic-row';
+            const labelHtml = `<input type="text" placeholder="אחר..." value="${l}" class="editable-label text-xs font-bold ${type === 'inc' ? 'mb-1 w-full bg-transparent border-b border-dashed border-slate-300' : ''}" oninput="saveDyn('${type}',${idx},'label',this.value)">`;
+            const freqSelect = type === 'fixed' ? `<select class="text-[10px] border rounded w-16" onchange="saveDyn('${type}',${idx},'freq',this.value);calculate()"><option value="1" ${f=='1'?'selected':''}>חודשי</option><option value="2" ${f=='2'?'selected':''}>דו-חודשי</option><option value="12" ${f=='12'?'selected':''}>שנתי</option></select>` : '';
+            const inputsHtml = `<div class="flex gap-1 h-9"><input type="number" value="${v}" class="input-field text-sm flex-grow" oninput="saveDyn('${type}',${idx},'val',this.value);calculate()">${freqSelect}</div>`;
+            div.innerHTML = labelHtml + inputsHtml; 
             return div;
         }
-        function saveDyn(t, i, k, v) { if(!savedDynamic[t][i]) { savedDynamic[t][i] = {label:'', val:'', freq:'1'}; renderDynamicInputs(t); } savedDynamic[t][i][k] = v; localStorage.setItem(KEYS.DYNAMIC, JSON.stringify(savedDynamic)); }
+
+        function saveDyn(t, i, k, v) { 
+            if(!savedDynamic[t][i]) { 
+                savedDynamic[t][i] = {label:'', val:'', freq:'1'}; 
+                const id = t === 'inc' ? 'dynamic-income-wrapper' : `dynamic-${t}-wrapper`;
+                document.getElementById(id).appendChild(createRow(t, i + 1, '', '', '1'));
+            } 
+            savedDynamic[t][i][k] = v; 
+            localStorage.setItem(KEYS.DYNAMIC, JSON.stringify(savedDynamic)); 
+        }
+
+        function handleMorningUpload(input) {
+            const file = input.files[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                processMorningData(XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]));
+            }; reader.readAsArrayBuffer(file);
+        }
+
+        function processMorningData(data) {
+            let count = 0;
+            data.forEach(row => {
+                const rawCat = row['תיאור חשבון הוצאה'], amount = parseFloat(row['סכום כולל'] || row['סכום כולל מע״מ'] || 0), logic = (row['Logic'] || 'משתנה').trim();
+                if(!rawCat || amount === 0) return;
+                const finalAmount = amount * ((PERCENT_MAP[rawCat] || 100) / 100);
+                let type = 'var', freq = '1';
+                if (logic === 'קבועה-חודשית') { type = 'fixed'; freq = '1'; }
+                else if (logic === 'קבועה-דו-חודשית') { type = 'fixed'; freq = '2'; }
+                else if (logic === 'קבועה-שנתית') { type = 'fixed'; freq = '12'; }
+
+                let matched = false;
+                [...FIXED_DEFAULTS, ...VAR_DEFAULTS].forEach(def => {
+                    if(def.label === rawCat) { savedFixed[def.id] = { val: (parseFloat(savedFixed[def.id]?.val)||0) + finalAmount, freq: freq }; matched = true; }
+                });
+                if(!matched) {
+                    let dyn = savedDynamic[type].find(d => d.label === rawCat);
+                    if(dyn) { dyn.val = (parseFloat(dyn.val)||0) + finalAmount; dyn.freq = freq; }
+                    else savedDynamic[type].push({ label: rawCat, val: finalAmount, freq: freq });
+                }
+                count++;
+            });
+            localStorage.setItem(KEYS.FIXED, JSON.stringify(savedFixed)); localStorage.setItem(KEYS.DYNAMIC, JSON.stringify(savedDynamic));
+            renderExpenses(); renderDynamicInputs('fixed'); renderDynamicInputs('var'); calculate(); alert(`נקלטו ${count} שורות בהצלחה!`);
+        }
 
         function calculate() {
             let tInc = 0, tFix = 0, tVar = 0, incVs=[], incLs=[];
             document.querySelectorAll('[data-group="inc"]').forEach(i => { const v = parseFloat(i.value)||0; tInc+=v; if(v>0){incVs.push(v); incLs.push(i.previousElementSibling.innerText);} });
-            savedDynamic.inc.forEach(d => { const v = parseFloat(d.val)||0; tInc+=v; if(v>0){incVs.push(v); incLs.push(d.label);} });
+            savedDynamic.inc.forEach(d => { const v = parseFloat(d.val)||0; tInc+=v; if(v>0){incVs.push(v); incLs.push(d.label||"אחר");} });
             
             document.querySelectorAll('[data-group="fixed"]').forEach(i => { const f = parseFloat(document.querySelector(`select[data-freq="${i.dataset.id}"]`).value); tFix+=(parseFloat(i.value)||0)/f; });
             savedDynamic.fixed.forEach(d => { tFix+=(parseFloat(d.val)||0)/(parseFloat(d.freq)||1); });
@@ -267,39 +332,30 @@
             let profit = isMurshe ? (tInc/1.18 - (tFix+tVar)/1.18) : (tInc - (tFix+tVar));
             profit = Math.max(0, profit);
 
-            // Core 101 Tax Calculation
             const pts = getCreditPoints();
             const salary = profile.salary;
-            
-            // Deductions (Sec 47) - Reduces taxable income
             const allowedPensionDeduction = Math.min(profile.pension, profit * 0.11); 
             const taxableProfit = Math.max(0, profit - allowedPensionDeduction);
             
             let rawTax = calcTax(salary + taxableProfit) - calcTax(salary);
-            
-            // Credits (Sec 45a) - Reduces tax directly
             const pensionCredit = profile.pension * 0.35;
             let netTax = Math.max(0, rawTax - (pts * C.CREDIT_POINT) - pensionCredit);
             
-            // Periphery discount
             const peri = PERIPHERY[profile.periphery];
             if(peri.rate > 0) {
-                const maxPeriDiscount = (peri.ceil / 12) * peri.rate;
-                const actualDiscount = Math.min(taxableProfit * peri.rate, maxPeriDiscount);
+                const actualDiscount = Math.min(taxableProfit * peri.rate, (peri.ceil / 12) * peri.rate);
                 netTax = Math.max(0, netTax - actualDiscount);
             }
 
-            // Bituach Leumi
             let bituach = 0;
             if(profile.bituach) {
                 bituach = Math.min(profit, C.BITUACH_LIMIT)*0.0597 + Math.max(0, profit-C.BITUACH_LIMIT)*0.1783;
             } else {
                 const exempt = C.AVG_WAGE * 0.25;
-                if(profit > exempt) { bituach = (profit-exempt)*0.0975; } // Simplified Lo-Ona calculation
+                if(profit > exempt) { bituach = (profit-exempt)*0.0975; }
             }
 
-            // Real deductions out of pocket
-            const outOfPocketPens = profile.pension || Math.min(profit, 13683)*0.12; // Fallback to mandatory if no actual
+            const outOfPocketPens = profile.pension || Math.min(profit, 13683)*0.12;
             const outOfPocketStudy = profile.study;
 
             document.getElementById('res-tax').innerText = Math.round(netTax + bituach).toLocaleString();
@@ -326,6 +382,8 @@
 
         function calcTax(n) { let t=0, p=0; for(let b of C.TAX){ if(n>p){ t+=Math.min(n-p, b.limit-p)*b.rate; p=b.limit; } } if(n>p) t+=(n-p)*0.47; return t; }
         function initCharts() { incomeChart = new Chart(document.getElementById('incomeChart').getContext('2d'), { type:'doughnut', data:{labels:[],datasets:[{data:[],backgroundColor:['#f26522','#334155','#94a3b8']}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{family:'Rubik'},boxWidth:8}}}}}); }
+        function backupData() { const data = { history, fixed: savedFixed, dynamic: savedDynamic, profile }; const blob = new Blob([JSON.stringify(data)], {type: "application/json"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `osek_backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); }
+        function restoreData(input) { const file = input.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const data = JSON.parse(e.target.result); if(data.history) localStorage.setItem(KEYS.HISTORY, JSON.stringify(data.history)); if(data.fixed) localStorage.setItem(KEYS.FIXED, JSON.stringify(data.fixed)); if(data.dynamic) localStorage.setItem(KEYS.DYNAMIC, JSON.stringify(data.dynamic)); if(data.profile) localStorage.setItem(KEYS.PROFILE, JSON.stringify(data.profile)); alert("הנתונים שוחזרו! העמוד יתרענן."); location.reload(); } catch(err) { alert("שגיאה בקובץ הגיבוי"); } }; reader.readAsText(file); }
         function clearAllData() { if(confirm("למחוק הכל?")){ localStorage.clear(); location.reload(); } }
     </script>
 </body>
