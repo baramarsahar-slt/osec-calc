@@ -114,19 +114,65 @@
                 </div>
 
                 <div id="results-area" class="opacity-0 transition-opacity duration-700 space-y-6 pb-20">
-                    <div class="grid grid-cols-3 gap-4 text-center">
-                        <div class="card p-4"> <p class="text-[10px] text-slate-400 font-bold">מיסים וביטוח</p> <p class="text-xl font-bold">₪<span id="res-tax">0</span></p> </div>
-                        <div class="card p-4"> <p class="text-[10px] text-slate-400 font-bold">פנסיה חובה</p> <p class="text-xl font-bold">₪<span id="res-pension">0</span></p> </div>
-                        <div class="card p-4"> <p class="text-[10px] text-slate-400 font-bold">קה"ש</p> <p class="text-xl font-bold">₪<span id="res-study">0</span></p> </div>
-                    </div>
-                    <div class="card bg-slate-900 text-white p-8 relative overflow-hidden">
-                        <div class="absolute top-0 right-0 w-32 h-32 bg-brand-orange rounded-full blur-3xl opacity-20"></div>
-                        <div class="flex justify-between items-center relative z-10">
-                            <div><h4 class="text-3xl font-bold">נטו הביתה</h4></div>
-                            <div class="text-5xl font-bold text-brand-orange">₪<span id="res-net">0</span></div>
+                    <div class="grid grid-cols-3 gap-4 text-center items-stretch">
+                        <div class="card p-4 flex flex-col">
+                            <p class="text-[10px] text-slate-400 font-bold">מיסים וביטוח</p>
+                            <p class="text-xl font-bold">₪<span id="res-tax">0</span></p>
+                            <p class="text-[10px] text-slate-400 mt-2 leading-snug">מקדמת מס הכנסה + ביטוח לאומי. משולם לרשות המסים ולביטוח הלאומי.</p>
+                        </div>
+                        <div class="card p-4 flex flex-col">
+                            <p class="text-[10px] text-slate-400 font-bold">פנסיה חובה</p>
+                            <p class="text-xl font-bold">₪<span id="res-pension">0</span></p>
+                            <p class="text-[10px] text-slate-400 mt-2 leading-snug">הפקדה חודשית לפי חובת פנסיה לעצמאים (או הסכום שהגדרת, לפי הגבוה). יש להעביר בפועל לקרן פנסיה / ביטוח מנהלים.</p>
+                        </div>
+                        <div class="card p-4 flex flex-col">
+                            <p class="text-[10px] text-slate-400 font-bold">קה"ש</p>
+                            <p class="text-xl font-bold">₪<span id="res-study">0</span></p>
+                            <p class="text-[10px] text-slate-400 mt-2 leading-snug">הסכום שהגדרת להפקדה לקרן השתלמות. יש להעביר בפועל לחברת הקה"ש.</p>
                         </div>
                     </div>
-                    <button onclick="saveMonthToHistory()" class="w-full bg-brand-orange text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-orange-600 transition">✅ שמור חודש זה ביומן</button>
+
+                    <div id="vat-card" class="card p-5 border-t-4 border-purple-400 hidden">
+                        <h4 class="font-bold text-slate-700 text-sm mb-3">🧾 מע"מ לתשלום (עוסק מורשה)</h4>
+                        <div class="grid grid-cols-2 gap-4 text-sm mb-3">
+                            <div><span class="text-slate-400 text-xs block">מע"מ שגבית (עסקאות)</span><span class="font-bold">₪<span id="vat-output">0</span></span></div>
+                            <div><span class="text-slate-400 text-xs block">מע"מ לקיזוז (תשומות)</span><span class="font-bold">₪<span id="vat-input">0</span></span></div>
+                        </div>
+                        <div class="pt-3 border-t flex justify-between items-center">
+                            <span class="font-bold text-slate-700 text-sm">להעביר בדו"ח התקופתי:</span>
+                            <span class="font-bold text-purple-600 text-xl">₪<span id="vat-net">0</span></span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2 leading-snug">הסכום הזה נגבה מהלקוחות בשם רשות המסים ואינו הכנסה שלך. יש לדווח ולהעביר אותו בדו"ח המע"מ התקופתי (בדרך כלל אחת לחודשיים).</p>
+                    </div>
+
+                    <div class="card bg-slate-900 text-white p-8 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-brand-orange rounded-full blur-3xl opacity-20"></div>
+                        <div class="relative z-10">
+                            <div class="flex justify-between items-center">
+                                <div><h4 class="text-3xl font-bold">נטו הביתה</h4></div>
+                                <div class="text-5xl font-bold text-brand-orange">₪<span id="res-net">0</span></div>
+                            </div>
+                            <p class="text-[11px] text-slate-400 mt-3 leading-snug">מה שנשאר לך למשיכה אישית אחרי מס הכנסה, ביטוח לאומי, פנסיה וקה"ש (ולפני מע"מ, אם רלוונטי — ראי כרטיס מע"מ למעלה).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card p-6 border-t-4 border-emerald-400">
+                    <div class="flex justify-between items-center mb-4 border-b pb-3">
+                        <h3 class="font-bold text-slate-700">🛟 קופה קטנה (קרן יציבות)</h3>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div><label class="text-xs font-bold text-slate-500">כבר יש לי בקופה (₪)</label><input type="number" id="ek-current" placeholder="0" class="input-field" oninput="updateEmergencyFund()"></div>
+                        <div><label class="text-xs font-bold text-slate-500">יעד: כמה חודשי הוצאות קבועות</label><input type="number" id="ek-months" placeholder="3" value="3" class="input-field" oninput="updateEmergencyFund()"></div>
+                    </div>
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="text-slate-500">יעד מחושב: <span id="ek-target" class="font-bold text-slate-700">0</span> ₪ <span class="text-slate-400 text-xs">(לפי ההוצאות הקבועות שהזנת למעלה)</span></span>
+                        <span class="font-bold text-emerald-600" id="ek-percent">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-4 overflow-hidden">
+                        <div id="ek-bar" class="h-4 rounded-full bg-emerald-400 transition-all duration-500" style="width:0%"></div>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-2 leading-snug" id="ek-note"></p>
                 </div>
             </div>
         </div>
@@ -150,6 +196,7 @@
                     <div><label class="text-xs font-bold text-slate-500">הפקדה חודשית לפנסיה</label><input type="number" id="p-pension" value="0" class="input-field"></div>
                     <div><label class="text-xs font-bold text-slate-500">הפקדה חודשית לקה"ש</label><input type="number" id="p-study" value="0" class="input-field"></div>
                 </div>
+                <p class="text-[10px] text-slate-400 leading-snug">לשתי ההפקדות יש תקרת ניכוי מס שנתית לפי חוק — הכלי מחשב אותה אוטומטית לפי הרווח שלך בכל חודש. כדאי לוודא את הסכום המדויק מול רואה החשבון בתחילת כל שנת מס.</p>
                 <div><label class="text-xs font-bold text-slate-500">משכורת כשכיר/ה (ברוטו)</label><input type="number" id="p-salary" value="0" class="input-field"></div>
                 <label class="flex items-center gap-2 text-xs font-bold"><input type="checkbox" id="p-degree"> בעל/ת תואר אקדמי ראשון (עד 3 שנים)</label>
                 <button onclick="save101()" class="w-full bg-brand-orange text-white font-bold py-3 rounded-xl mt-4">שמור וחשב</button>
@@ -158,23 +205,38 @@
     </div>
 
     <script>
-        const PERCENT_MAP = { 'הוצאות דלק': 45, 'אחזקת רכב (ללא דלק)': 45, 'אינטרנט': 25, 'הוצאות תקשורת וטלפון': 25, 'חשמל מים גז': 25, 'ארנונה': 25, 'שכירות': 100, 'רו"ח': 100, 'תוכנות, מנויים': 100, 'ביטוחים': 100, 'חומרים מתכלים וציוד מתכלה': 100, 'כיבודים, מתנות, תרומות, קנסות': 100, 'כנסים השתלמויות וספרות מקצועית': 100, 'משחקים/עזרים/ספרים': 100, 'ריהוט קליניקה': 100, 'הדרכה': 100, 'יעוץ עסקי': 100, 'פרסום ושיווק': 100, 'הוצאות אחזקה ותיקונים': 100, 'עלויות אחרות': 100 };
+        // רשימת הקטגוריות והאחוזים תואמת בדיוק לטבלת הסיווגים ממורנינג (classifications.csv) שהרו"ח הגדיר
+        const PERCENT_MAP = { 'הוצאות דלק': 45, 'אחזקת רכב (ללא דלק)': 45, 'אינטרנט': 25, 'חניונים ותחבורה ציבורית': 45, 'הוצאות תקשורת וטלפון': 25, 'חשמל מים גז': 25, 'ארנונה': 25, 'שכירות': 100, 'רו"ח': 100, 'תוכנות, מנויים': 100, 'תוכנה': 100, 'ביטוחים': 100, 'חומרים מתכלים וציוד מתכלה': 100, 'כיבודים, מתנות, תרומות, קנסות': 100, 'כנסים השתלמויות וספרות מקצועית': 100, 'משחקים/עזרים/ספרים': 100, 'ריהוט קליניקה': 100, 'הדרכה': 100, 'יעוץ עסקי': 100, 'פרסום ושיווק': 100, 'הוצאות אחזקה ותיקונים': 100, 'עלויות אחרות': 100 };
+        // קטגוריות שבהן מורנינג מסמנת "אחוז מוכר למע"מ" נמוך מ-100 (בעיקר מנויי תוכנה מספקים זרים בלי חשבונית מס ישראלית) -
+        // לכל קטגוריה שלא רשומה כאן מניחים 100% (ברירת המחדל בטבלה האמיתית)
+        const VAT_PERCENT_MAP = { 'תוכנה': 0, 'תוכנות, מנויים': 0 };
         const FIXED_DEFAULTS = [{ id: "acc", label: 'רו"ח' }, { id: "soft", label: 'תוכנות, מנויים' }, { id: "rent", label: 'שכירות' }, { id: "comm", label: 'הוצאות תקשורת וטלפון' }];
-        const VAR_DEFAULTS = [{ id: "fuel", label: 'הוצאות דלק' }, { id: "supplies", label: 'חומרים מתכלים וציוד מתכלה' }, { id: "conf", label: 'כנסים השתלמויות' }];
+        const VAR_DEFAULTS = [{ id: "fuel", label: 'הוצאות דלק' }, { id: "supplies", label: 'חומרים מתכלים וציוד מתכלה' }, { id: "conf", label: 'כנסים השתלמויות וספרות מקצועית' }, { id: "parking", label: 'חניונים ותחבורה ציבורית' }];
         const C = { CEILING: 122833, AVG_WAGE: 13683, VAT_RATE: 0.18, CREDIT_POINT: 255, BITUACH_LIMIT: 8210, TAX: [{ limit: 7250, rate: 0.10 }, { limit: 10410, rate: 0.14 }, { limit: 16710, rate: 0.20 }, { limit: 23230, rate: 0.31 }, { limit: 48000, rate: 0.35 }] };
+        // ⚠️ תקרות ניכוי מס לפנסיה/קה"ש לעצמאים - האחוזים קבועים בחוק, אבל התקרות בשקלים מתעדכנות מדי שנה.
+        // המספרים כאן הם הידועים העדכניים ביותר - יש לוודא מול רואה החשבון בתחילת כל שנת מס.
+        const PENSION_INCOME_CEILING = C.AVG_WAGE * 2.5; // "הכנסה מזכה" חודשית מרבית לעניין הפרשות עצמאים לפנסיה (~34,200 ₪)
+        const PENSION_DEDUCTION_RATE = 0.11;  // אחוז הניכוי (מפחית רווח חייב במס) מתוך ההכנסה המזכה
+        const PENSION_CREDIT_RATE_OF_INCOME = 0.0434; // אחוז נוסף (קטן יותר) שעליו מקבלים זיכוי של 35%, מתוך אותה הכנסה מזכה
+        const STUDY_FUND_ANNUAL_CEILING = 18480; // תקרת ניכוי שנתית לקה"ש לעצמאים (₪/שנה)
+        const STUDY_FUND_RATE = 0.045; // אחוז מהרווח שמוכר לניכוי לקה"ש (עד התקרה השנתית)
         const PERIPHERY = { 'none': {rate: 0, ceil: 0, name:'ללא'}, 'akko': {rate: 0.11, ceil: 180000, name:'עכו'}, 'nahariya': {rate: 0.12, ceil: 204000, name:'נהריה'}, 'k8': {rate: 0.20, ceil: 241080, name:'ק.שמונה'}, 'sdrot': {rate: 0.20, ceil: 241080, name:'שדרות'}, 'eilat': {rate: 0.10, ceil: 168000, name:'אילת'} };
-        const KEYS = { HISTORY: 'osek_history_15_1', FIXED: 'osek_fixed_15_1', DYNAMIC: 'osek_dynamic_15_1', PROFILE: 'osek_profile_15_1' };
+        const KEYS = { HISTORY: 'osek_history_15_1', FIXED: 'osek_fixed_15_1', DYNAMIC: 'osek_dynamic_15_1', PROFILE: 'osek_profile_15_1', EMERGENCY: 'osek_emergency_15_1' };
 
         let history = [], savedFixed = {}, savedDynamic = { inc: [], fixed: [], var: [] };
         let profile = { gender:'female', status:'married', kids:'', periphery:'none', bituach:true, pension:0, study:0, salary:0, degree:false };
         let isMurshe = localStorage.getItem('is_murshe') === 'true';
         let incomeChart = null;
+        let lastFixedMonthly = 0; // ההוצאות הקבועות המשוקללות לחודש מהחישוב האחרון - משמש את כרטיס הקופה הקטנה
 
         window.onload = () => {
             history = JSON.parse(localStorage.getItem(KEYS.HISTORY)) || [];
             savedFixed = JSON.parse(localStorage.getItem(KEYS.FIXED)) || {};
             savedDynamic = JSON.parse(localStorage.getItem(KEYS.DYNAMIC)) || { inc: [], fixed: [], var: [] };
             profile = JSON.parse(localStorage.getItem(KEYS.PROFILE)) || profile;
+            const savedEmergency = JSON.parse(localStorage.getItem(KEYS.EMERGENCY)) || { current: '', months: 3 };
+            document.getElementById('ek-current').value = savedEmergency.current;
+            document.getElementById('ek-months').value = savedEmergency.months;
 
             renderExpenses(); renderDynamicInputs('inc'); renderDynamicInputs('fixed'); renderDynamicInputs('var');
             initCharts(); updateStatusUI(); updateProfileUI(); calculate(); calcSim();
@@ -231,14 +293,18 @@
         function toggleStatus() { isMurshe = !isMurshe; localStorage.setItem('is_murshe', isMurshe); updateStatusUI(); calculate(); calcSim(); }
         function updateStatusUI() {
             document.getElementById('slider').style.left = isMurshe ? '50%' : '4px';
-            document.getElementById('dash-patur').classList.toggle('hidden', isMurshe);
-            document.getElementById('dash-murshe').classList.toggle('hidden', !isMurshe);
+            document.getElementById('opt-patur').classList.toggle('active', !isMurshe);
+            document.getElementById('opt-murshe').classList.toggle('active', isMurshe);
         }
+
+        // אפשרויות התדירות המשותפות לכל השדות הקבועים (חד-פעמי לא מתחלק בחישוב - הסכום המלא נכנס לחודש הנוכחי בלבד)
+        const FREQ_OPTIONS = `<option value="1">חודשי</option><option value="2">דו-חודשי</option><option value="12">שנתי</option><option value="once">חד-פעמי</option>`;
 
         function renderExpenses() {
             const fixGen = (i) => {
                 const val = savedFixed[i.id]?.val || ''; const freq = savedFixed[i.id]?.freq || '1';
-                return `<div class="flex flex-col"><label class="text-[11px] font-bold text-slate-500">${i.label}</label><div class="flex gap-1 h-9"><input type="number" id="inp-fixed-${i.id}" data-group="fixed" data-id="${i.id}" value="${val}" class="input-field text-sm flex-grow" oninput="saveVar('${i.id}', this.value, this.nextElementSibling.value); calculate()"><select data-freq="${i.id}" class="text-[10px] border rounded w-16" onchange="saveVar('${i.id}', this.previousElementSibling.value, this.value); calculate()"><option value="1" ${freq=='1'?'selected':''}>חודשי</option><option value="2" ${freq=='2'?'selected':''}>דו-חודשי</option><option value="12" ${freq=='12'?'selected':''}>שנתי</option></select></div></div>`;
+                const opts = FREQ_OPTIONS.replace(`value="${freq}"`, `value="${freq}" selected`);
+                return `<div class="flex flex-col"><label class="text-[11px] font-bold text-slate-500">${i.label}</label><div class="flex gap-1 h-9"><input type="number" id="inp-fixed-${i.id}" data-group="fixed" data-id="${i.id}" value="${val}" class="input-field text-sm flex-grow" oninput="saveVar('${i.id}', this.value, this.nextElementSibling.value); calculate()"><select data-freq="${i.id}" class="text-[10px] border rounded w-16" onchange="saveVar('${i.id}', this.previousElementSibling.value, this.value); calculate()">${opts}</select></div><p id="freq-note-fixed-${i.id}" class="text-[10px] text-slate-400 mt-1 leading-snug"></p></div>`;
             };
             const varGen = (i) => {
                 const val = savedFixed[i.id]?.val || '';
@@ -246,6 +312,17 @@
             };
             document.getElementById('fixed-exp-container').innerHTML = FIXED_DEFAULTS.map(fixGen).join('');
             document.getElementById('var-exp-container').innerHTML = VAR_DEFAULTS.map(varGen).join('');
+        }
+
+        // מתרגם סכום+תדירות להסבר קצר וברור: כמה זה שווה לחודש בממוצע, או שזו הוצאה חד-פעמית
+        function freqNoteText(amount, freq) {
+            const amt = parseFloat(amount) || 0;
+            if (amt <= 0) return '';
+            if (freq === 'once') return `הוצאה חד-פעמית החודש (${Math.round(amt).toLocaleString()} ₪) — לא תיכלל בחישובי חודשים הבאים.`;
+            const f = parseFloat(freq) || 1;
+            if (f <= 1) return '';
+            const cadence = f === 2 ? 'כל חודשיים' : (f === 12 ? 'פעם בשנה' : `כל ${f} חודשים`);
+            return `≈ ${Math.round(amt / f).toLocaleString()} ₪ לחודש בממוצע (משלמת ${Math.round(amt).toLocaleString()} ₪ ${cadence})`;
         }
 
         function saveVar(id, val, freq) { savedFixed[id] = { val: val, freq: freq }; localStorage.setItem(KEYS.FIXED, JSON.stringify(savedFixed)); }
@@ -259,12 +336,13 @@
         }
 
         function createRow(type, idx, l, v, f) {
-            const div = document.createElement('div'); 
+            const div = document.createElement('div');
             div.className = type === 'inc' ? 'input-group dynamic-row' : 'flex flex-col dynamic-row';
             const labelHtml = `<input type="text" placeholder="אחר..." value="${l}" class="editable-label text-xs font-bold ${type === 'inc' ? 'mb-1 w-full bg-transparent border-b border-dashed border-slate-300' : ''}" oninput="saveDyn('${type}',${idx},'label',this.value)">`;
-            const freqSelect = type === 'fixed' ? `<select class="text-[10px] border rounded w-16" onchange="saveDyn('${type}',${idx},'freq',this.value);calculate()"><option value="1" ${f=='1'?'selected':''}>חודשי</option><option value="2" ${f=='2'?'selected':''}>דו-חודשי</option><option value="12" ${f=='12'?'selected':''}>שנתי</option></select>` : '';
+            const freqSelect = type === 'fixed' ? `<select class="text-[10px] border rounded w-16" onchange="saveDyn('${type}',${idx},'freq',this.value);calculate()">${FREQ_OPTIONS.replace(`value="${f}"`, `value="${f}" selected`)}</select>` : '';
             const inputsHtml = `<div class="flex gap-1 h-9"><input type="number" value="${v}" class="input-field text-sm flex-grow" oninput="saveDyn('${type}',${idx},'val',this.value);calculate()">${freqSelect}</div>`;
-            div.innerHTML = labelHtml + inputsHtml; 
+            const noteHtml = type === 'fixed' ? `<p id="freq-note-fixed-dyn-${idx}" class="text-[10px] text-slate-400 mt-1 leading-snug"></p>` : '';
+            div.innerHTML = labelHtml + inputsHtml + noteHtml;
             return div;
         }
 
@@ -314,33 +392,50 @@
             renderExpenses(); renderDynamicInputs('fixed'); renderDynamicInputs('var'); calculate(); alert(`נקלטו ${count} שורות בהצלחה!`);
         }
 
-        function calculate() {
-            let tInc = 0, tFix = 0, tVar = 0, incVs=[], incLs=[];
-            document.querySelectorAll('[data-group="inc"]').forEach(i => { const v = parseFloat(i.value)||0; tInc+=v; if(v>0){incVs.push(v); incLs.push(i.previousElementSibling.innerText);} });
-            savedDynamic.inc.forEach(d => { const v = parseFloat(d.val)||0; tInc+=v; if(v>0){incVs.push(v); incLs.push(d.label||"אחר");} });
-            
-            document.querySelectorAll('[data-group="fixed"]').forEach(i => { const f = parseFloat(document.querySelector(`select[data-freq="${i.dataset.id}"]`).value); tFix+=(parseFloat(i.value)||0)/f; });
-            savedDynamic.fixed.forEach(d => { tFix+=(parseFloat(d.val)||0)/(parseFloat(d.freq)||1); });
-            
-            document.querySelectorAll('[data-group="var"]').forEach(i => { tVar+=parseFloat(i.value)||0; });
-            savedDynamic.var.forEach(d => { tVar+=parseFloat(d.val)||0; });
+        // מחשב "רווח" (הכנסה פחות הוצאות) - זהה בדיוק עבור החישוב האמיתי והסימולטור
+        // אצל עוסק מורשה מסירים קודם את המע"מ (הוא לא באמת הכנסה/הוצאה שלה)
+        function computeProfit(income, expenses) {
+            const divisor = isMurshe ? (1 + C.VAT_RATE) : 1;
+            let profit = (income / divisor) - (expenses / divisor);
+            return Math.max(0, profit);
+        }
 
-            document.getElementById('total-income-val').innerText = tInc.toLocaleString();
-            document.getElementById('income-chart-wrapper').classList.toggle('hidden', tInc===0);
-            if(incomeChart) { incomeChart.data.labels=incLs; incomeChart.data.datasets[0].data=incVs; incomeChart.update(); }
+        // האחוז מתוך הוצאה בקטגוריה נתונה שמוכר לקיזוז מע"מ (ברירת מחדל 100%, פרט לחריגים ב-VAT_PERCENT_MAP - למשל מנויי תוכנה)
+        function vatPercentFor(label) {
+            const p = VAT_PERCENT_MAP[label];
+            return p === undefined ? 100 : p;
+        }
 
-            let profit = isMurshe ? (tInc/1.18 - (tFix+tVar)/1.18) : (tInc - (tFix+tVar));
-            profit = Math.max(0, profit);
+        // מחשב כמה מע"מ נגבה מלקוחות, כמה אפשר לקזז על הוצאות (רק מהחלק שבאמת מוכר לקיזוז לפי קטגוריה), וכמה נשאר להעביר.
+        // רלוונטי רק לעוסק מורשה - עוסק פטור לא גובה מע"מ כלל.
+        function computeVat(income, vatEligibleExpenses) {
+            if (!isMurshe) return null;
+            const divisor = 1 + C.VAT_RATE;
+            const vatOutput = income - (income / divisor);                     // מע"מ עסקאות (שגבית מלקוחות)
+            const vatInput = vatEligibleExpenses - (vatEligibleExpenses / divisor); // מע"מ תשומות שאפשר לקזז בפועל
+            const vatNet = vatOutput - vatInput;                                // מה שנשאר להעביר בפועל
+            return { vatOutput, vatInput, vatNet };
+        }
 
+        // מחשב מס, ביטוח לאומי, פנסיה ונטו - הפונקציה היחידה שמבצעת את חישוב המס,
+        // כדי שהחישוב האמיתי והסימולטור תמיד ייתנו אותה תוצאה על אותם נתונים
+        function computeFinancials(profit) {
             const pts = getCreditPoints();
             const salary = profile.salary;
-            const allowedPensionDeduction = Math.min(profile.pension, profit * 0.11); 
-            const taxableProfit = Math.max(0, profit - allowedPensionDeduction);
-            
+
+            // "הכנסה מזכה" - הרווח החודשי, אבל לא יותר מהתקרה החוקית לעניין הפרשות עצמאים
+            const recognizedIncome = Math.min(profit, PENSION_INCOME_CEILING);
+            const allowedPensionDeduction = Math.min(profile.pension, recognizedIncome * PENSION_DEDUCTION_RATE);
+            // ניכוי לקה"ש - עד 4.5% מהרווח, ולא יותר מהתקרה השנתית (מחולקת ל-12)
+            const allowedStudyDeduction = Math.min(profile.study, profit * STUDY_FUND_RATE, STUDY_FUND_ANNUAL_CEILING / 12);
+            const taxableProfit = Math.max(0, profit - allowedPensionDeduction - allowedStudyDeduction);
+
             let rawTax = calcTax(salary + taxableProfit) - calcTax(salary);
-            const pensionCredit = profile.pension * 0.35;
+            // זיכוי 35% - רק על עד 4.34% מההכנסה המזכה (תקרה נמוכה יותר מתקרת הניכוי הרגילה)
+            const pensionCreditEligible = Math.min(profile.pension, recognizedIncome * PENSION_CREDIT_RATE_OF_INCOME);
+            const pensionCredit = pensionCreditEligible * 0.35;
             let netTax = Math.max(0, rawTax - (pts * C.CREDIT_POINT) - pensionCredit);
-            
+
             const peri = PERIPHERY[profile.periphery];
             if(peri.rate > 0) {
                 const actualDiscount = Math.min(taxableProfit * peri.rate, (peri.ceil / 12) * peri.rate);
@@ -357,33 +452,110 @@
 
             const outOfPocketPens = profile.pension || Math.min(profit, 13683)*0.12;
             const outOfPocketStudy = profile.study;
+            const net = profit - netTax - bituach - outOfPocketPens - outOfPocketStudy;
 
-            document.getElementById('res-tax').innerText = Math.round(netTax + bituach).toLocaleString();
-            document.getElementById('res-pension').innerText = Math.round(outOfPocketPens).toLocaleString();
-            document.getElementById('res-study').innerText = Math.round(outOfPocketStudy).toLocaleString();
-            document.getElementById('res-net').innerText = Math.round(profit - netTax - bituach - outOfPocketPens - outOfPocketStudy).toLocaleString();
-            document.getElementById('results-area').style.opacity = tInc > 0 ? "1" : "0";
+            return { netTax, bituach, outOfPocketPens, outOfPocketStudy, net };
+        }
+
+        function calculate() {
+            let tInc = 0, tFix = 0, tVar = 0, incVs=[], incLs=[], vatEligibleExp = 0;
+            document.querySelectorAll('[data-group="inc"]').forEach(i => { const v = parseFloat(i.value)||0; tInc+=v; if(v>0){incVs.push(v); incLs.push(i.previousElementSibling.innerText);} });
+            savedDynamic.inc.forEach(d => { const v = parseFloat(d.val)||0; tInc+=v; if(v>0){incVs.push(v); incLs.push(d.label||"אחר");} });
+
+            document.querySelectorAll('[data-group="fixed"]').forEach(i => {
+                const freq = document.querySelector(`select[data-freq="${i.dataset.id}"]`).value;
+                const amt = parseFloat(i.value) || 0;
+                const monthly = amt / (parseFloat(freq) || 1); // "חד-פעמי" (לא מספר) => מתחלק ב-1, נכנס במלואו לחודש הנוכחי
+                tFix += monthly;
+                const def = FIXED_DEFAULTS.find(x => x.id === i.dataset.id);
+                vatEligibleExp += monthly * (vatPercentFor(def ? def.label : '') / 100);
+                const note = document.getElementById(`freq-note-fixed-${i.dataset.id}`);
+                if (note) note.innerText = freqNoteText(amt, freq);
+            });
+            savedDynamic.fixed.forEach((d, idx) => {
+                const amt = parseFloat(d.val) || 0;
+                const monthly = amt / (parseFloat(d.freq) || 1);
+                tFix += monthly;
+                vatEligibleExp += monthly * (vatPercentFor(d.label) / 100);
+                const note = document.getElementById(`freq-note-fixed-dyn-${idx}`);
+                if (note) note.innerText = freqNoteText(amt, d.freq);
+            });
+
+            document.querySelectorAll('[data-group="var"]').forEach(i => {
+                const amt = parseFloat(i.value) || 0;
+                tVar += amt;
+                const def = VAR_DEFAULTS.find(x => x.id === i.dataset.id);
+                vatEligibleExp += amt * (vatPercentFor(def ? def.label : '') / 100);
+            });
+            savedDynamic.var.forEach(d => {
+                const amt = parseFloat(d.val) || 0;
+                tVar += amt;
+                vatEligibleExp += amt * (vatPercentFor(d.label) / 100);
+            });
+
+            document.getElementById('total-income-val').innerText = tInc.toLocaleString();
+            document.getElementById('income-chart-wrapper').classList.toggle('hidden', tInc===0);
+            if(incomeChart) { incomeChart.data.labels=incLs; incomeChart.data.datasets[0].data=incVs; incomeChart.update(); }
+
+            const profit = computeProfit(tInc, tFix + tVar);
+            const fin = computeFinancials(profit);
+
+            document.getElementById('res-tax').innerText = Math.round(fin.netTax + fin.bituach).toLocaleString();
+            document.getElementById('res-pension').innerText = Math.round(fin.outOfPocketPens).toLocaleString();
+            document.getElementById('res-study').innerText = Math.round(fin.outOfPocketStudy).toLocaleString();
+            document.getElementById('res-net').innerText = Math.round(fin.net).toLocaleString();
+
+            const vat = computeVat(tInc, vatEligibleExp);
+            const vatCard = document.getElementById('vat-card');
+            vatCard.classList.toggle('hidden', !vat);
+            if (vat) {
+                document.getElementById('vat-output').innerText = Math.round(vat.vatOutput).toLocaleString();
+                document.getElementById('vat-input').innerText = Math.round(vat.vatInput).toLocaleString();
+                document.getElementById('vat-net').innerText = Math.round(vat.vatNet).toLocaleString();
+            }
+
+            document.getElementById('results-area').classList.toggle('opacity-0', tInc <= 0);
+
+            lastFixedMonthly = tFix;
+            updateEmergencyFund();
+        }
+
+        // כרטיס "קופה קטנה": כמה כבר יש לה ביחס ליעד (N חודשי הוצאות קבועות)
+        function updateEmergencyFund() {
+            const current = parseFloat(document.getElementById('ek-current').value) || 0;
+            const months = parseFloat(document.getElementById('ek-months').value) || 0;
+            localStorage.setItem(KEYS.EMERGENCY, JSON.stringify({ current: document.getElementById('ek-current').value, months: document.getElementById('ek-months').value }));
+
+            const target = lastFixedMonthly * months;
+            const pct = target > 0 ? Math.min(100, Math.round((current / target) * 100)) : 0;
+
+            document.getElementById('ek-target').innerText = Math.round(target).toLocaleString();
+            document.getElementById('ek-percent').innerText = pct + '%';
+            document.getElementById('ek-bar').style.width = pct + '%';
+
+            const noteEl = document.getElementById('ek-note');
+            if (target <= 0) {
+                noteEl.innerText = 'הזיני הוצאות קבועות למעלה כדי שהיעד יחושב אוטומטית.';
+            } else if (current >= target) {
+                noteEl.innerText = `הגעת ליעד! יש לך כרית ביטחון של ${months} חודשי הוצאות קבועות.`;
+            } else {
+                noteEl.innerText = `נשארו ${Math.round(target - current).toLocaleString()} ₪ עד היעד.`;
+            }
         }
 
         function calcSim() {
             const tInc = parseFloat(document.getElementById('sim-inc').value) || 0;
             const tExp = parseFloat(document.getElementById('sim-exp').value) || 0;
-            let profit = isMurshe ? (tInc/1.18 - tExp/1.18) : (tInc - tExp); profit = Math.max(0, profit);
-            const pts = getCreditPoints();
-            const taxableProfit = Math.max(0, profit - profile.pension);
-            let rawTax = calcTax(profile.salary + taxableProfit) - calcTax(profile.salary);
-            let netTax = Math.max(0, rawTax - (pts * C.CREDIT_POINT) - (profile.pension * 0.35));
-            const peri = PERIPHERY[profile.periphery];
-            if(peri.rate > 0) netTax = Math.max(0, netTax - Math.min(taxableProfit * peri.rate, (peri.ceil / 12) * peri.rate));
-            let bituach = profile.bituach ? (Math.min(profit, C.BITUACH_LIMIT)*0.0597 + Math.max(0, profit-C.BITUACH_LIMIT)*0.1783) : (profit > C.AVG_WAGE*0.25 ? (profit-C.AVG_WAGE*0.25)*0.0975 : 0);
-            document.getElementById('sim-tax').innerText = Math.round(netTax + bituach).toLocaleString();
-            document.getElementById('sim-net').innerText = Math.round(profit - netTax - bituach - profile.pension - profile.study).toLocaleString();
+            const profit = computeProfit(tInc, tExp);
+            const fin = computeFinancials(profit);
+            document.getElementById('sim-tax').innerText = Math.round(fin.netTax + fin.bituach).toLocaleString();
+            document.getElementById('sim-net').innerText = Math.round(fin.net).toLocaleString();
         }
 
         function calcTax(n) { let t=0, p=0; for(let b of C.TAX){ if(n>p){ t+=Math.min(n-p, b.limit-p)*b.rate; p=b.limit; } } if(n>p) t+=(n-p)*0.47; return t; }
         function initCharts() { incomeChart = new Chart(document.getElementById('incomeChart').getContext('2d'), { type:'doughnut', data:{labels:[],datasets:[{data:[],backgroundColor:['#f26522','#334155','#94a3b8']}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{family:'Rubik'},boxWidth:8}}}}}); }
-        function backupData() { const data = { history, fixed: savedFixed, dynamic: savedDynamic, profile }; const blob = new Blob([JSON.stringify(data)], {type: "application/json"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `osek_backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); }
-        function restoreData(input) { const file = input.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const data = JSON.parse(e.target.result); if(data.history) localStorage.setItem(KEYS.HISTORY, JSON.stringify(data.history)); if(data.fixed) localStorage.setItem(KEYS.FIXED, JSON.stringify(data.fixed)); if(data.dynamic) localStorage.setItem(KEYS.DYNAMIC, JSON.stringify(data.dynamic)); if(data.profile) localStorage.setItem(KEYS.PROFILE, JSON.stringify(data.profile)); alert("הנתונים שוחזרו! העמוד יתרענן."); location.reload(); } catch(err) { alert("שגיאה בקובץ הגיבוי"); } }; reader.readAsText(file); }
+        function backupData() { const emergency = JSON.parse(localStorage.getItem(KEYS.EMERGENCY)) || {}; const data = { history, fixed: savedFixed, dynamic: savedDynamic, profile, emergency }; const blob = new Blob([JSON.stringify(data)], {type: "application/json"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `osek_backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); }
+        function restoreData(input) { const file = input.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const data = JSON.parse(e.target.result); if(data.history) localStorage.setItem(KEYS.HISTORY, JSON.stringify(data.history)); if(data.fixed) localStorage.setItem(KEYS.FIXED, JSON.stringify(data.fixed)); if(data.dynamic) localStorage.setItem(KEYS.DYNAMIC, JSON.stringify(data.dynamic)); if(data.profile) localStorage.setItem(KEYS.PROFILE, JSON.stringify(data.profile)); if(data.emergency) localStorage.setItem(KEYS.EMERGENCY, JSON.stringify(data.emergency)); alert("הנתונים שוחזרו! העמוד יתרענן."); location.reload(); } catch(err) { alert("שגיאה בקובץ הגיבוי"); } }; reader.readAsText(file); }
         function clearAllData() { if(confirm("למחוק הכל?")){ localStorage.clear(); location.reload(); } }
     </script>
 </body>
