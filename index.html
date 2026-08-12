@@ -7,38 +7,79 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&family=Assistant:wght@400;500;600;700&family=David+Libre:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Rubik', sans-serif; background-color: #f8fafc; color: #334155; }
-        .text-brand-orange { color: #f26522; } .bg-brand-orange { background-color: #f26522; }
-        .card { background: white; border-radius: 16px; box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; }
-        .input-field { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none; transition: all 0.2s; background-color: #fff; }
-        .input-field:focus { border-color: #f26522; outline: none; }
-        .drop-zone { border: 2px dashed #cbd5e1; border-radius: 12px; transition: all 0.3s; background-color: #f8fafc; }
-        .drop-zone.dragover { border-color: #f26522; background-color: #fff7ed; }
-        .status-toggle { display: flex; background: #f1f5f9; padding: 4px; border-radius: 12px; position: relative; cursor: pointer; }
-        .status-option { flex: 1; text-align: center; padding: 8px; font-size: 0.85rem; font-weight: bold; z-index: 10; color: #64748b; }
-        .status-option.active { color: #f26522; }
-        .status-slider { position: absolute; top: 4px; bottom: 4px; width: 50%; background: white; border-radius: 8px; transition: left 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        :root{
+          --bg:#F5EDE0; --bg-tint:#EFE4D2; --surface:#E8D5BC; --ink:#2F2B26; --ink-soft:#6E5A40;
+          --muted:#8A8178; --line:#E2D4BE; --accent:#D4622E; --accent-strong:#B5532A; --on-accent:#FFF8F2;
+          --chip-bg: color-mix(in srgb, var(--ink) 6%, var(--bg));
+        }
+        body { font-family: 'Assistant', sans-serif; background-color: var(--bg); color: var(--ink); line-height: 1.55; }
+        h1,h2,h3,h4 { font-family: 'Rubik', sans-serif; }
+        .text-brand-orange { color: var(--accent-strong) !important; } .bg-brand-orange { background-color: var(--accent-strong) !important; }
+        .card { background: var(--surface); border-radius: 16px; box-shadow: 0 2px 6px rgba(47,43,38,.06), 0 10px 26px rgba(47,43,38,.05); border: 1px solid var(--line); }
+        .input-field { width: 100%; min-height:44px; padding: 10px 14px; border: 1.5px solid var(--line); border-radius: 8px; font-size: 0.95rem; outline: none; transition: all 0.2s; background-color: var(--bg); color: var(--ink); font-family:'Assistant',sans-serif; }
+        .input-field:focus { border-color: var(--accent-strong); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+        .drop-zone { border: 2px dashed var(--line); border-radius: 12px; transition: all 0.3s; background-color: var(--bg-tint); }
+        .drop-zone.dragover { border-color: var(--accent-strong); background-color: color-mix(in srgb, var(--accent) 10%, var(--bg)); }
+        .status-toggle { display: flex; background: var(--bg); padding: 4px; border-radius: 999px; position: relative; cursor: pointer; border:1.5px solid var(--line); }
+        .status-option { flex: 1; text-align: center; padding: 10px; font-size: 0.85rem; font-weight: 700; z-index: 10; color: var(--ink-soft); position:relative; transition: color .2s ease; }
+        .status-option.active { color: var(--on-accent); }
+        .status-slider { position: absolute; top: 4px; bottom: 4px; width: calc(50% - 4px); background: var(--accent-strong); border-radius: 999px; transition: left 0.3s ease; }
         .dynamic-row { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-        .modal { display: none !important; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(51, 65, 85, 0.6); align-items: center; justify-content: center; }
+        .modal { display: none !important; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(47, 43, 38, 0.55); align-items: center; justify-content: center; }
         .modal.active { display: flex !important; }
-        .modal-content { background-color: #ffffff; padding: 24px; border-radius: 20px; width: 90%; max-width: 500px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border-top: 6px solid #f26522; max-height: 90vh; overflow-y: auto; }
+        .modal-content { background-color: var(--surface); padding: 24px; border-radius: 20px; width: 90%; max-width: 500px; box-shadow: 0 25px 50px -12px rgba(47,43,38,0.25); border-top: 6px solid var(--accent-strong); max-height: 90vh; overflow-y: auto; }
+
+        .btn{font-family:'Assistant',sans-serif;font-weight:700;font-size:.8rem;cursor:pointer;min-height:44px;padding:0 20px;border-radius:999px;border:1.5px solid transparent;display:inline-flex;align-items:center;gap:8px;transition:all .2s ease;}
+        .btn-primary{background:var(--accent-strong);color:#fff;}
+        .btn-primary:hover{background:#a04a25;}
+        .btn-secondary{background:var(--ink);color:var(--bg);}
+        .btn-secondary:hover{background:#241f1a;}
+        .btn-ghost{background:var(--surface);color:var(--ink);border-color:var(--line);}
+        .btn-ghost:hover{border-color:var(--muted);}
+
+        a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--accent-strong);outline-offset:2px;border-radius:8px;}
+        input[type=checkbox],input[type=radio]{accent-color:var(--accent-strong);}
+        #expense-list select{border:1.5px solid var(--line) !important;border-radius:999px !important;background:var(--bg);color:var(--ink-soft);font-weight:600;padding:6px 12px !important;min-height:36px;}
+
+        /* remap legacy utility colors to brand tokens */
+        .bg-white{background:var(--surface) !important;}
+        .text-slate-800,.text-slate-700{color:var(--ink) !important;}
+        .text-slate-600,.text-slate-500{color:var(--ink-soft) !important;}
+        .text-slate-400,.text-slate-300{color:var(--muted) !important;}
+        .bg-slate-50,.bg-blue-50{background:var(--bg-tint) !important;}
+        .bg-slate-100{background:var(--chip-bg) !important;}
+        .bg-slate-700,.bg-slate-900{background:var(--ink) !important;}
+        .border-slate-100,.border-slate-200,.border-blue-200,.border-blue-400,.border-purple-400,.border-teal-400,.border-emerald-400,.border-slate-400{border-color:var(--line) !important;}
+        .text-red-500,.text-green-600,.text-purple-600,.text-emerald-600{color:var(--ink) !important;}
+        .text-teal-600{color:var(--accent-strong) !important;}
+        .bg-emerald-400,.bg-emerald-600{background:var(--accent-strong) !important;}
+        .text-emerald-400{color:var(--bg) !important;}
+        .hover\:bg-slate-800:hover{background:#241f1a !important;}
+        .hover\:bg-slate-200:hover{background:var(--line) !important;}
+        .hover\:text-slate-800:hover{color:var(--ink) !important;}
+
+        @media (prefers-reduced-motion: reduce){ *{animation:none !important;transition:none !important;} }
     </style>
 </head>
 <body class="p-4 md:p-8 min-h-screen">
+    <svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true"><defs><symbol id="crescent-shape" viewBox="0 0 24 24"><mask id="crescent-mask"><circle cx="9.5" cy="9.5" r="7.5" fill="#fff"/><circle cx="15.5" cy="15.5" r="7.5" fill="#000"/></mask><circle cx="9.5" cy="9.5" r="7.5" fill="currentColor" mask="url(#crescent-mask)"/></symbol></defs></svg>
 
     <div class="max-w-6xl mx-auto pb-12">
-        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 border-b border-slate-200 pb-6">
-            <div class="text-center md:text-right">
-                <h1 class="text-3xl font-bold text-slate-800 tracking-tight">Bar Amar-Sahar <span class="text-brand-orange text-xl font-medium">| ניהול קליניקה</span></h1>
-                <p class="text-xs text-slate-500 mt-1">גרסה 16.0</p>
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 pb-6" style="border-bottom:1px solid var(--line);">
+            <div class="flex items-center gap-4">
+                <img src="assets/logo-color.png" alt="בר עמר-סהר" style="width:52px;height:52px;object-fit:contain;flex:none;">
+                <div style="text-align:right;">
+                    <h1 class="tracking-tight" style="font-weight:800;font-size:26px;color:var(--ink);margin:0;">בר עמר-סהר <span style="color:var(--accent-strong);font-weight:600;font-size:16px;">| ניהול קליניקה</span></h1>
+                    <p style="font-size:11px;color:var(--muted);margin-top:4px;">גרסה 16.0</p>
+                </div>
             </div>
             <div class="flex gap-2 flex-wrap justify-center">
-                <button onclick="backupData()" class="flex items-center gap-2 text-xs font-bold text-white bg-slate-700 px-4 py-2.5 rounded-full hover:bg-slate-800 transition"><span>💾</span> שמור גיבוי</button>
-                <label class="flex items-center gap-2 text-xs font-bold text-slate-600 bg-white px-4 py-2.5 rounded-full border border-slate-200 cursor-pointer">
-                    <span>📂</span> שחזר גיבוי<input type="file" accept=".json" class="hidden" onchange="restoreData(this)">
+                <button onclick="backupData()" class="btn btn-secondary">שמור גיבוי</button>
+                <label class="btn btn-ghost" style="cursor:pointer;">
+                    שחזר גיבוי<input type="file" accept=".json" class="hidden" onchange="restoreData(this)">
                 </label>
             </div>
         </div>
@@ -47,7 +88,7 @@
             <div class="lg:col-span-4 space-y-6">
                 <div class="card p-6">
                     <div class="flex justify-between items-center mb-5 border-b pb-3">
-                        <h3 class="font-bold text-slate-700">⚙️ פרופיל מס 101</h3>
+                        <h3 class="font-bold text-slate-700 flex items-center gap-2"><svg class="crescent" width="14" height="14" style="color:var(--accent)"><use href="#crescent-shape"></use></svg>פרופיל מס 101</h3>
                         <button onclick="open101Modal()" class="text-[10px] bg-slate-100 px-3 py-1.5 rounded-full font-bold text-slate-600 hover:bg-slate-200">עריכה</button>
                     </div>
                     <div class="mb-5">
@@ -64,8 +105,8 @@
                     </div>
                 </div>
 
-                <div class="card p-6 border-t-4 border-blue-400">
-                    <h3 class="font-bold text-slate-700 mb-2">🔮 סימולטור תכנון</h3>
+                <div class="card p-6">
+                    <h3 class="font-bold text-slate-700 mb-2 flex items-center gap-2"><svg class="crescent" width="14" height="14" style="color:var(--accent)"><use href="#crescent-shape"></use></svg>סימולטור תכנון</h3>
                     <div class="space-y-3">
                         <div><label class="text-xs font-bold text-slate-500">הכנסה משוערת (₪)</label><input type="number" id="sim-inc" placeholder="0" class="input-field border-blue-200" oninput="calcSim()"></div>
                         <div><label class="text-xs font-bold text-slate-500">הוצאה מוכרת (₪)</label><input type="number" id="sim-exp" placeholder="0" class="input-field border-blue-200" oninput="calcSim()"></div>
@@ -78,8 +119,8 @@
             </div>
 
             <div class="lg:col-span-8 space-y-8">
-                <div class="card p-6 border-t-4 border-brand-orange">
-                    <h3 class="font-bold text-slate-700 mb-6 flex items-center gap-2">💰 הכנסות</h3>
+                <div class="card p-6">
+                    <h3 class="font-bold text-slate-700 mb-6 flex items-center gap-2"><svg class="crescent" width="14" height="14" style="color:var(--accent)"><use href="#crescent-shape"></use></svg>הכנסות</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="income-inputs-container">
                         <div class="input-group"><label class="text-xs font-bold text-slate-400">טיפולים</label><input type="number" data-group="inc" class="input-field" oninput="calculate()"></div>
                         <div class="input-group"><label class="text-xs font-bold text-slate-400">הרצאות</label><input type="number" data-group="inc" class="input-field" oninput="calculate()"></div>
@@ -96,14 +137,14 @@
                     <div class="drop-zone p-10 text-center cursor-pointer relative" id="drop-zone">
                         <input type="file" accept=".csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleMorningUpload(this)">
                         <div>
-                            <span class="text-4xl mb-2 block">📄</span>
+                            <svg width="34" height="34" class="mb-2" style="color:var(--muted);margin:0 auto 8px;display:block"><use href="#crescent-shape" width="34" height="34"></use></svg>
                             <h4 class="font-bold text-slate-700">ייבוא דו"ח הוצאות מ-Morning</h4>
                             <p class="text-xs text-slate-400 mt-1">או גררי לכאן את הקובץ</p>
                         </div>
                     </div>
-                    <div class="card p-5 border-t-4 border-slate-400">
+                    <div class="card p-5">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-bold text-slate-700 text-sm">📋 הוצאות</h3>
+                            <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2"><svg class="crescent" width="12" height="12" style="color:var(--accent)"><use href="#crescent-shape"></use></svg>הוצאות</h3>
                             <span class="text-[10px] text-slate-400">מוצגות רק קטגוריות שיש בהן נתונים</span>
                         </div>
                         <div id="expense-list" class="space-y-4"></div>
@@ -130,8 +171,8 @@
                         </div>
                     </div>
 
-                    <div id="vat-card" class="card p-5 border-t-4 border-purple-400 hidden">
-                        <h4 class="font-bold text-slate-700 text-sm mb-3">🧾 מע"מ לתשלום (עוסק מורשה)</h4>
+                    <div id="vat-card" class="card p-5 hidden">
+                        <h4 class="font-bold text-slate-700 text-sm mb-3">מע"מ לתשלום (עוסק מורשה)</h4>
                         <div class="grid grid-cols-2 gap-4 text-sm mb-3">
                             <div><span class="text-slate-400 text-xs block">מע"מ שגבית (עסקאות)</span><span class="font-bold">₪<span id="vat-output">0</span></span></div>
                             <div><span class="text-slate-400 text-xs block">מע"מ לקיזוז (תשומות)</span><span class="font-bold">₪<span id="vat-input">0</span></span></div>
@@ -144,11 +185,10 @@
                     </div>
 
                     <div class="card bg-slate-900 text-white p-8 relative overflow-hidden">
-                        <div class="absolute top-0 right-0 w-32 h-32 bg-brand-orange rounded-full blur-3xl opacity-20"></div>
                         <div class="relative z-10">
                             <div class="flex justify-between items-center">
                                 <div><h4 class="text-3xl font-bold">נטו אמיתי</h4></div>
-                                <div class="text-5xl font-bold text-brand-orange">₪<span id="res-net">0</span></div>
+                                <div class="text-5xl font-bold" style="color:var(--bg);">₪<span id="res-net">0</span></div>
                             </div>
                             <p class="text-[11px] text-slate-400 mt-3 leading-snug">רווח העסק בפועל החודש (הכנסה פחות כל ההוצאה) — אחרי מס הכנסה, ביטוח לאומי, פנסיה וקה"ש (ולפני מע"מ, אם רלוונטי — ראי כרטיס מע"מ למעלה).</p>
                             <div id="loan-row" class="mt-3 pt-3 border-t border-slate-700 hidden flex justify-between items-center">
@@ -158,8 +198,8 @@
                         </div>
                     </div>
 
-                    <div class="card p-6 border-t-4 border-teal-400">
-                        <h4 class="font-bold text-slate-700 mb-3">💵 המלצה למשכורת החודש</h4>
+                    <div class="card p-6">
+                        <h4 class="font-bold text-slate-700 mb-3 flex items-center gap-2"><svg class="crescent" width="14" height="14" style="color:var(--accent)"><use href="#crescent-shape"></use></svg>המלצה למשכורת החודש</h4>
                         <div class="flex justify-between items-end gap-4">
                             <div>
                                 <p class="text-[10px] text-slate-400 font-bold">שמרנית (בונה קופה קטנה)</p>
@@ -175,9 +215,9 @@
                     </div>
                 </div>
 
-                <div class="card p-6 border-t-4 border-emerald-400">
+                <div class="card p-6">
                     <div class="flex justify-between items-center mb-4 border-b pb-3">
-                        <h3 class="font-bold text-slate-700">🛟 קופה קטנה (קרן יציבות)</h3>
+                        <h3 class="font-bold text-slate-700 flex items-center gap-2"><svg class="crescent" width="14" height="14" style="color:var(--accent)"><use href="#crescent-shape"></use></svg>קופה קטנה (קרן יציבות)</h3>
                     </div>
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div><label class="text-xs font-bold text-slate-500">כבר יש לי בקופה (₪)</label><input type="number" id="ek-current" placeholder="0" class="input-field" oninput="updateEmergencyFund()"></div>
@@ -330,8 +370,9 @@
         }
 
         // --- רשימת ההוצאות המאוחדת ---
-        // כל קטגוריה מסווגת פעם אחת (תדירות + מקור תשלום) והמערכת זוכרת את הסיווג קדימה.
-        // מיישבת גם נתונים ישנים מגרסה קודמת של האתר (savedFixed/savedDynamic.fixed/var) לפורמט האחיד, פעם אחת בלבד.
+        // כל הוצאה מסווגת פעם אחת (תדירות + מקור תשלום) לפי הספק הספציפי (לא הקטגוריה הרחבה!) והמערכת זוכרת את הסיווג קדימה.
+        // "category" נשמר על כל רשומה בנפרד, ומשמש רק "מאחורי הקלעים" לחישוב האחוז העסקי והמע"מ - לא כמפתח הסיווג.
+        // מיישבת גם נתונים ישנים מגרסה קודמת של האתר (savedFixed/savedDynamic.fixed/var, שהיו מסווגים לפי קטגוריה) לפורמט החדש, פעם אחת בלבד.
         function migrateExpensesIfNeeded() {
             const already = localStorage.getItem(KEYS.EXPENSES);
             if (already) { expenses = JSON.parse(already); return; }
@@ -340,14 +381,14 @@
             const migrated = {};
             LEGACY_FIXED_DEFAULTS.forEach(def => {
                 const rec = oldFixed[def.id];
-                if (rec && parseFloat(rec.val) > 0) migrated[def.label] = { amount: parseFloat(rec.val) || 0, freq: rec.freq || '1', source: 'business' };
+                if (rec && parseFloat(rec.val) > 0) migrated[def.label] = { amount: parseFloat(rec.val) || 0, freq: rec.freq || '1', source: 'business', category: def.label };
             });
             LEGACY_VAR_DEFAULTS.forEach(def => {
                 const rec = oldFixed[def.id];
-                if (rec && parseFloat(rec.val) > 0) migrated[def.label] = { amount: parseFloat(rec.val) || 0, freq: 'var', source: 'business' };
+                if (rec && parseFloat(rec.val) > 0) migrated[def.label] = { amount: parseFloat(rec.val) || 0, freq: 'var', source: 'business', category: def.label };
             });
-            (oldDynamic.fixed || []).forEach(d => { if (d.label && parseFloat(d.val) > 0) migrated[d.label] = { amount: parseFloat(d.val) || 0, freq: d.freq || '1', source: 'business' }; });
-            (oldDynamic.var || []).forEach(d => { if (d.label && parseFloat(d.val) > 0) migrated[d.label] = { amount: parseFloat(d.val) || 0, freq: 'var', source: 'business' }; });
+            (oldDynamic.fixed || []).forEach(d => { if (d.label && parseFloat(d.val) > 0) migrated[d.label] = { amount: parseFloat(d.val) || 0, freq: d.freq || '1', source: 'business', category: d.label }; });
+            (oldDynamic.var || []).forEach(d => { if (d.label && parseFloat(d.val) > 0) migrated[d.label] = { amount: parseFloat(d.val) || 0, freq: 'var', source: 'business', category: d.label }; });
             expenses = migrated;
             saveExpenses();
         }
@@ -403,6 +444,13 @@
             srcWrap.append(btnBiz, btnPer);
             top.append(nameEl, srcWrap);
 
+            const catLine = document.createElement('p');
+            catLine.className = 'text-[10px] text-slate-400';
+            if (rec.category) {
+                const pct = PERCENT_MAP[rec.category] !== undefined ? PERCENT_MAP[rec.category] : 100;
+                catLine.textContent = `קטגוריה: ${rec.category} · ${pct}% עסקי`;
+            }
+
             const row = document.createElement('div');
             row.className = 'flex gap-2 mt-2';
             const amtInput = document.createElement('input');
@@ -421,7 +469,7 @@
             amtInput.oninput = () => { rec.amount = parseFloat(amtInput.value) || 0; saveExpenses(); refreshNote(); calculate(); };
             freqSelect.onchange = () => { rec.freq = freqSelect.value; saveExpenses(); refreshNote(); calculate(); };
 
-            div.append(top, row, note);
+            div.append(top, catLine, row, note);
             return div;
         }
 
@@ -461,17 +509,22 @@
             }; reader.readAsArrayBuffer(file);
         }
 
-        // כל העלאה מרעננת את הסכום לכל קטגוריה (לא מצטברת מהעלאה קודמת - כדי שקובץ מצטבר/עדכני תמיד ישקף נכון).
-        // תדירות ומקור תשלום שכבר סווגו פעם אחת נשמרים כמו שהם; רק קטגוריה חדשה מקבלת ניחוש ראשוני (מ"Logic" אם קיים, אחרת "משתנה"/"עסקי").
+        // מקבצת לפי ה"ספק" הספציפי (למשל "Zoom" או "גילת טלקום בע\"מ") - לא לפי הקטגוריה הרחבה ("תיאור חשבון הוצאה"),
+        // כי קטגוריה אחת יכולה לכלול כמה הוצאות שונות עם תדירויות שונות (למשל 3 מנויים חודשיים + חידוש שנתי אחד תחת "תוכנות, מנויים").
+        // אם לשורה מסוימת אין ספק רשום, נופלים חזרה לקטגוריה כדי שלא לאבד את הנתון.
+        // כל העלאה מרעננת את הסכום לכל ספק (לא מצטברת מהעלאה קודמת - כדי שקובץ מצטבר/עדכני תמיד ישקף נכון).
+        // תדירות ומקור תשלום שכבר סווגו פעם אחת לספק מסוים נשמרים כמו שהם; רק ספק חדש מקבל ניחוש ראשוני (מ"Logic" אם קיים, אחרת "משתנה"/"עסקי").
         function processMorningData(data) {
             let count = 0;
-            const uploadTotals = {}, uploadLogic = {};
+            const uploadTotals = {}, uploadLogic = {}, uploadCategory = {};
             data.forEach(row => {
                 const rawCat = row['תיאור חשבון הוצאה'], amount = parseFloat(row['סכום כולל'] || row['סכום כולל מע״מ'] || 0), logic = (row['Logic'] || '').trim();
-                if(!rawCat || amount === 0) return;
+                const vendor = (row['ספק'] || '').toString().trim() || rawCat;
+                if(!rawCat || !vendor || amount === 0) return;
                 const finalAmount = amount * ((PERCENT_MAP[rawCat] || 100) / 100);
-                uploadTotals[rawCat] = (uploadTotals[rawCat] || 0) + finalAmount;
-                if (logic) uploadLogic[rawCat] = logic;
+                uploadTotals[vendor] = (uploadTotals[vendor] || 0) + finalAmount;
+                uploadCategory[vendor] = rawCat;
+                if (logic) uploadLogic[vendor] = logic;
                 count++;
             });
 
@@ -484,13 +537,13 @@
                     else if (logic === 'קבועה-דו-חודשית') freq = '2';
                     else if (logic === 'קבועה-שנתית') freq = '12';
                 }
-                expenses[label] = { amount: uploadTotals[label], freq: freq, source: isNew ? 'business' : expenses[label].source };
+                expenses[label] = { amount: uploadTotals[label], freq: freq, source: isNew ? 'business' : expenses[label].source, category: uploadCategory[label] };
             });
 
             saveExpenses();
             renderExpenseList();
             calculate();
-            alert(`נקלטו ${count} שורות בהצלחה! קטגוריות חדשות סווגו כברירת מחדל "משתנה / עסקי" — אפשר לשנות בכל שורה.`);
+            alert(`נקלטו ${count} שורות בהצלחה! ספקים חדשים סווגו כברירת מחדל "משתנה / עסקי" — אפשר לשנות בכל שורה.`);
         }
 
         // מחשב "רווח" (הכנסה פחות הוצאות) - זהה בדיוק עבור החישוב האמיתי והסימולטור
@@ -573,7 +626,7 @@
                 const divisor = (rec.freq === 'var' || rec.freq === 'once') ? 1 : (parseFloat(rec.freq) || 1);
                 const monthly = amt / divisor;
                 if (rec.freq === 'var') tVar += monthly; else tFix += monthly;
-                vatEligibleExp += monthly * (vatPercentFor(label) / 100);
+                vatEligibleExp += monthly * (vatPercentFor(rec.category || label) / 100);
                 if (rec.source === 'personal') personalLoanMonthly += monthly;
                 if (rec.freq === '2' || rec.freq === '12') annualPeriodicTotal += amt * (12 / divisor);
             });
