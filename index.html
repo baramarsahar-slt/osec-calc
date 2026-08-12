@@ -147,8 +147,51 @@
                             <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2"><svg class="crescent" width="12" height="12" style="color:var(--accent)"><use href="#crescent-shape"></use></svg>הוצאות</h3>
                             <span class="text-[10px] text-slate-400">מוצגות רק קטגוריות שיש בהן נתונים</span>
                         </div>
-                        <div id="expense-list" class="space-y-4"></div>
+
+                        <div id="expense-list">
+                            <div id="pending-section" class="hidden mb-4 pb-4" style="border-bottom:1.5px solid var(--line);">
+                                <div class="flex justify-between items-center mb-3">
+                                    <h4 class="text-xs font-bold" style="color:var(--accent-strong)">לביקורת — סיווג ראשוני, נא לאשר</h4>
+                                    <button type="button" onclick="confirmAllPending()" class="btn btn-primary" style="padding:0 14px;min-height:32px;font-size:11px;">אשרי הכל</button>
+                                </div>
+                                <div id="expense-pending-list" class="space-y-4"></div>
+                            </div>
+
+                            <div id="expense-month-list" class="space-y-4"></div>
+
+                            <div id="periodic-summary-line" class="hidden mt-4 pt-4" style="border-top:1.5px solid var(--line);">
+                                <button type="button" onclick="togglePeriodicDetail()" class="w-full flex justify-between items-center text-sm" style="cursor:pointer;">
+                                    <span class="font-bold text-slate-700">הוצאות תקופתיות (<span id="periodic-count">0</span> פריטים)</span>
+                                    <span class="text-slate-500">משוקלל לחודש: <span id="periodic-total" class="font-bold text-slate-700">0</span> ₪ <span id="periodic-detail-arrow">▾</span></span>
+                                </button>
+                                <div id="expense-periodic-list" class="hidden space-y-4 mt-3"></div>
+                            </div>
+                        </div>
+
                         <p id="expense-empty-note" class="text-xs text-slate-400 text-center py-4">עדיין אין הוצאות — העלי קובץ ממורנינג כדי להתחיל.</p>
+
+                        <div class="mt-4 pt-4" style="border-top:1.5px solid var(--line);">
+                            <button type="button" onclick="toggleAddExpenseForm()" class="text-xs font-bold" style="color:var(--ink-soft);cursor:pointer;">+ הוספת הוצאה תקופתית שכבר שילמת</button>
+                            <div id="add-expense-form" class="hidden mt-3 space-y-2">
+                                <input type="text" id="ae-name" placeholder="שם / תיאור (למשל: ביטוח רכב)" class="input-field text-sm">
+                                <select id="ae-category" class="input-field text-sm"></select>
+                                <div class="flex gap-2">
+                                    <input type="number" id="ae-amount" placeholder="סכום ששילמת בפועל (₪)" class="input-field text-sm flex-grow">
+                                    <select id="ae-freq" class="input-field text-sm">
+                                        <option value="12">שנתי</option>
+                                        <option value="2">דו-חודשי</option>
+                                        <option value="1">חודשי קבוע</option>
+                                        <option value="once">חד-פעמי</option>
+                                    </select>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs text-slate-500">מקור תשלום:</span>
+                                    <button type="button" id="ae-src-biz" onclick="setAeSource('business')" class="text-[10px] px-2 py-1 rounded-full font-bold">עסקי</button>
+                                    <button type="button" id="ae-src-per" onclick="setAeSource('personal')" class="text-[10px] px-2 py-1 rounded-full font-bold">פרטי</button>
+                                </div>
+                                <button type="button" onclick="addManualExpense()" class="btn btn-primary w-full">הוסף לרשימה</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -211,7 +254,7 @@
                                 <p class="text-2xl font-bold text-slate-700">₪<span id="salary-high">0</span></p>
                             </div>
                         </div>
-                        <p class="text-[10px] text-slate-400 mt-3 leading-snug">נטו אמיתי + הלוואה מהבית שמוחזרת אלייך, פחות (בקצה השמרני) תרומה חודשית לבניית הקופה הקטנה עד שהיא מגיעה ליעד.</p>
+                        <p class="text-[10px] text-slate-400 mt-3 leading-snug">נטו אמיתי + הלוואה מהבית שמוחזרת אלייך, פחות (בקצה השמרני) תרומה חודשית לבניית הקופה הקטנה עד שהיא מגיעה ליעד. <span id="salary-avg-note"></span></p>
                     </div>
                 </div>
 
@@ -286,10 +329,10 @@
         const STUDY_FUND_ANNUAL_CEILING = 18480; // תקרת ניכוי שנתית לקה"ש לעצמאים (₪/שנה)
         const STUDY_FUND_RATE = 0.045; // אחוז מהרווח שמוכר לניכוי לקה"ש (עד התקרה השנתית)
         const PERIPHERY = { 'none': {rate: 0, ceil: 0, name:'ללא'}, 'akko': {rate: 0.11, ceil: 180000, name:'עכו'}, 'nahariya': {rate: 0.12, ceil: 204000, name:'נהריה'}, 'k8': {rate: 0.20, ceil: 241080, name:'ק.שמונה'}, 'sdrot': {rate: 0.20, ceil: 241080, name:'שדרות'}, 'eilat': {rate: 0.10, ceil: 168000, name:'אילת'} };
-        const KEYS = { HISTORY: 'osek_history_15_1', FIXED: 'osek_fixed_15_1', DYNAMIC: 'osek_dynamic_15_1', PROFILE: 'osek_profile_15_1', EMERGENCY: 'osek_emergency_16_0', EXPENSES: 'osek_expenses_16_0' };
+        const KEYS = { HISTORY: 'osek_history_15_1', FIXED: 'osek_fixed_15_1', DYNAMIC: 'osek_dynamic_15_1', PROFILE: 'osek_profile_15_1', EMERGENCY: 'osek_emergency_16_0', EXPENSES: 'osek_expenses_16_0', MONTHLY: 'osek_monthly_16_0' };
 
         let history = [];
-        // expenses: מפתח = שם הקטגוריה (בדיוק כפי שמופיע במורנינג). value = { amount, freq: 'var'|'1'|'2'|'12'|'once', source: 'business'|'personal' }
+        // expenses: מפתח = שם ההוצאה (ספק/קטגוריה). value = { amount, freq: 'var'|'1'|'2'|'12'|'once', source: 'business'|'personal', category, confirmed }
         let expenses = {};
         let savedDynamic = { inc: [] };
         let profile = { gender:'female', status:'married', kids:'', periphery:'none', bituach:true, pension:0, study:0, salary:0, degree:false };
@@ -297,18 +340,23 @@
         let incomeChart = null;
         // ערכים מהחישוב האחרון - משמשים את כרטיסי הקופה הקטנה והמלצת המשכורת
         let lastTotalMonthly = 0, lastAnnualPeriodicTotal = 0, salaryBase = 0, ekGap = 0;
+        // monthlyHistory: מפתח = "YYYY-MM", value = salaryBase של אותו חודש - נשמר אוטומטית בכל חישוב, בלי פעולה מצידך.
+        // משמש לחשב ממוצע מצטבר להמלצת המשכורת ולקופה הקטנה, כדי שלא יקפצו לפי חודש בודד.
+        let monthlyHistory = {};
+        let aeSource = 'business'; // מקור התשלום שנבחר בטופס ההוספה הידנית
 
         window.onload = () => {
             history = JSON.parse(localStorage.getItem(KEYS.HISTORY)) || [];
             savedDynamic = JSON.parse(localStorage.getItem(KEYS.DYNAMIC)) || { inc: [] };
             if (!savedDynamic.inc) savedDynamic.inc = [];
             profile = JSON.parse(localStorage.getItem(KEYS.PROFILE)) || profile;
+            monthlyHistory = JSON.parse(localStorage.getItem(KEYS.MONTHLY)) || {};
             const savedEmergency = JSON.parse(localStorage.getItem(KEYS.EMERGENCY)) || { current: '', multiplier: 2.5 };
             document.getElementById('ek-current').value = savedEmergency.current;
             document.getElementById('ek-multiplier').value = savedEmergency.multiplier || 2.5;
 
             migrateExpensesIfNeeded();
-            renderExpenseList(); renderDynamicInputs('inc');
+            renderExpenseList(); renderDynamicInputs('inc'); populateCategoryDropdown(); setAeSource('business');
             initCharts(); updateStatusUI(); updateProfileUI(); calculate(); calcSim();
 
             const dropZone = document.getElementById('drop-zone');
@@ -375,20 +423,26 @@
         // מיישבת גם נתונים ישנים מגרסה קודמת של האתר (savedFixed/savedDynamic.fixed/var, שהיו מסווגים לפי קטגוריה) לפורמט החדש, פעם אחת בלבד.
         function migrateExpensesIfNeeded() {
             const already = localStorage.getItem(KEYS.EXPENSES);
-            if (already) { expenses = JSON.parse(already); return; }
+            if (already) {
+                expenses = JSON.parse(already);
+                // מידע שנוצר לפני שהיה שלב "אישור" נחשב כבר מאושר, כדי שלא תצטרכי לאשר מחדש מה שכבר הגדרת
+                Object.values(expenses).forEach(rec => { if (rec.confirmed === undefined) rec.confirmed = true; });
+                saveExpenses();
+                return;
+            }
             const oldFixed = JSON.parse(localStorage.getItem(KEYS.FIXED)) || {};
             const oldDynamic = JSON.parse(localStorage.getItem(KEYS.DYNAMIC)) || { fixed: [], var: [] };
             const migrated = {};
             LEGACY_FIXED_DEFAULTS.forEach(def => {
                 const rec = oldFixed[def.id];
-                if (rec && parseFloat(rec.val) > 0) migrated[def.label] = { amount: parseFloat(rec.val) || 0, freq: rec.freq || '1', source: 'business', category: def.label };
+                if (rec && parseFloat(rec.val) > 0) migrated[def.label] = { amount: parseFloat(rec.val) || 0, freq: rec.freq || '1', source: 'business', category: def.label, confirmed: true };
             });
             LEGACY_VAR_DEFAULTS.forEach(def => {
                 const rec = oldFixed[def.id];
-                if (rec && parseFloat(rec.val) > 0) migrated[def.label] = { amount: parseFloat(rec.val) || 0, freq: 'var', source: 'business', category: def.label };
+                if (rec && parseFloat(rec.val) > 0) migrated[def.label] = { amount: parseFloat(rec.val) || 0, freq: 'var', source: 'business', category: def.label, confirmed: true };
             });
-            (oldDynamic.fixed || []).forEach(d => { if (d.label && parseFloat(d.val) > 0) migrated[d.label] = { amount: parseFloat(d.val) || 0, freq: d.freq || '1', source: 'business', category: d.label }; });
-            (oldDynamic.var || []).forEach(d => { if (d.label && parseFloat(d.val) > 0) migrated[d.label] = { amount: parseFloat(d.val) || 0, freq: 'var', source: 'business', category: d.label }; });
+            (oldDynamic.fixed || []).forEach(d => { if (d.label && parseFloat(d.val) > 0) migrated[d.label] = { amount: parseFloat(d.val) || 0, freq: d.freq || '1', source: 'business', category: d.label, confirmed: true }; });
+            (oldDynamic.var || []).forEach(d => { if (d.label && parseFloat(d.val) > 0) migrated[d.label] = { amount: parseFloat(d.val) || 0, freq: 'var', source: 'business', category: d.label, confirmed: true }; });
             expenses = migrated;
             saveExpenses();
         }
@@ -407,20 +461,52 @@
             return `≈ ${Math.round(amt / f).toLocaleString()} ₪ לחודש בממוצע (משלמת ${Math.round(amt).toLocaleString()} ₪ ${cadence}) — נכלל בכל חודש, גם כשלא משלמים בפועל.`;
         }
 
+        // מחלקת את ההוצאות לשלושה אזורים: לביקורת (חדשות, טרם אושרו) / החודש הזה (חודשי+משתנה, מאושר) / תקופתיות (מאושר, מכווץ לשורה אחת)
         function renderExpenseList() {
-            const container = document.getElementById('expense-list');
+            const pendingContainer = document.getElementById('expense-pending-list');
+            const monthContainer = document.getElementById('expense-month-list');
+            const periodicContainer = document.getElementById('expense-periodic-list');
             const emptyNote = document.getElementById('expense-empty-note');
-            container.innerHTML = '';
+            pendingContainer.innerHTML = ''; monthContainer.innerHTML = ''; periodicContainer.innerHTML = '';
+
             const divisorOf = (r) => (r.freq === 'var' || r.freq === 'once') ? 1 : (parseFloat(r.freq) || 1);
-            const labels = Object.keys(expenses)
-                .filter(l => parseFloat(expenses[l].amount) > 0)
-                .sort((a, b) => (expenses[b].amount / divisorOf(expenses[b])) - (expenses[a].amount / divisorOf(expenses[a])));
+            const monthlyEq = (r) => (parseFloat(r.amount) || 0) / divisorOf(r);
+            const byMonthlyDesc = (a, b) => monthlyEq(expenses[b]) - monthlyEq(expenses[a]);
+
+            const labels = Object.keys(expenses).filter(l => parseFloat(expenses[l].amount) > 0);
+            const pending = labels.filter(l => !expenses[l].confirmed).sort(byMonthlyDesc);
+            const confirmed = labels.filter(l => expenses[l].confirmed);
+            const monthly = confirmed.filter(l => expenses[l].freq === 'var' || expenses[l].freq === '1').sort(byMonthlyDesc);
+            const periodic = confirmed.filter(l => expenses[l].freq === '2' || expenses[l].freq === '12' || expenses[l].freq === 'once').sort(byMonthlyDesc);
+
+            document.getElementById('pending-section').classList.toggle('hidden', pending.length === 0);
+            pending.forEach(label => pendingContainer.appendChild(buildExpenseRow(label, true)));
+
+            monthly.forEach(label => monthContainer.appendChild(buildExpenseRow(label, false)));
+
+            let periodicMonthlyTotal = 0;
+            periodic.forEach(label => { periodicMonthlyTotal += monthlyEq(expenses[label]); });
+            document.getElementById('periodic-count').innerText = periodic.length;
+            document.getElementById('periodic-total').innerText = Math.round(periodicMonthlyTotal).toLocaleString();
+            document.getElementById('periodic-summary-line').classList.toggle('hidden', periodic.length === 0);
+            periodic.forEach(label => periodicContainer.appendChild(buildExpenseRow(label, false)));
+
             emptyNote.classList.toggle('hidden', labels.length > 0);
-            labels.forEach(label => container.appendChild(buildExpenseRow(label)));
+        }
+
+        function confirmAllPending() {
+            Object.keys(expenses).forEach(l => { if (parseFloat(expenses[l].amount) > 0 && !expenses[l].confirmed) expenses[l].confirmed = true; });
+            saveExpenses(); renderExpenseList(); calculate();
+        }
+
+        function togglePeriodicDetail() {
+            const el = document.getElementById('expense-periodic-list');
+            el.classList.toggle('hidden');
+            document.getElementById('periodic-detail-arrow').textContent = el.classList.contains('hidden') ? '▾' : '▴';
         }
 
         // בונה שורת הוצאה עם DOM API (לא הרכבת מחרוזת HTML) - כדי שקטגוריות עם גרשיים בשם (למשל רו"ח, קה"ש) לא ישברו את הקוד
-        function buildExpenseRow(label) {
+        function buildExpenseRow(label, isPending) {
             const rec = expenses[label];
             const div = document.createElement('div');
             div.className = 'border-b border-slate-100 pb-3 last:border-0 last:pb-0';
@@ -470,7 +556,50 @@
             freqSelect.onchange = () => { rec.freq = freqSelect.value; saveExpenses(); refreshNote(); calculate(); };
 
             div.append(top, catLine, row, note);
+
+            if (isPending) {
+                const confirmBtn = document.createElement('button');
+                confirmBtn.type = 'button';
+                confirmBtn.textContent = '✓ אשרי שורה זו';
+                confirmBtn.className = 'btn btn-primary';
+                confirmBtn.style.cssText = 'padding:0 14px;min-height:32px;font-size:11px;margin-top:8px;';
+                confirmBtn.onclick = () => { rec.confirmed = true; saveExpenses(); renderExpenseList(); calculate(); };
+                div.appendChild(confirmBtn);
+            }
+
             return div;
+        }
+
+        // --- הוספת הוצאה תקופתית ידנית (למשל תשלום שנתי שכבר יצא מהחשבון בחודש קודם ולא עלה בהעלאה החודשית) ---
+        function populateCategoryDropdown() {
+            const sel = document.getElementById('ae-category');
+            sel.innerHTML = Object.keys(PERCENT_MAP).sort().map(cat => `<option value="${cat.replace(/"/g,'&quot;')}">${cat} (${PERCENT_MAP[cat]}% עסקי)</option>`).join('');
+        }
+
+        function toggleAddExpenseForm() {
+            document.getElementById('add-expense-form').classList.toggle('hidden');
+        }
+
+        function setAeSource(src) {
+            aeSource = src;
+            document.getElementById('ae-src-biz').className = 'text-[10px] px-2 py-1 rounded-full font-bold ' + (aeSource === 'personal' ? 'bg-slate-100 text-slate-500' : 'bg-slate-700 text-white');
+            document.getElementById('ae-src-per').className = 'text-[10px] px-2 py-1 rounded-full font-bold ' + (aeSource === 'personal' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500');
+        }
+
+        function addManualExpense() {
+            const name = document.getElementById('ae-name').value.trim();
+            const category = document.getElementById('ae-category').value;
+            const rawAmount = parseFloat(document.getElementById('ae-amount').value) || 0;
+            const freq = document.getElementById('ae-freq').value;
+            if (!name || rawAmount <= 0) { alert('נא למלא שם וסכום חיובי.'); return; }
+            const finalAmount = rawAmount * ((PERCENT_MAP[category] || 100) / 100);
+            expenses[name] = { amount: finalAmount, freq, source: aeSource, category, confirmed: true };
+            saveExpenses();
+            renderExpenseList();
+            calculate();
+            document.getElementById('ae-name').value = '';
+            document.getElementById('ae-amount').value = '';
+            document.getElementById('add-expense-form').classList.add('hidden');
         }
 
         function renderDynamicInputs(type) {
@@ -537,13 +666,18 @@
                     else if (logic === 'קבועה-דו-חודשית') freq = '2';
                     else if (logic === 'קבועה-שנתית') freq = '12';
                 }
-                expenses[label] = { amount: uploadTotals[label], freq: freq, source: isNew ? 'business' : expenses[label].source, category: uploadCategory[label] };
+                expenses[label] = {
+                    amount: uploadTotals[label], freq: freq,
+                    source: isNew ? 'business' : expenses[label].source,
+                    category: uploadCategory[label],
+                    confirmed: isNew ? false : expenses[label].confirmed  // ספק חדש עובר קודם ל"לביקורת"; ספק מוכר שומר על האישור הקודם שלו
+                };
             });
 
             saveExpenses();
             renderExpenseList();
             calculate();
-            alert(`נקלטו ${count} שורות בהצלחה! ספקים חדשים סווגו כברירת מחדל "משתנה / עסקי" — אפשר לשנות בכל שורה.`);
+            alert(`נקלטו ${count} שורות בהצלחה! ספקים חדשים ממתינים ל"לביקורת" למטה - נא לאשר אותם.`);
         }
 
         // מחשב "רווח" (הכנסה פחות הוצאות) - זהה בדיוק עבור החישוב האמיתי והסימולטור
@@ -661,9 +795,24 @@
             lastTotalMonthly = tFix + tVar;
             lastAnnualPeriodicTotal = annualPeriodicTotal;
             salaryBase = fin.net + personalLoanMonthly;
+            saveMonthlySnapshot();
 
             updateEmergencyFund();
             updateSalaryRecommendation();
+        }
+
+        // שומרת אוטומטית, בלי פעולה מצידך, את "בסיס המשכורת" של החודש הקלנדרי הנוכחי - כדי לחשב ממוצע מצטבר לאורך זמן
+        function getMonthKey() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        }
+        function saveMonthlySnapshot() {
+            monthlyHistory[getMonthKey()] = salaryBase;
+            localStorage.setItem(KEYS.MONTHLY, JSON.stringify(monthlyHistory));
+        }
+        function avgSalaryBase() {
+            const vals = Object.values(monthlyHistory);
+            return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : salaryBase;
         }
 
         // כרטיס "קופה קטנה": יעד = (א) סך שנתי מלא של הוצאות תקופתיות + (ב) הוצאות חודשיות ממוצעות × מכפיל בלת"מ + (ג) 3 חודשי משכורת
@@ -674,7 +823,7 @@
 
             const partA = lastAnnualPeriodicTotal;
             const partB = lastTotalMonthly * multiplier;
-            const partC = 3 * Math.max(0, salaryBase);
+            const partC = 3 * Math.max(0, avgSalaryBase()); // מבוסס על הממוצע המצטבר, לא רק החודש הנוכחי
             const target = partA + partB + partC;
 
             document.getElementById('ek-part-a').innerText = Math.round(partA).toLocaleString() + ' ₪';
@@ -698,12 +847,17 @@
             ekGap = Math.max(0, target - current);
         }
 
-        // "המלצה למשכורת": טווח בין קצה שמרני (בונה את הפער לקופה הקטנה תוך שנה) לקצה גבוה (לוקחת הכל)
+        // "המלצה למשכורת": טווח בין קצה שמרני (בונה את הפער לקופה הקטנה תוך שנה) לקצה גבוה (לוקחת הכל) - שניהם לפי הממוצע המצטבר
         function updateSalaryRecommendation() {
-            const high = Math.max(0, salaryBase);
-            const low = Math.max(0, salaryBase - (ekGap / 12));
+            const avg = avgSalaryBase();
+            const high = Math.max(0, avg);
+            const low = Math.max(0, avg - (ekGap / 12));
             document.getElementById('salary-high').innerText = Math.round(high).toLocaleString();
             document.getElementById('salary-low').innerText = Math.round(low).toLocaleString();
+
+            const monthsCount = Math.max(1, Object.keys(monthlyHistory).length);
+            const noteEl = document.getElementById('salary-avg-note');
+            if (noteEl) noteEl.textContent = monthsCount === 1 ? 'מבוסס כרגע רק על החודש הזה — יתייצב ככל שתשתמשי באתר לאורך זמן.' : `מבוסס על ממוצע ${monthsCount} חודשים שנרשמו.`;
         }
 
         function calcSim() {
@@ -717,8 +871,8 @@
 
         function calcTax(n) { let t=0, p=0; for(let b of C.TAX){ if(n>p){ t+=Math.min(n-p, b.limit-p)*b.rate; p=b.limit; } } if(n>p) t+=(n-p)*0.47; return t; }
         function initCharts() { incomeChart = new Chart(document.getElementById('incomeChart').getContext('2d'), { type:'doughnut', data:{labels:[],datasets:[{data:[],backgroundColor:['#f26522','#334155','#94a3b8']}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{family:'Rubik'},boxWidth:8}}}}}); }
-        function backupData() { const emergency = JSON.parse(localStorage.getItem(KEYS.EMERGENCY)) || {}; const data = { history, dynamic: savedDynamic, profile, emergency, expenses }; const blob = new Blob([JSON.stringify(data)], {type: "application/json"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `osek_backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); }
-        function restoreData(input) { const file = input.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const data = JSON.parse(e.target.result); if(data.history) localStorage.setItem(KEYS.HISTORY, JSON.stringify(data.history)); if(data.fixed) localStorage.setItem(KEYS.FIXED, JSON.stringify(data.fixed)); if(data.dynamic) localStorage.setItem(KEYS.DYNAMIC, JSON.stringify(data.dynamic)); if(data.profile) localStorage.setItem(KEYS.PROFILE, JSON.stringify(data.profile)); if(data.emergency) localStorage.setItem(KEYS.EMERGENCY, JSON.stringify(data.emergency)); if(data.expenses) localStorage.setItem(KEYS.EXPENSES, JSON.stringify(data.expenses)); alert("הנתונים שוחזרו! העמוד יתרענן."); location.reload(); } catch(err) { alert("שגיאה בקובץ הגיבוי"); } }; reader.readAsText(file); }
+        function backupData() { const emergency = JSON.parse(localStorage.getItem(KEYS.EMERGENCY)) || {}; const data = { history, dynamic: savedDynamic, profile, emergency, expenses, monthlyHistory }; const blob = new Blob([JSON.stringify(data)], {type: "application/json"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `osek_backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); }
+        function restoreData(input) { const file = input.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const data = JSON.parse(e.target.result); if(data.history) localStorage.setItem(KEYS.HISTORY, JSON.stringify(data.history)); if(data.fixed) localStorage.setItem(KEYS.FIXED, JSON.stringify(data.fixed)); if(data.dynamic) localStorage.setItem(KEYS.DYNAMIC, JSON.stringify(data.dynamic)); if(data.profile) localStorage.setItem(KEYS.PROFILE, JSON.stringify(data.profile)); if(data.emergency) localStorage.setItem(KEYS.EMERGENCY, JSON.stringify(data.emergency)); if(data.expenses) localStorage.setItem(KEYS.EXPENSES, JSON.stringify(data.expenses)); if(data.monthlyHistory) localStorage.setItem(KEYS.MONTHLY, JSON.stringify(data.monthlyHistory)); alert("הנתונים שוחזרו! העמוד יתרענן."); location.reload(); } catch(err) { alert("שגיאה בקובץ הגיבוי"); } }; reader.readAsText(file); }
         function clearAllData() { if(confirm("למחוק הכל?")){ localStorage.clear(); location.reload(); } }
     </script>
 </body>
