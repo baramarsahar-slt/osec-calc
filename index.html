@@ -73,7 +73,7 @@
                 <img src="assets/logo-color.png" alt="בר עמר-סהר" style="width:52px;height:52px;object-fit:contain;flex:none;">
                 <div style="text-align:right;">
                     <h1 class="tracking-tight" style="font-weight:800;font-size:26px;color:var(--ink);margin:0;">בר עמר-סהר <span style="color:var(--accent-strong);font-weight:600;font-size:16px;">| ניהול קליניקה</span></h1>
-                    <p style="font-size:11px;color:var(--muted);margin-top:4px;">גרסה 16.0</p>
+                    <p style="font-size:11px;color:var(--muted);margin-top:4px;">גרסה 16.1</p>
                 </div>
             </div>
             <div class="flex gap-2 flex-wrap justify-center">
@@ -195,6 +195,15 @@
                                 <button type="button" onclick="addManualExpense()" class="btn btn-primary w-full">הוסף לרשימה</button>
                             </div>
                         </div>
+
+                        <div class="mt-4 pt-4" style="border-top:1.5px solid var(--line);">
+                            <button type="button" onclick="toggleArchiveSection()" class="text-xs font-bold" style="color:var(--ink-soft);cursor:pointer;">📁 ארכיון חודשים קודמים <span id="archive-toggle-arrow">▾</span></button>
+                            <div id="archive-section" class="hidden mt-3 space-y-3">
+                                <p class="text-[10px] text-slate-400 leading-snug">כשמעלים קובץ שמכיל כמה חודשים במרוכז (למשל ריכוז ינואר–יוני), אפשר להעביר את הרשימה הנוכחית לארכיון "חודשים קודמים". התקופה תיכנס לממוצע של המלצת המשכורת והקופה הקטנה, והרשימה החיה תתאפס להתחלה נקייה (הסיווגים של כל ספק — תדירות ומקור תשלום — נשארים, כדי שלא תצטרכי לסווג מחדש).</p>
+                                <button type="button" onclick="openArchiveModal()" class="btn btn-ghost" style="font-size:11px;min-height:36px;padding:0 14px;">+ העבירי את הרשימה הנוכחית לארכיון</button>
+                                <div id="archive-list" class="space-y-2"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -313,6 +322,29 @@
         </div>
     </div>
 
+    <div id="modal-archive" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-bold text-xl text-slate-800">העברה לארכיון — חודשים קודמים</h3>
+                <button onclick="closeArchiveModal()" class="text-slate-400 hover:text-slate-800 text-2xl">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <p class="text-xs text-slate-500 leading-snug">בחרי את טווח החודשים שהמידע הנוכחי מכסה, והזיני את ההכנסה בפועל לכל חודש (לפי המספרים האמיתיים שיש לך). ההוצאות נשלפות אוטומטית מהרשימה הנוכחית - אין צורך להזין אותן שוב.</p>
+                <div class="grid grid-cols-3 gap-3">
+                    <div><label class="text-xs font-bold text-slate-500">שנה</label><input type="number" id="ar-year" class="input-field" oninput="regenerateArchiveMonthRows()"></div>
+                    <div><label class="text-xs font-bold text-slate-500">מחודש</label><select id="ar-from" class="input-field" onchange="regenerateArchiveMonthRows()"></select></div>
+                    <div><label class="text-xs font-bold text-slate-500">עד חודש</label><select id="ar-to" class="input-field" onchange="regenerateArchiveMonthRows()"></select></div>
+                </div>
+                <div id="archive-month-income-rows" class="space-y-2"></div>
+                <div class="bg-slate-50 p-3 rounded-lg text-sm flex justify-between">
+                    <span class="text-slate-500">סה"כ הוצאות עסקיות שיועברו לארכיון:</span>
+                    <span class="font-bold text-slate-700">₪<span id="archive-expense-preview">0</span></span>
+                </div>
+                <button onclick="confirmArchive()" class="w-full bg-brand-orange text-white font-bold py-3 rounded-xl mt-2">אשרי והעבירי לארכיון</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // רשימת הקטגוריות והאחוזים תואמת בדיוק לטבלת הסיווגים ממורנינג (classifications.csv) שהרו"ח הגדיר.
         // משכנתא/ביטוח דירה ב-25% - מוכרות בהנחיית הרו"ח כי הקליניקה מתופעלת חלקית מהבית (אותו היגיון כמו אינטרנט/חשמל/ארנונה).
@@ -332,11 +364,13 @@
         const STUDY_FUND_ANNUAL_CEILING = 18480; // תקרת ניכוי שנתית לקה"ש לעצמאים (₪/שנה)
         const STUDY_FUND_RATE = 0.045; // אחוז מהרווח שמוכר לניכוי לקה"ש (עד התקרה השנתית)
         const PERIPHERY = { 'none': {rate: 0, ceil: 0, name:'ללא'}, 'akko': {rate: 0.11, ceil: 180000, name:'עכו'}, 'nahariya': {rate: 0.12, ceil: 204000, name:'נהריה'}, 'k8': {rate: 0.20, ceil: 241080, name:'ק.שמונה'}, 'sdrot': {rate: 0.20, ceil: 241080, name:'שדרות'}, 'eilat': {rate: 0.10, ceil: 168000, name:'אילת'} };
-        const KEYS = { HISTORY: 'osek_history_15_1', FIXED: 'osek_fixed_15_1', DYNAMIC: 'osek_dynamic_15_1', PROFILE: 'osek_profile_15_1', EMERGENCY: 'osek_emergency_16_0', EXPENSES: 'osek_expenses_16_0', MONTHLY: 'osek_monthly_16_0' };
+        const KEYS = { HISTORY: 'osek_history_15_1', FIXED: 'osek_fixed_15_1', DYNAMIC: 'osek_dynamic_15_1', PROFILE: 'osek_profile_15_1', EMERGENCY: 'osek_emergency_16_0', EXPENSES: 'osek_expenses_16_0', MONTHLY: 'osek_monthly_16_0', ARCHIVE: 'osek_archive_16_1' };
 
         let history = [];
         // expenses: מפתח = שם ההוצאה (ספק/קטגוריה). value = { amount, freq: 'var'|'1'|'2'|'12'|'once', source: 'business'|'personal', category, confirmed }
         let expenses = {};
+        // archive: תקופות "חודשים קודמים" שהועברו מהרשימה החיה - כל תקופה מחזיקה הכנסה/הוצאה ממוצעת לחודש, ומוזנת גם כ-N "חודשים" סינתטיים ל-monthlyHistory
+        let archive = { periods: [] };
         let savedDynamic = { inc: [] };
         let profile = { gender:'female', status:'married', kids:'', periphery:'none', bituach:true, pension:0, study:0, salary:0, degree:false };
         let isMurshe = localStorage.getItem('is_murshe') === 'true';
@@ -354,12 +388,14 @@
             if (!savedDynamic.inc) savedDynamic.inc = [];
             profile = JSON.parse(localStorage.getItem(KEYS.PROFILE)) || profile;
             monthlyHistory = JSON.parse(localStorage.getItem(KEYS.MONTHLY)) || {};
+            archive = JSON.parse(localStorage.getItem(KEYS.ARCHIVE)) || { periods: [] };
+            if (!archive.periods) archive.periods = [];
             const savedEmergency = JSON.parse(localStorage.getItem(KEYS.EMERGENCY)) || { current: '', multiplier: 2.5 };
             document.getElementById('ek-current').value = savedEmergency.current;
             document.getElementById('ek-multiplier').value = savedEmergency.multiplier || 2.5;
 
             migrateExpensesIfNeeded();
-            renderExpenseList(); renderDynamicInputs('inc'); populateCategoryDropdown(); setAeSource('business');
+            renderExpenseList(); renderDynamicInputs('inc'); populateCategoryDropdown(); setAeSource('business'); renderArchiveList();
             initCharts(); updateStatusUI(); updateProfileUI(); calculate(); calcSim();
 
             const dropZone = document.getElementById('drop-zone');
@@ -612,6 +648,149 @@
             document.getElementById('ae-name').value = '';
             document.getElementById('ae-amount').value = '';
             document.getElementById('add-expense-form').classList.add('hidden');
+        }
+
+        // --- ארכיון "חודשים קודמים" ---
+        // כשמעלים קובץ שמכיל כמה חודשים במרוכז, אפשר להעביר את הרשימה החיה לתקופה בארכיון: שומר הכנסה+הוצאה ממוצעת לחודש,
+        // ומזין אותה כ-N "חודשים" סינתטיים לתוך monthlyHistory (מפתח שמתחיל ב-"archive-", כדי שלא יתנגש עם מפתחות חודש אמיתי "YYYY-MM").
+        // כך היא נכנסת לאותו חישוב ממוצע שכבר מזין את המלצת המשכורת והקופה הקטנה (avgSalaryBase) - בלי לשנות את המנגנון הקיים.
+        const HE_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+
+        function toggleArchiveSection() {
+            const el = document.getElementById('archive-section');
+            el.classList.toggle('hidden');
+            document.getElementById('archive-toggle-arrow').textContent = el.classList.contains('hidden') ? '▾' : '▴';
+        }
+
+        function populateArchiveMonthSelects() {
+            const opts = HE_MONTHS.map((name, i) => `<option value="${i + 1}">${name}</option>`).join('');
+            document.getElementById('ar-from').innerHTML = opts;
+            document.getElementById('ar-to').innerHTML = opts;
+        }
+
+        // סה"כ ההוצאות העסקיות (כבר לאחר האחוז המוכר) שנמצאות כרגע ברשימה החיה - זה מה שיישלח לארכיון כ"הוצאת התקופה"
+        function currentExpenseTotalForArchive() {
+            return Object.values(expenses).reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+        }
+        function currentPersonalTotalForArchive() {
+            return Object.values(expenses).filter(r => r.source === 'personal').reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+        }
+
+        function openArchiveModal() {
+            populateArchiveMonthSelects();
+            document.getElementById('ar-year').value = new Date().getFullYear();
+            document.getElementById('ar-from').value = 1;
+            document.getElementById('ar-to').value = 6;
+            regenerateArchiveMonthRows();
+            document.getElementById('modal-archive').classList.add('active');
+        }
+        function closeArchiveModal() { document.getElementById('modal-archive').classList.remove('active'); }
+
+        // בונה שורת קלט הכנסה לכל חודש בטווח שנבחר (שומר ערכים שכבר הוקלדו אם רק משנים את הטווח), ומרענן את תצוגת סה"כ ההוצאות
+        function regenerateArchiveMonthRows() {
+            const from = parseInt(document.getElementById('ar-from').value) || 1;
+            const to = parseInt(document.getElementById('ar-to').value) || from;
+            const wrapper = document.getElementById('archive-month-income-rows');
+            const prevValues = {};
+            wrapper.querySelectorAll('input[data-month]').forEach(inp => { prevValues[inp.dataset.month] = inp.value; });
+            wrapper.innerHTML = '';
+            if (to >= from) {
+                for (let m = from; m <= to; m++) {
+                    const row = document.createElement('div');
+                    row.className = 'flex items-center gap-2';
+                    const label = document.createElement('label');
+                    label.className = 'text-xs font-bold text-slate-500 w-16 flex-none';
+                    label.textContent = HE_MONTHS[m - 1];
+                    const input = document.createElement('input');
+                    input.type = 'number'; input.className = 'input-field text-sm'; input.placeholder = 'הכנסה בחודש זה (₪)';
+                    input.dataset.month = m;
+                    if (prevValues[m] !== undefined) input.value = prevValues[m];
+                    row.append(label, input);
+                    wrapper.appendChild(row);
+                }
+            }
+            document.getElementById('archive-expense-preview').innerText = Math.round(currentExpenseTotalForArchive()).toLocaleString();
+        }
+
+        function confirmArchive() {
+            const year = parseInt(document.getElementById('ar-year').value) || new Date().getFullYear();
+            const from = parseInt(document.getElementById('ar-from').value) || 1;
+            const to = parseInt(document.getElementById('ar-to').value) || from;
+            if (to < from) { alert('חודש הסיום צריך להיות אחרי חודש ההתחלה (או זהה לו).'); return; }
+            const monthsCount = to - from + 1;
+
+            let totalIncome = 0;
+            document.querySelectorAll('#archive-month-income-rows input[data-month]').forEach(inp => { totalIncome += parseFloat(inp.value) || 0; });
+            const totalExpense = currentExpenseTotalForArchive();
+            const totalPersonal = currentPersonalTotalForArchive();
+
+            if (totalIncome <= 0 && totalExpense <= 0) { alert('אין נתונים להעביר לארכיון — מלאי לפחות הכנסה אחת, או ודאי שיש הוצאות ברשימה.'); return; }
+
+            const avgIncome = totalIncome / monthsCount;
+            const avgExpense = totalExpense / monthsCount;
+            const avgPersonal = totalPersonal / monthsCount;
+            // אותן פונקציות חישוב בדיוק כמו בחישוב החי - כדי שהמשכורת הממוצעת שנכנסת לארכיון תהיה עקבית עם שאר האתר
+            const profit = computeProfit(avgIncome, avgExpense);
+            const fin = computeFinancials(profit);
+            const avgSalaryBase = fin.net + avgPersonal;
+            const label = from === to ? `${HE_MONTHS[from - 1]} ${year}` : `${HE_MONTHS[from - 1]}–${HE_MONTHS[to - 1]} ${year}`;
+
+            if (!confirm(`להעביר לארכיון את "${label}" (${monthsCount} חודשים)?\n\nהכנסה חודשית ממוצעת: ${Math.round(avgIncome).toLocaleString()} ₪\nהוצאה חודשית ממוצעת: ${Math.round(avgExpense).toLocaleString()} ₪\n\nרשימת ההוצאות הנוכחית תתאפס (הסכומים בלבד — הסיווגים של הספקים יישארו לזיהוי אוטומטי בהעלאה הבאה).\nמומלץ ללחוץ קודם על "שמור גיבוי" למעלה, ליתר ביטחון.`)) return;
+
+            const id = 'p' + Date.now();
+            archive.periods.push({ id, label, year, from, to, monthsCount, totalIncome, totalExpense, avgIncome, avgExpense, avgSalaryBase, createdAt: new Date().toISOString() });
+            saveArchive();
+
+            for (let i = 0; i < monthsCount; i++) { monthlyHistory[`archive-${id}-${i}`] = avgSalaryBase; }
+            localStorage.setItem(KEYS.MONTHLY, JSON.stringify(monthlyHistory));
+
+            // מאפסת רק את הסכומים - התדירות/מקור התשלום/קטגוריה שכבר סווגו לכל ספק נשארים, כדי שההעלאה הבאה תזהה אותם אוטומטית בלי לבקש אישור מחדש
+            Object.values(expenses).forEach(rec => { rec.amount = 0; });
+            saveExpenses();
+
+            closeArchiveModal();
+            renderExpenseList(); renderArchiveList(); calculate();
+            alert('הועבר לארכיון בהצלחה! רשימת ההוצאות התאפסה ומוכנה להעלאה של חודש חדש.');
+        }
+
+        function deleteArchivePeriod(id) {
+            if (!confirm('למחוק תקופה זו מהארכיון? זה יקטין את הבסיס לחישוב הממוצע במשכורת ובקופה הקטנה.')) return;
+            archive.periods = archive.periods.filter(p => p.id !== id);
+            saveArchive();
+            Object.keys(monthlyHistory).forEach(k => { if (k.startsWith('archive-' + id + '-')) delete monthlyHistory[k]; });
+            localStorage.setItem(KEYS.MONTHLY, JSON.stringify(monthlyHistory));
+            renderArchiveList(); calculate();
+        }
+
+        function saveArchive() { localStorage.setItem(KEYS.ARCHIVE, JSON.stringify(archive)); }
+
+        function renderArchiveList() {
+            const list = document.getElementById('archive-list');
+            if (!list) return;
+            list.innerHTML = '';
+            if (!archive.periods.length) {
+                const p = document.createElement('p');
+                p.className = 'text-[10px] text-slate-400';
+                p.textContent = 'אין עדיין תקופות בארכיון.';
+                list.appendChild(p);
+                return;
+            }
+            archive.periods.forEach(period => {
+                const row = document.createElement('div');
+                row.className = 'flex justify-between items-center bg-slate-50 rounded-lg p-3 text-xs gap-2';
+                const info = document.createElement('div');
+                const nameEl = document.createElement('span'); nameEl.className = 'font-bold text-slate-700 block'; nameEl.textContent = period.label;
+                const detailEl = document.createElement('span'); detailEl.className = 'text-slate-400';
+                detailEl.textContent = `הכנסה ממוצעת: ${Math.round(period.avgIncome).toLocaleString()} ₪ · הוצאה ממוצעת: ${Math.round(period.avgExpense).toLocaleString()} ₪ · ${period.monthsCount} חודשים`;
+                info.append(nameEl, detailEl);
+                const delBtn = document.createElement('button');
+                delBtn.type = 'button'; delBtn.textContent = 'מחקי';
+                delBtn.className = 'text-[10px] font-bold flex-none';
+                delBtn.style.cssText = 'color:var(--muted);text-decoration:underline;cursor:pointer;';
+                delBtn.onclick = () => deleteArchivePeriod(period.id);
+                row.append(info, delBtn);
+                list.appendChild(row);
+            });
         }
 
         function renderDynamicInputs(type) {
@@ -867,9 +1046,18 @@
             document.getElementById('salary-high').innerText = Math.round(high).toLocaleString();
             document.getElementById('salary-low').innerText = Math.round(low).toLocaleString();
 
-            const monthsCount = Math.max(1, Object.keys(monthlyHistory).length);
+            const allKeys = Object.keys(monthlyHistory);
+            const archiveMonths = allKeys.filter(k => k.startsWith('archive-')).length;
+            const liveMonths = allKeys.length - archiveMonths;
+            const monthsCount = Math.max(1, allKeys.length);
             const noteEl = document.getElementById('salary-avg-note');
-            if (noteEl) noteEl.textContent = monthsCount === 1 ? 'מבוסס כרגע רק על החודש הזה — יתייצב ככל שתשתמשי באתר לאורך זמן.' : `מבוסס על ממוצע ${monthsCount} חודשים שנרשמו.`;
+            if (noteEl) {
+                if (archiveMonths > 0) {
+                    noteEl.textContent = `מבוסס על ממוצע ${monthsCount} חודשים (${archiveMonths} מהארכיון + ${liveMonths} בפועל).`;
+                } else {
+                    noteEl.textContent = monthsCount === 1 ? 'מבוסס כרגע רק על החודש הזה — יתייצב ככל שתשתמשי באתר לאורך זמן.' : `מבוסס על ממוצע ${monthsCount} חודשים שנרשמו.`;
+                }
+            }
         }
 
         function calcSim() {
@@ -883,8 +1071,8 @@
 
         function calcTax(n) { let t=0, p=0; for(let b of C.TAX){ if(n>p){ t+=Math.min(n-p, b.limit-p)*b.rate; p=b.limit; } } if(n>p) t+=(n-p)*0.47; return t; }
         function initCharts() { incomeChart = new Chart(document.getElementById('incomeChart').getContext('2d'), { type:'doughnut', data:{labels:[],datasets:[{data:[],backgroundColor:['#f26522','#334155','#94a3b8']}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{family:'Rubik'},boxWidth:8}}}}}); }
-        function backupData() { const emergency = JSON.parse(localStorage.getItem(KEYS.EMERGENCY)) || {}; const data = { history, dynamic: savedDynamic, profile, emergency, expenses, monthlyHistory }; const blob = new Blob([JSON.stringify(data)], {type: "application/json"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `osek_backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); }
-        function restoreData(input) { const file = input.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const data = JSON.parse(e.target.result); if(data.history) localStorage.setItem(KEYS.HISTORY, JSON.stringify(data.history)); if(data.fixed) localStorage.setItem(KEYS.FIXED, JSON.stringify(data.fixed)); if(data.dynamic) localStorage.setItem(KEYS.DYNAMIC, JSON.stringify(data.dynamic)); if(data.profile) localStorage.setItem(KEYS.PROFILE, JSON.stringify(data.profile)); if(data.emergency) localStorage.setItem(KEYS.EMERGENCY, JSON.stringify(data.emergency)); if(data.expenses) localStorage.setItem(KEYS.EXPENSES, JSON.stringify(data.expenses)); if(data.monthlyHistory) localStorage.setItem(KEYS.MONTHLY, JSON.stringify(data.monthlyHistory)); alert("הנתונים שוחזרו! העמוד יתרענן."); location.reload(); } catch(err) { alert("שגיאה בקובץ הגיבוי"); } }; reader.readAsText(file); }
+        function backupData() { const emergency = JSON.parse(localStorage.getItem(KEYS.EMERGENCY)) || {}; const data = { history, dynamic: savedDynamic, profile, emergency, expenses, monthlyHistory, archive }; const blob = new Blob([JSON.stringify(data)], {type: "application/json"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `osek_backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); }
+        function restoreData(input) { const file = input.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const data = JSON.parse(e.target.result); if(data.history) localStorage.setItem(KEYS.HISTORY, JSON.stringify(data.history)); if(data.fixed) localStorage.setItem(KEYS.FIXED, JSON.stringify(data.fixed)); if(data.dynamic) localStorage.setItem(KEYS.DYNAMIC, JSON.stringify(data.dynamic)); if(data.profile) localStorage.setItem(KEYS.PROFILE, JSON.stringify(data.profile)); if(data.emergency) localStorage.setItem(KEYS.EMERGENCY, JSON.stringify(data.emergency)); if(data.expenses) localStorage.setItem(KEYS.EXPENSES, JSON.stringify(data.expenses)); if(data.monthlyHistory) localStorage.setItem(KEYS.MONTHLY, JSON.stringify(data.monthlyHistory)); if(data.archive) localStorage.setItem(KEYS.ARCHIVE, JSON.stringify(data.archive)); alert("הנתונים שוחזרו! העמוד יתרענן."); location.reload(); } catch(err) { alert("שגיאה בקובץ הגיבוי"); } }; reader.readAsText(file); }
         function clearAllData() { if(confirm("למחוק הכל?")){ localStorage.clear(); location.reload(); } }
     </script>
 </body>
