@@ -145,7 +145,10 @@
                     <div class="card p-5">
                         <div class="flex justify-between items-center mb-4">
                             <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2"><svg class="crescent" width="12" height="12" style="color:var(--accent)"><use href="#crescent-shape"></use></svg>הוצאות</h3>
-                            <span class="text-[10px] text-slate-400">מוצגות רק קטגוריות שיש בהן נתונים</span>
+                            <div class="flex items-center gap-3">
+                                <span class="text-[10px] text-slate-400">מוצגות רק קטגוריות שיש בהן נתונים</span>
+                                <button type="button" onclick="resetExpenses()" class="text-[10px] font-bold" style="color:var(--muted);text-decoration:underline;cursor:pointer;">אפס רשימת הוצאות</button>
+                            </div>
                         </div>
 
                         <div id="expense-list">
@@ -448,6 +451,15 @@
         }
 
         function saveExpenses() { localStorage.setItem(KEYS.EXPENSES, JSON.stringify(expenses)); }
+
+        // מאפסת רק את רשימת ההוצאות (לא נוגעת בפרופיל/קופה קטנה/היסטוריה) - כדי לעשות סדר ולהעלות הכל מחדש
+        function resetExpenses() {
+            if (!confirm('לאפס את כל רשימת ההוצאות ולהתחיל מחדש?\nמומלץ ללחוץ קודם על "שמור גיבוי" למעלה, כדי שיהיה לך עותק אם תתחרטי.\nהגדרות אחרות (פרופיל מס, קופה קטנה) לא ייפגעו.')) return;
+            expenses = {};
+            saveExpenses();
+            renderExpenseList();
+            calculate();
+        }
 
         // מתרגם סכום+תדירות להסבר קצר וברור על המשמעות החודשית של השורה
         function freqNoteText(amount, freq) {
