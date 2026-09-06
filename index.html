@@ -233,10 +233,19 @@
                             <div><span class="text-slate-400 text-xs block">מע"מ לקיזוז (תשומות)</span><span class="font-bold">₪<span id="vat-input">0</span></span></div>
                         </div>
                         <div class="pt-3 border-t flex justify-between items-center">
-                            <span class="font-bold text-slate-700 text-sm">להעביר בדו"ח התקופתי:</span>
+                            <span class="font-bold text-slate-700 text-sm">להעביר החודש הזה:</span>
                             <span class="font-bold text-purple-600 text-xl">₪<span id="vat-net">0</span></span>
                         </div>
-                        <p class="text-[10px] text-slate-400 mt-2 leading-snug">הסכום הזה נגבה מהלקוחות בשם רשות המסים ואינו הכנסה שלך. יש לדווח ולהעביר אותו בדו"ח המע"מ התקופתי (בדרך כלל אחת לחודשיים).</p>
+                        <p class="text-[10px] text-slate-400 mt-2 leading-snug">הסכום הזה נגבה מהלקוחות בשם רשות המסים ואינו הכנסה שלך.</p>
+
+                        <div class="pt-3 mt-3 border-t-2" style="border-color:var(--accent);">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-sm" style="color:var(--ink);">מצטבר לתקופת הדיווח <span class="font-normal text-[11px] text-slate-400">(מאז <span id="vat-period-since">-</span>)</span></span>
+                                <span class="font-bold text-xl" style="color:var(--accent-strong);">₪<span id="vat-acc-net">0</span></span>
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-1 leading-snug">זה הסכום הכולל שיש להעביר בדו"ח המע"מ התקופתי (בדרך כלל אחת לחודשיים) - כולל את החודש הנוכחי וגם חודשים קודמים שכבר הועברו ל"ארכיון" מאז הדיווח האחרון.</p>
+                            <button onclick="markVatFiled()" class="btn btn-secondary w-full justify-center mt-3" style="font-size:.75rem;">✓ דיווחתי ושילמתי בפועל - אפס את המונה</button>
+                        </div>
                     </div>
 
                     <div class="card bg-slate-900 text-white p-8 relative overflow-hidden">
@@ -364,7 +373,7 @@
         const STUDY_FUND_ANNUAL_CEILING = 18480; // תקרת ניכוי שנתית לקה"ש לעצמאים (₪/שנה)
         const STUDY_FUND_RATE = 0.045; // אחוז מהרווח שמוכר לניכוי לקה"ש (עד התקרה השנתית)
         const PERIPHERY = { 'none': {rate: 0, ceil: 0, name:'ללא'}, 'akko': {rate: 0.11, ceil: 180000, name:'עכו'}, 'nahariya': {rate: 0.12, ceil: 204000, name:'נהריה'}, 'k8': {rate: 0.20, ceil: 241080, name:'ק.שמונה'}, 'sdrot': {rate: 0.20, ceil: 241080, name:'שדרות'}, 'eilat': {rate: 0.10, ceil: 168000, name:'אילת'} };
-        const KEYS = { HISTORY: 'osek_history_15_1', FIXED: 'osek_fixed_15_1', DYNAMIC: 'osek_dynamic_15_1', PROFILE: 'osek_profile_15_1', EMERGENCY: 'osek_emergency_16_0', EXPENSES: 'osek_expenses_16_0', MONTHLY: 'osek_monthly_16_0', ARCHIVE: 'osek_archive_16_1' };
+        const KEYS = { HISTORY: 'osek_history_15_1', FIXED: 'osek_fixed_15_1', DYNAMIC: 'osek_dynamic_15_1', PROFILE: 'osek_profile_15_1', EMERGENCY: 'osek_emergency_16_0', EXPENSES: 'osek_expenses_16_0', MONTHLY: 'osek_monthly_16_0', ARCHIVE: 'osek_archive_16_1', VAT_PERIOD: 'osek_vat_period_1_0' };
 
         let history = [];
         // expenses: מפתח = שם ההוצאה (ספק/קטגוריה). value = { amount, freq: 'var'|'1'|'2'|'12'|'once', source: 'business'|'personal', category, confirmed }
@@ -381,6 +390,8 @@
         // משמש לחשב ממוצע מצטבר להמלצת המשכורת ולקופה הקטנה, כדי שלא יקפצו לפי חודש בודד.
         let monthlyHistory = {};
         let aeSource = 'business'; // מקור התשלום שנבחר בטופס ההוספה הידנית
+        // vatPeriod.since: תאריך (ISO) שממנו מצטבר "מונה" המע"מ לתקופת הדיווח הנוכחית - מתאפס בלחיצה על "דיווחתי ושילמתי"
+        let vatPeriod = { since: null };
 
         window.onload = () => {
             history = JSON.parse(localStorage.getItem(KEYS.HISTORY)) || [];
@@ -390,6 +401,8 @@
             monthlyHistory = JSON.parse(localStorage.getItem(KEYS.MONTHLY)) || {};
             archive = JSON.parse(localStorage.getItem(KEYS.ARCHIVE)) || { periods: [] };
             if (!archive.periods) archive.periods = [];
+            vatPeriod = JSON.parse(localStorage.getItem(KEYS.VAT_PERIOD)) || null;
+            if (!vatPeriod || !vatPeriod.since) { vatPeriod = { since: new Date().toISOString() }; localStorage.setItem(KEYS.VAT_PERIOD, JSON.stringify(vatPeriod)); }
             const savedEmergency = JSON.parse(localStorage.getItem(KEYS.EMERGENCY)) || { current: '', multiplier: 2.5 };
             document.getElementById('ek-current').value = savedEmergency.current;
             document.getElementById('ek-multiplier').value = savedEmergency.multiplier || 2.5;
@@ -729,16 +742,26 @@
             const avgIncome = totalIncome / monthsCount;
             const avgExpense = totalExpense / monthsCount;
             const avgPersonal = totalPersonal / monthsCount;
+            // אותה פירוק לפי קטגוריה כמו בחישוב החי, כדי שקיזוז המע"מ יהיה עקבי (ולא גורף) גם בממוצע לארכיון
+            const avgExpenseItems = Object.entries(expenses).map(([label, rec]) =>
+                ({ label, category: rec.category, amount: (parseFloat(rec.amount) || 0) / monthsCount }));
             // אותן פונקציות חישוב בדיוק כמו בחישוב החי - כדי שהמשכורת הממוצעת שנכנסת לארכיון תהיה עקבית עם שאר האתר
-            const profit = computeProfit(avgIncome, avgExpense);
+            const profit = computeProfit(avgIncome, avgExpenseItems);
             const fin = computeFinancials(profit);
             const avgSalaryBase = fin.net + avgPersonal;
             const label = from === to ? `${HE_MONTHS[from - 1]} ${year}` : `${HE_MONTHS[from - 1]}–${HE_MONTHS[to - 1]} ${year}`;
 
+            // שומרים גם את סך המע"מ של התקופה שהועברה (לא ממוצע חודשי) - כדי שהמונה המצטבר לתקופת הדיווח
+            // ("מצטבר מאז שסימנת שדיווחת" בכרטיס המע"מ) יוכל לכלול גם חודשים שכבר עברו לארכיון, לא רק את החודש החי.
+            const totalVatEligibleExp = Object.entries(expenses).reduce((s, [lbl, rec]) =>
+                s + (parseFloat(rec.amount) || 0) * (vatPercentFor(rec.category || lbl) / 100), 0);
+            const vatTotals = isMurshe ? computeVat(totalIncome, totalVatEligibleExp) : null;
+
             if (!confirm(`להעביר לארכיון את "${label}" (${monthsCount} חודשים)?\n\nהכנסה חודשית ממוצעת: ${Math.round(avgIncome).toLocaleString()} ₪\nהוצאה חודשית ממוצעת: ${Math.round(avgExpense).toLocaleString()} ₪\n\nרשימת ההוצאות הנוכחית תתאפס (הסכומים בלבד — הסיווגים של הספקים יישארו לזיהוי אוטומטי בהעלאה הבאה).\nמומלץ ללחוץ קודם על "שמור גיבוי" למעלה, ליתר ביטחון.`)) return;
 
             const id = 'p' + Date.now();
-            archive.periods.push({ id, label, year, from, to, monthsCount, totalIncome, totalExpense, avgIncome, avgExpense, avgSalaryBase, createdAt: new Date().toISOString() });
+            archive.periods.push({ id, label, year, from, to, monthsCount, totalIncome, totalExpense, avgIncome, avgExpense, avgSalaryBase, createdAt: new Date().toISOString(),
+                vatOutputTotal: vatTotals ? vatTotals.vatOutput : 0, vatInputTotal: vatTotals ? vatTotals.vatInput : 0, vatNetTotal: vatTotals ? vatTotals.vatNet : 0 });
             saveArchive();
 
             for (let i = 0; i < monthsCount; i++) { monthlyHistory[`archive-${id}-${i}`] = avgSalaryBase; }
@@ -872,11 +895,20 @@
         }
 
         // מחשב "רווח" (הכנסה פחות הוצאות) - זהה בדיוק עבור החישוב האמיתי והסימולטור
-        // אצל עוסק מורשה מסירים קודם את המע"מ (הוא לא באמת הכנסה/הוצאה שלה)
-        function computeProfit(income, expenseTotal) {
-            const divisor = isMurshe ? (1 + C.VAT_RATE) : 1;
-            let profit = (income / divisor) - (expenseTotal / divisor);
-            return Math.max(0, profit);
+        // אצל עוסק מורשה מסירים קודם את המע"מ (הוא לא באמת הכנסה/הוצאה שלה) - אבל רק מהחלק
+        // שבאמת מוכר לקיזוז בכל שורת הוצאה (לפי vatPercentFor), לא באופן גורף מכל ההוצאות.
+        // items: מערך {label, category, amount} (amount = חודשי), או מספר בודד כשאין פירוט שורות (הסימולטור) -
+        // במקרה כזה מניחים ברירת מחדל של 100% זכאות לקיזוז, בדיוק כמו vatPercentFor כשאין קטגוריה.
+        function computeProfit(income, items) {
+            const incDivisor = isMurshe ? (1 + C.VAT_RATE) : 1;
+            const list = Array.isArray(items) ? items : [{ amount: items }];
+            let realExpense = 0;
+            list.forEach(it => {
+                if (!isMurshe) { realExpense += it.amount; return; }
+                const eligible = it.amount * (vatPercentFor(it.category || it.label) / 100);
+                realExpense += (it.amount - eligible) + (eligible / (1 + C.VAT_RATE));
+            });
+            return Math.max(0, (income / incDivisor) - realExpense);
         }
 
         // האחוז מתוך הוצאה בקטגוריה נתונה שמוכר לקיזוז מע"מ (ברירת מחדל 100%, פרט לחריגים ב-VAT_PERCENT_MAP - למשל מנויי תוכנה)
@@ -894,6 +926,30 @@
             const vatInput = vatEligibleExpenses - (vatEligibleExpenses / divisor); // מע"מ תשומות שאפשר לקזז בפועל
             const vatNet = vatOutput - vatInput;                                // מה שנשאר להעביר בפועל
             return { vatOutput, vatInput, vatNet };
+        }
+
+        // מצטבר של מע"מ מאז תאריך נתון (התאריך שבו סומן "דיווחתי ושילמתי" לאחרונה) - מחבר את החודש הנוכחי (החי)
+        // עם כל התקופות שכבר הועברו לארכיון מאז אותו תאריך. משמש להציג "כמה יש להעביר בדו"ח התקופתי" גם
+        // כשהתקופה כוללת יותר מחודש אחד (למשל דיווח דו-חודשי), לא רק את החודש הנוכחי בלבד.
+        function computeVatAccumulated(sinceISO, liveVat) {
+            if (!isMurshe) return null;
+            let vatOutput = liveVat ? liveVat.vatOutput : 0;
+            let vatInput = liveVat ? liveVat.vatInput : 0;
+            archive.periods.forEach(p => {
+                if (p.createdAt && p.createdAt > sinceISO) {
+                    vatOutput += p.vatOutputTotal || 0;
+                    vatInput += p.vatInputTotal || 0;
+                }
+            });
+            return { vatOutput, vatInput, vatNet: vatOutput - vatInput };
+        }
+
+        // נלחצת אחרי שבאמת דיווחת ושילמת למע"מ בפועל - מאפסת את המונה המצטבר כדי שהתקופה הבאה תתחיל מ-0
+        function markVatFiled() {
+            if (!confirm('לאשר שדיווחת ושילמת בפועל את המע"מ? המונה המצטבר יתאפס ויתחיל להצטבר מחדש מהיום.')) return;
+            vatPeriod.since = new Date().toISOString();
+            localStorage.setItem(KEYS.VAT_PERIOD, JSON.stringify(vatPeriod));
+            calculate();
         }
 
         // מחשב מס, ביטוח לאומי, פנסיה ונטו - הפונקציה היחידה שמבצעת את חישוב המס,
@@ -943,7 +999,7 @@
 
             // עובר על רשימת ההוצאות המאוחדת פעם אחת, ומחלץ ממנה את כל המספרים שצריך: הוצאה קבועה/משתנה,
             // כמה מוכר לקיזוז מע"מ, כמה מומן מהחשבון הפרטי (="הלוואה מהבית"), וכמה זו ההתחייבות התקופתית השנתית
-            let tFix = 0, tVar = 0, vatEligibleExp = 0, personalLoanMonthly = 0, annualPeriodicTotal = 0;
+            let tFix = 0, tVar = 0, vatEligibleExp = 0, personalLoanMonthly = 0, annualPeriodicTotal = 0, expenseItems = [];
             Object.keys(expenses).forEach(label => {
                 const rec = expenses[label];
                 const amt = parseFloat(rec.amount) || 0;
@@ -952,6 +1008,7 @@
                 const monthly = amt / divisor;
                 if (rec.freq === 'var') tVar += monthly; else tFix += monthly;
                 vatEligibleExp += monthly * (vatPercentFor(rec.category || label) / 100);
+                expenseItems.push({ label, category: rec.category, amount: monthly });
                 if (rec.source === 'personal') personalLoanMonthly += monthly;
                 if (rec.freq === '2' || rec.freq === '12') annualPeriodicTotal += amt * (12 / divisor);
             });
@@ -960,7 +1017,7 @@
             document.getElementById('income-chart-wrapper').classList.toggle('hidden', tInc===0);
             if(incomeChart) { incomeChart.data.labels=incLs; incomeChart.data.datasets[0].data=incVs; incomeChart.update(); }
 
-            const profit = computeProfit(tInc, tFix + tVar);
+            const profit = computeProfit(tInc, expenseItems);
             const fin = computeFinancials(profit);
 
             document.getElementById('res-tax').innerText = Math.round(fin.netTax + fin.bituach).toLocaleString();
@@ -979,6 +1036,10 @@
                 document.getElementById('vat-output').innerText = Math.round(vat.vatOutput).toLocaleString();
                 document.getElementById('vat-input').innerText = Math.round(vat.vatInput).toLocaleString();
                 document.getElementById('vat-net').innerText = Math.round(vat.vatNet).toLocaleString();
+
+                const vatAcc = computeVatAccumulated(vatPeriod.since, vat);
+                document.getElementById('vat-acc-net').innerText = Math.round(vatAcc.vatNet).toLocaleString();
+                document.getElementById('vat-period-since').innerText = new Date(vatPeriod.since).toLocaleDateString('he-IL');
             }
 
             document.getElementById('results-area').classList.toggle('opacity-0', tInc <= 0);
@@ -1071,8 +1132,8 @@
 
         function calcTax(n) { let t=0, p=0; for(let b of C.TAX){ if(n>p){ t+=Math.min(n-p, b.limit-p)*b.rate; p=b.limit; } } if(n>p) t+=(n-p)*0.47; return t; }
         function initCharts() { incomeChart = new Chart(document.getElementById('incomeChart').getContext('2d'), { type:'doughnut', data:{labels:[],datasets:[{data:[],backgroundColor:['#f26522','#334155','#94a3b8']}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{family:'Rubik'},boxWidth:8}}}}}); }
-        function backupData() { const emergency = JSON.parse(localStorage.getItem(KEYS.EMERGENCY)) || {}; const data = { history, dynamic: savedDynamic, profile, emergency, expenses, monthlyHistory, archive }; const blob = new Blob([JSON.stringify(data)], {type: "application/json"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `osek_backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); }
-        function restoreData(input) { const file = input.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const data = JSON.parse(e.target.result); if(data.history) localStorage.setItem(KEYS.HISTORY, JSON.stringify(data.history)); if(data.fixed) localStorage.setItem(KEYS.FIXED, JSON.stringify(data.fixed)); if(data.dynamic) localStorage.setItem(KEYS.DYNAMIC, JSON.stringify(data.dynamic)); if(data.profile) localStorage.setItem(KEYS.PROFILE, JSON.stringify(data.profile)); if(data.emergency) localStorage.setItem(KEYS.EMERGENCY, JSON.stringify(data.emergency)); if(data.expenses) localStorage.setItem(KEYS.EXPENSES, JSON.stringify(data.expenses)); if(data.monthlyHistory) localStorage.setItem(KEYS.MONTHLY, JSON.stringify(data.monthlyHistory)); if(data.archive) localStorage.setItem(KEYS.ARCHIVE, JSON.stringify(data.archive)); alert("הנתונים שוחזרו! העמוד יתרענן."); location.reload(); } catch(err) { alert("שגיאה בקובץ הגיבוי"); } }; reader.readAsText(file); }
+        function backupData() { const emergency = JSON.parse(localStorage.getItem(KEYS.EMERGENCY)) || {}; const data = { history, dynamic: savedDynamic, profile, emergency, expenses, monthlyHistory, archive, vatPeriod }; const blob = new Blob([JSON.stringify(data)], {type: "application/json"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `osek_backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); }
+        function restoreData(input) { const file = input.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = (e) => { try { const data = JSON.parse(e.target.result); if(data.history) localStorage.setItem(KEYS.HISTORY, JSON.stringify(data.history)); if(data.fixed) localStorage.setItem(KEYS.FIXED, JSON.stringify(data.fixed)); if(data.dynamic) localStorage.setItem(KEYS.DYNAMIC, JSON.stringify(data.dynamic)); if(data.profile) localStorage.setItem(KEYS.PROFILE, JSON.stringify(data.profile)); if(data.emergency) localStorage.setItem(KEYS.EMERGENCY, JSON.stringify(data.emergency)); if(data.expenses) localStorage.setItem(KEYS.EXPENSES, JSON.stringify(data.expenses)); if(data.monthlyHistory) localStorage.setItem(KEYS.MONTHLY, JSON.stringify(data.monthlyHistory)); if(data.archive) localStorage.setItem(KEYS.ARCHIVE, JSON.stringify(data.archive)); if(data.vatPeriod) localStorage.setItem(KEYS.VAT_PERIOD, JSON.stringify(data.vatPeriod)); alert("הנתונים שוחזרו! העמוד יתרענן."); location.reload(); } catch(err) { alert("שגיאה בקובץ הגיבוי"); } }; reader.readAsText(file); }
         function clearAllData() { if(confirm("למחוק הכל?")){ localStorage.clear(); location.reload(); } }
     </script>
 </body>
