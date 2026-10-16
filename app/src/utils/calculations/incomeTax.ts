@@ -25,10 +25,10 @@ export function computeAnnualIncomeTaxBeforeCredits(annualTaxableIncome: number)
 }
 
 /**
- * נקודות הזיכוי לשנת המס הנוכחית, לפי גיל הילדים בשנה הזו.
- * כולל רק קטגוריות שאומתו במסמכי המחקר (בסיס תושבות + ילדים) ועוד
- * profile.personal.manualExtraCreditPoints (לקטגוריות שדורשות אישור חיצוני —
- * ראו ההערה בטיפוס עצמו).
+ * נקודות הזיכוי האוטומטיות לשנת המס הנוכחית — רק קטגוריות שאומתו במסמכי
+ * המחקר: בסיס תושבות (2.25, +0.5 לאישה) וילדים לפי גיל. **לא** כולל הורה
+ * עצמאי/ת, יישוב מזכה, נכות, עולה חדש, מילואים או תואר — הערך המדויק של
+ * אלה תלוי אישור/מחשבון רשמי שלא אומת כאן (ראו resolveCreditPoints).
  */
 export function computeCreditPoints(personal: UserProfile['personal'], taxYear = new Date().getFullYear()): number {
   let points = BASE_CREDIT_POINTS_RESIDENT
@@ -41,9 +41,19 @@ export function computeCreditPoints(personal: UserProfile['personal'], taxYear =
     points += personal.gender === 'female' ? bracket.mother : bracket.father
   }
 
-  points += personal.manualExtraCreditPoints
-
   return points
+}
+
+/**
+ * נקודות הזיכוי שבאמת נכנסות לחישוב: אם הוזן creditPointsOverride (למשל
+ * מהמחשבון הרשמי של רשות המסים, secapp.taxes.gov.il/srsimulatorNZ) — הוא
+ * גובר לגמרי על החישוב האוטומטי. כך אין צורך "לחבר דלתא" ידנית בין השניים.
+ */
+export function resolveCreditPoints(
+  personal: UserProfile['personal'],
+  taxYear = new Date().getFullYear(),
+): number {
+  return personal.creditPointsOverride ?? computeCreditPoints(personal, taxYear)
 }
 
 export interface IncomeTaxEstimate {
@@ -62,7 +72,7 @@ export interface IncomeTaxEstimate {
  */
 export function estimateIncomeTax(monthlyProfit: number, profile: UserProfile): IncomeTaxEstimate {
   const annualTaxableIncome = Math.max(0, monthlyProfit) * 12
-  const creditPoints = computeCreditPoints(profile.personal)
+  const creditPoints = resolveCreditPoints(profile.personal)
   const annualCreditValue = creditPoints * CREDIT_POINT_MONTHLY_VALUE_2026 * 12
 
   const annualTaxBeforeCredits = computeAnnualIncomeTaxBeforeCredits(annualTaxableIncome)

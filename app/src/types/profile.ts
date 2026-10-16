@@ -38,17 +38,28 @@ export interface PersonalInfo {
   isRecentGraduate: boolean
   graduationYear: number | null
   /**
-   * נקודות זיכוי נוספות שהערך המדויק שלהן תלוי אישור/טבלה שלא אומתה כאן
-   * (הורה עצמאי/ת, יישוב מזכה, נכות, עולה חדש, מילואים, תואר אקדמי).
-   * יש להזין לפי אישור רו"ח/טופס 101 — המנוע לא מנחש את הערך.
+   * סה"כ נקודות זיכוי, אם כבר נבדק במחשבון הרשמי של רשות המסים או מול רו"ח —
+   * כשמוגדר, דורס לגמרי את החישוב האוטומטי (תושבות + ילדים) שבקובץ incomeTax.ts.
+   * זה נמנע ממצב שבו המשתמשת צריכה לחשב בעצמה "דלתא" בין החישוב האוטומטי
+   * לתוצאה המלאה מהמחשבון הרשמי — היא פשוט מזינה את המספר הסופי.
    */
-  manualExtraCreditPoints: number
+  creditPointsOverride: number | null
 }
 
-/** 3. תחזית הכנסות והוצאות */
+/** 3. הכנסות — נקודת פתיחה בלבד (לא תחליף להזנה חודשית אמיתית ב"קלט חודשי") */
+export type RevenueTrend = 'same' | 'increase' | 'decrease'
+
 export interface RevenueForecast {
-  expectedMonthlyRevenue: number
-  expectedMonthlyExpenses: number
+  /**
+   * הכנסה חודשית ממוצעת ידועה (לא כולל הוצאות, לא כולל מע"מ) — מתוך נתונים
+   * שכבר יש למשתמשת (למשל סגירת שנה קודמת, או כמה חודשים אחרונים שנסגרו
+   * במערכת הנהלת החשבונות). לא ניחוש — מספר שכבר קיים.
+   */
+  knownAverageMonthlyRevenue: number | null
+  /** צפי כיוון קדימה ביחס לממוצע הידוע */
+  revenueTrend: RevenueTrend
+  /** באחוזים, רלוונטי רק כש-revenueTrend הוא increase/decrease */
+  revenueTrendPercent: number
   /**
    * אחוז המקדמה שנקבע בפועל בתיק ברשות המסים (אם כבר ידוע). זהו האחוז הרשמי,
    * הנקבע מנהלית לפי שומת עבר/ענף — לא ניתן לחשב אותו באופן מדויק מהמדרגות בלבד.
@@ -135,12 +146,13 @@ export const createDefaultProfile = (): UserProfile => ({
     reserveDutyDaysPriorYear: 0,
     isRecentGraduate: false,
     graduationYear: null,
-    manualExtraCreditPoints: 0,
+    creditPointsOverride: null,
   },
 
   revenueForecast: {
-    expectedMonthlyRevenue: 0,
-    expectedMonthlyExpenses: 0,
+    knownAverageMonthlyRevenue: null,
+    revenueTrend: 'same',
+    revenueTrendPercent: 0,
     assignedAdvanceRatePercent: null,
   },
 

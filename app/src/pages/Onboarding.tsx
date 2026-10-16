@@ -4,12 +4,15 @@ import type {
   BusinessStatus,
   Gender,
   MaritalStatus,
+  RevenueTrend,
   SalaryDrawModel,
 } from '../types/profile'
 import FormSection from '../components/form/FormSection'
 import Field from '../components/form/Field'
 import { CheckboxRow, RadioCards, SelectInput, TextInput } from '../components/form/inputs'
 import { ChildrenEditor } from '../components/form/ChildrenEditor'
+import InfoNote from '../components/form/InfoNote'
+import { CreditPointsSummary } from '../components/form/CreditPointsSummary'
 
 const businessStatusOptions: { value: BusinessStatus; label: string; description: string }[] = [
   { value: 'exempt', label: 'עוסק פטור', description: 'ללא חיוב במע״מ' },
@@ -28,6 +31,12 @@ const maritalStatusOptions: { value: MaritalStatus; label: string }[] = [
   { value: 'divorced', label: 'גרוש/ה' },
   { value: 'widowed', label: 'אלמן/ה' },
   { value: 'single_parent', label: 'הורה עצמאי/ת' },
+]
+
+const revenueTrendOptions: { value: RevenueTrend; label: string }[] = [
+  { value: 'same', label: 'דומה' },
+  { value: 'increase', label: 'עולה' },
+  { value: 'decrease', label: 'יורד' },
 ]
 
 const advanceStrategyOptions: { value: AdvanceStrategy; label: string; description: string }[] = [
@@ -71,12 +80,20 @@ export default function Onboarding() {
           onChange={(v) => updateProfile({ businessStatus: v })}
           options={businessStatusOptions}
         />
+        <InfoNote>
+          לא בטוחה מה ההבדל בפועל? כדאי לבדוק את המשמעות של כל מעמד לפני שבוחרים — זה קובע אם גובים
+          מע״מ מלקוחות, איך מדווחים, ואיך מחושב מס ההכנסה.
+        </InfoNote>
       </FormSection>
 
       {/* 2. מצב אישי ונקודות זיכוי */}
       <FormSection step={2} title="מצב אישי ונקודות זיכוי" description="קובע את נקודות הזיכוי ממס ההכנסה.">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="מגדר" htmlFor="gender">
+          <Field
+            label="מגדר"
+            htmlFor="gender"
+            hint="כפי שרשום במרשם לצורכי מס — לא זהות מגדרית"
+          >
             <SelectInput
               id="gender"
               options={genderOptions}
@@ -94,7 +111,11 @@ export default function Onboarding() {
               }
             />
           </Field>
-          <Field label="שנת לידה" htmlFor="birthYear" hint="לבדיקת הגעה לגיל פרישה">
+          <Field
+            label="שנת לידה"
+            htmlFor="birthYear"
+            hint="רלוונטי מגיל הפרישה — 67 לגברים; לנשים תלוי בשנת הלידה, עולה בהדרגה עד 65 לילידות 1970+ — ומשפיע על אחוזי הביטוח הלאומי"
+          >
             <TextInput
               id="birthYear"
               type="number"
@@ -114,23 +135,6 @@ export default function Onboarding() {
             />
           </Field>
         </div>
-
-        <Field
-          label='נקודות זיכוי נוספות (לפי אישור רו"ח/טופס 101)'
-          htmlFor="manualExtraCreditPoints"
-          hint='קטגוריות כמו הורה עצמאי/ת, יישוב מזכה, נכות, עולה חדש, מילואים או תואר — הערך המדויק תלוי אישור, ולכן לא מחושב אוטומטית. יש להזין כאן את סך הנקודות הנוספות שאושרו.'
-        >
-          <TextInput
-            id="manualExtraCreditPoints"
-            type="number"
-            min={0}
-            step={0.25}
-            value={profile.personal.manualExtraCreditPoints}
-            onChange={(e) =>
-              updateSection('personal', { manualExtraCreditPoints: Number(e.target.value) })
-            }
-          />
-        </Field>
 
         <Field label="ילדים" htmlFor="children">
           <ChildrenEditor
@@ -154,6 +158,13 @@ export default function Onboarding() {
           >
             מגורים ביישוב המזכה בזיכוי מס אזורי
           </CheckboxRow>
+          {profile.personal.livesInEligibleSettlement && (
+            <InfoNote>
+              אין לנו רשימת יישובים מעודכנת — רשות המסים מפרסמת ומעדכנת אותה. אפשר לחפש "יישובים
+              מזכים במס הכנסה" באתר gov.il, או לבדוק מול המועצה המקומית/רו"ח אם היישוב שלך ברשימה
+              לשנה הנוכחית.
+            </InfoNote>
+          )}
           <CheckboxRow
             id="hasDisability"
             checked={profile.personal.hasDisability}
@@ -200,50 +211,80 @@ export default function Onboarding() {
             בוגר/ת תואר אקדמי/תעודה מקצועית (זכאות זמנית לנקודות זיכוי)
           </CheckboxRow>
           {profile.personal.isRecentGraduate && (
-            <Field label="שנת סיום הלימודים" htmlFor="graduationYear">
-              <TextInput
-                id="graduationYear"
-                type="number"
-                value={profile.personal.graduationYear ?? ''}
-                onChange={(e) =>
-                  updateSection('personal', { graduationYear: Number(e.target.value) })
-                }
-              />
-            </Field>
+            <>
+              <Field label="שנת סיום הלימודים" htmlFor="graduationYear">
+                <TextInput
+                  id="graduationYear"
+                  type="number"
+                  value={profile.personal.graduationYear ?? ''}
+                  onChange={(e) =>
+                    updateSection('personal', { graduationYear: Number(e.target.value) })
+                  }
+                />
+              </Field>
+              <InfoNote>
+                אין לנו מידע מאומת על משך הזכאות (כמה שנים), האם זה חל רק על תואר ראשון, ואיך זה
+                מתייחס לתואר שני/שלישי אחרי שכבר נוצלה הזכאות על תואר קודם. חשוב לשאול את זה
+                במפורש את רו"ח/יועץ המס.
+              </InfoNote>
+            </>
           )}
         </div>
+
+        <CreditPointsSummary personal={profile.personal} onUpdate={(patch) => updateSection('personal', patch)} />
       </FormSection>
 
-      {/* 3. תחזית הכנסות והוצאות */}
-      <FormSection step={3} title="תחזית הכנסות והוצאות" description="לקביעת מקדמות מס הכנסה וביטוח לאומי ראשוניות.">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="הכנסה חודשית צפויה (₪)" htmlFor="expectedRevenue">
-            <TextInput
-              id="expectedRevenue"
-              type="number"
-              min={0}
-              value={profile.revenueForecast.expectedMonthlyRevenue}
-              onChange={(e) =>
-                updateSection('revenueForecast', {
-                  expectedMonthlyRevenue: Number(e.target.value),
-                })
-              }
-            />
-          </Field>
-          <Field label="הוצאות חודשיות צפויות (₪)" htmlFor="expectedExpenses">
-            <TextInput
-              id="expectedExpenses"
-              type="number"
-              min={0}
-              value={profile.revenueForecast.expectedMonthlyExpenses}
-              onChange={(e) =>
-                updateSection('revenueForecast', {
-                  expectedMonthlyExpenses: Number(e.target.value),
-                })
-              }
-            />
-          </Field>
-        </div>
+      {/* 3. הכנסות — נקודת פתיחה בלבד */}
+      <FormSection
+        step={3}
+        title="הכנסות"
+        description="נקודת פתיחה בלבד — ברגע שמזינים נתונים אמיתיים בעמוד 'קלט חודשי', המערכת משתמשת בהם, לא בהערכה כאן."
+      >
+        <Field
+          label="הכנסה חודשית ממוצעת ידועה (₪, לא כולל הוצאות ולא כולל מע״מ)"
+          htmlFor="knownAverageRevenue"
+          hint='לא ניחוש — מספר שכבר יש לך: מתוך סגירת שנה קודמת, או כמה חודשים אחרונים שכבר "סגרת" במערכת הנהלת החשבונות (לדוגמה Morning). אם יש לך כמה חודשים, אפשר לחשב ממוצע ולהזין אותו כאן. אפשר להשאיר ריק אם עוד אין נתונים.'
+        >
+          <TextInput
+            id="knownAverageRevenue"
+            type="number"
+            min={0}
+            value={profile.revenueForecast.knownAverageMonthlyRevenue ?? ''}
+            onChange={(e) =>
+              updateSection('revenueForecast', {
+                knownAverageMonthlyRevenue: e.target.value === '' ? null : Number(e.target.value),
+              })
+            }
+          />
+        </Field>
+
+        {profile.revenueForecast.knownAverageMonthlyRevenue !== null && (
+          <div className="flex flex-col gap-3">
+            <Field label="הצפי קדימה, ביחס לממוצע שהזנת" htmlFor="revenueTrend">
+              <RadioCards
+                name="revenueTrend"
+                value={profile.revenueForecast.revenueTrend}
+                onChange={(v) => updateSection('revenueForecast', { revenueTrend: v })}
+                options={revenueTrendOptions}
+              />
+            </Field>
+            {profile.revenueForecast.revenueTrend !== 'same' && (
+              <Field label="בכמה אחוזים בערך?" htmlFor="revenueTrendPercent">
+                <TextInput
+                  id="revenueTrendPercent"
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={profile.revenueForecast.revenueTrendPercent}
+                  onChange={(e) =>
+                    updateSection('revenueForecast', { revenueTrendPercent: Number(e.target.value) })
+                  }
+                />
+              </Field>
+            )}
+          </div>
+        )}
+
         <Field
           label='אחוז מקדמה שנקבע בתיק ברשות המסים (%, אם ידוע)'
           htmlFor="assignedAdvanceRate"
@@ -267,12 +308,25 @@ export default function Onboarding() {
 
       {/* 4. מעמד בביטוח לאומי */}
       <FormSection step={4} title="מעמד בביטוח לאומי">
+        <InfoNote>
+          <p className="font-semibold text-ink">ב-2026, מספיק לעמוד באחת משלוש האפשרויות:</p>
+          <ul className="mt-1 list-inside list-disc">
+            <li>לפחות 20 שעות עבודה בשבוע בממוצע, או</li>
+            <li>הכנסה חודשית ממוצעת ממשלח היד של לפחות 6,885 ₪, או</li>
+            <li>לפחות 12 שעות שבוע בממוצע + הכנסה חודשית ממוצעת של לפחות 2,065 ₪.</li>
+          </ul>
+          <p className="mt-2">
+            מי שלא עומדת באף אחת מהחלופות מסווגת כ"עצמאית שאינה עונה להגדרה" — ההכנסה מטופלת כהכנסה
+            שלא מעבודה, וזה עלול לפגוע בזכאות להטבות מחליפות הכנסה כמו דמי לידה. לא בטוחה? כדאי לבדוק את
+            המשמעות של כל מעמד לפני שבוחרים.
+          </p>
+        </InfoNote>
         <CheckboxRow
           id="meetsSelfEmployedDefinition"
           checked={profile.bituachLeumi.meetsSelfEmployedDefinition}
           onChange={(v) => updateSection('bituachLeumi', { meetsSelfEmployedDefinition: v })}
         >
-          עומדת/ת בהגדרת "עצמאי" לפי חוק ביטוח לאומי (שעות/הכנסה)
+          עומדת/ת בהגדרת "עצמאי" לפי חוק ביטוח לאומי (אחת משלוש החלופות למעלה)
         </CheckboxRow>
         <CheckboxRow
           id="hasEmployeeIncome"
@@ -287,19 +341,26 @@ export default function Onboarding() {
           יש לי גם הכנסה כשכיר/ה (נדרש תיאום דמי ביטוח)
         </CheckboxRow>
         {profile.bituachLeumi.hasEmployeeIncome && (
-          <Field label="שכר ברוטו חודשי כשכיר/ה (₪)" htmlFor="employeeIncome">
-            <TextInput
-              id="employeeIncome"
-              type="number"
-              min={0}
-              value={profile.bituachLeumi.employeeMonthlyGrossIncome ?? ''}
-              onChange={(e) =>
-                updateSection('bituachLeumi', {
-                  employeeMonthlyGrossIncome: Number(e.target.value),
-                })
-              }
-            />
-          </Field>
+          <>
+            <Field label="שכר ברוטו חודשי כשכיר/ה (₪)" htmlFor="employeeIncome">
+              <TextInput
+                id="employeeIncome"
+                type="number"
+                min={0}
+                value={profile.bituachLeumi.employeeMonthlyGrossIncome ?? ''}
+                onChange={(e) =>
+                  updateSection('bituachLeumi', {
+                    employeeMonthlyGrossIncome: Number(e.target.value),
+                  })
+                }
+              />
+            </Field>
+            <InfoNote>
+              זה משפיע גם על ביטוח לאומי (תיאום הסף המופחת) וגם על מס הכנסה: אין שתי מדרגות נפרדות —
+              המשכורת "תופסת" את המדרגות הנמוכות קודם, והרווח מהעסק ממוסה החל מהמדרגה שהמשכורת כבר
+              הגיעה אליה.
+            </InfoNote>
+          </>
         )}
       </FormSection>
 
@@ -396,28 +457,17 @@ export default function Onboarding() {
       </FormSection>
 
       {/* 8. העדפת משיכת שכר */}
-      <FormSection step={8} title="העדפת משיכת שכר">
+      <FormSection
+        step={8}
+        title="העדפת משיכת שכר"
+        description='בוחרים כיוון כללי כאן — את הסכום הקבוע עצמו לא צריך לנחש: ברגע שיש נתונים בדשבורד, יהיה אפשר לקבוע אותו משם (למשל "קחי את הממוצע המומלץ כסכום הקבוע שלי"), לא כאן בשאלון.'
+      >
         <RadioCards
           name="salaryDrawModel"
           value={profile.salaryPreference.drawModel}
           onChange={(v) => updateSection('salaryPreference', { drawModel: v })}
           options={salaryDrawModelOptions}
         />
-        {profile.salaryPreference.drawModel === 'fixed' && (
-          <Field label="סכום משיכה קבוע לחודש (₪)" htmlFor="fixedSalary">
-            <TextInput
-              id="fixedSalary"
-              type="number"
-              min={0}
-              value={profile.salaryPreference.fixedMonthlyAmount ?? ''}
-              onChange={(e) =>
-                updateSection('salaryPreference', {
-                  fixedMonthlyAmount: e.target.value === '' ? null : Number(e.target.value),
-                })
-              }
-            />
-          </Field>
-        )}
       </FormSection>
 
       <div className="flex items-center gap-3">

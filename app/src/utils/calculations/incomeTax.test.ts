@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeAnnualIncomeTaxBeforeCredits, computeCreditPoints, estimateIncomeTax } from './incomeTax'
+import { computeAnnualIncomeTaxBeforeCredits, computeCreditPoints, estimateIncomeTax, resolveCreditPoints } from './incomeTax'
 import { createDefaultProfile } from '../../types/profile'
 import { CREDIT_POINT_MONTHLY_VALUE_2026 } from './constants2026'
 
@@ -45,11 +45,23 @@ describe('computeCreditPoints', () => {
     expect(computeCreditPoints(profile.personal, 2026)).toBeCloseTo(2.75, 5)
   })
 
-  it('מוסיף נקודות זיכוי נוספות שהוזנו ידנית', () => {
+  it('override דורס לגמרי את החישוב האוטומטי (לא מצטבר אליו)', () => {
     const profile = createDefaultProfile()
     profile.personal.gender = 'male'
-    profile.personal.manualExtraCreditPoints = 1.5
-    expect(computeCreditPoints(profile.personal, 2026)).toBeCloseTo(2.25 + 1.5, 5)
+    profile.personal.children = [{ id: '1', birthYear: 2016 }] // היה מוסיף +1 אוטומטית
+    profile.personal.creditPointsOverride = 10.75 // למשל מהמחשבון הרשמי
+
+    expect(computeCreditPoints(profile.personal, 2026)).toBeCloseTo(2.25 + 1, 5) // האוטומטי לא השתנה
+    expect(resolveCreditPoints(profile.personal, 2026)).toBeCloseTo(10.75, 5) // אבל זה מה שבאמת נכנס לחישוב
+  })
+
+  it('בלי override, resolveCreditPoints זהה ל-computeCreditPoints', () => {
+    const profile = createDefaultProfile()
+    profile.personal.gender = 'female'
+    expect(resolveCreditPoints(profile.personal, 2026)).toBeCloseTo(
+      computeCreditPoints(profile.personal, 2026),
+      5,
+    )
   })
 
   it('ילד/ה בן/בת 10 להורה-אם: +2 נקודות (טווח גילאי 6–17)', () => {
