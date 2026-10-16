@@ -120,7 +120,7 @@ export default function Dashboard() {
 
           <TaskCard
             title="פנסיה וקה״ש"
-            amount={financials.pension.actualMonthlyDeposit + financials.pension.studyFundDeductibleMonthly}
+            amount={financials.pension.actualMonthlyDeposit + financials.pension.actualStudyFundDeposit}
             badge={
               financials.pension.belowMandatoryMinimum
                 ? { text: 'מתחת לחובה — תוקן', tone: 'warning' }

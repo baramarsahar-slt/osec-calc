@@ -75,4 +75,27 @@ describe('קרן השתלמות — נתונים מאומתים', () => {
     const result = estimatePension(50_000, profile) // 4.5% × 50,000 = 2,250 > התקרה
     expect(result.studyFundDeductibleMonthly).toBeCloseTo(13_203 / 12, 2)
   })
+
+  it('יעד לפי אחוז עצמאי מהפנסיה — 6% פנסיה ו-2.5% קה"ש על אותו רווח', () => {
+    const profile = createDefaultProfile()
+    profile.pensionGoals.pensionTargetPercent = 6
+    profile.pensionGoals.monthlyPensionAmount = null
+    profile.pensionGoals.studyFundTargetPercent = 2.5
+    profile.pensionGoals.monthlyStudyFundAmount = null
+
+    const result = estimatePension(10_000, profile)
+
+    expect(result.actualStudyFundDeposit).toBeCloseTo(250, 2) // 2.5% × 10,000
+    // הפנסיה לא נגזרת מקה"ש וההפך — שני יעדים עצמאיים על אותו רווח
+    expect(result.actualMonthlyDeposit).toBeGreaterThanOrEqual(600) // 6% × 10,000, או החובה אם גבוהה ממנה
+  })
+
+  it('הפקדה מעבר לתקרת הניכוי — התזרים בפועל (actualStudyFundDeposit) לא נחתך, רק הניכוי למס', () => {
+    const profile = createDefaultProfile()
+    profile.pensionGoals.monthlyStudyFundAmount = 5_000 // הרבה מעבר לתקרת הניכוי
+    const result = estimatePension(50_000, profile)
+
+    expect(result.actualStudyFundDeposit).toBeCloseTo(5_000, 2) // זה מה שבאמת יוצא מהחשבון
+    expect(result.studyFundDeductibleMonthly).toBeLessThan(result.actualStudyFundDeposit) // אבל רק חלק ממנו מוכר
+  })
 })

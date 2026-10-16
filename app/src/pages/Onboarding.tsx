@@ -365,29 +365,42 @@ export default function Onboarding() {
       </FormSection>
 
       {/* 5. יעדי פנסיה וחיסכון */}
-      <FormSection
-        step={5}
-        title="יעדי פנסיה וחיסכון"
-        description="חובת ההפקדה המזערית לעצמאי היא 4.45% עד תקרה ראשונה, ו-12.55% עד תקרה שנייה."
-      >
-        <Field label="אחוז יעד להפקדה פנסיונית (%)" htmlFor="pensionTargetPercent">
-          <TextInput
-            id="pensionTargetPercent"
-            type="number"
-            min={0}
-            max={25}
-            step={0.05}
-            value={profile.pensionGoals.pensionTargetPercent}
-            onChange={(e) =>
-              updateSection('pensionGoals', { pensionTargetPercent: Number(e.target.value) })
-            }
-          />
-        </Field>
+      <FormSection step={5} title="יעדי פנסיה וחיסכון">
+        <InfoNote>
+          <p>
+            חובת ההפקדה המזערית לעצמאי: <strong>4.45%</strong> על הרווח השנתי עד{' '}
+            <strong>82,614 ₪</strong> (כ-6,885 ₪/חודש), ו-<strong>12.55%</strong> על החלק שבין זה
+            לבין <strong>165,228 ₪</strong> לשנה (כ-13,769 ₪/חודש). מעבר לכך אין עוד חובה חוקית
+            להפקיד — אפשר כמובן לחסוך יותר מרצון.
+          </p>
+          <p className="mt-2">
+            פנסיה וקרן השתלמות הן שתי מטרות נפרדות — אפשר להגדיר אחוז יעד לכל אחת בנפרד (למשל 6%
+            לפנסיה ו-2.5% לקה"ש), בלי שאחת "נגזרת" מהשנייה.
+          </p>
+        </InfoNote>
+
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field
+            label="אחוז יעד להפקדה פנסיונית (%)"
+            htmlFor="pensionTargetPercent"
+            hint="מעבר למינימום החוקי — המערכת לא תרד מתחת לחובה בכל מקרה"
+          >
+            <TextInput
+              id="pensionTargetPercent"
+              type="number"
+              min={0}
+              max={25}
+              step={0.05}
+              value={profile.pensionGoals.pensionTargetPercent}
+              onChange={(e) =>
+                updateSection('pensionGoals', { pensionTargetPercent: Number(e.target.value) })
+              }
+            />
+          </Field>
           <Field
             label="סכום הפקדה חודשי קבוע לפנסיה (₪, רשות)"
             htmlFor="monthlyPension"
-            hint="אם מוגדר, גובר על האחוז למעלה"
+            hint="אם מוגדר, גובר על האחוז"
           >
             <TextInput
               id="monthlyPension"
@@ -401,7 +414,28 @@ export default function Onboarding() {
               }
             />
           </Field>
-          <Field label="הפקדה חודשית לקרן השתלמות (₪, רשות)" htmlFor="monthlyStudyFund">
+          <Field
+            label="אחוז יעד להפקדה לקרן השתלמות (%)"
+            htmlFor="studyFundTargetPercent"
+            hint="עצמאי מאחוז הפנסיה — לא חלק ממנו"
+          >
+            <TextInput
+              id="studyFundTargetPercent"
+              type="number"
+              min={0}
+              max={15}
+              step={0.05}
+              value={profile.pensionGoals.studyFundTargetPercent}
+              onChange={(e) =>
+                updateSection('pensionGoals', { studyFundTargetPercent: Number(e.target.value) })
+              }
+            />
+          </Field>
+          <Field
+            label="סכום הפקדה חודשי קבוע לקרן השתלמות (₪, רשות)"
+            htmlFor="monthlyStudyFund"
+            hint="אם מוגדר, גובר על האחוז"
+          >
             <TextInput
               id="monthlyStudyFund"
               type="number"

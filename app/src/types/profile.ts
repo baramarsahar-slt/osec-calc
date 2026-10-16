@@ -81,8 +81,11 @@ export interface BituachLeumiStatus {
 export interface PensionGoals {
   /** אחוז יעד להפקדה פנסיונית, מעבר למינימום החוקי (4.45%/12.55%) */
   pensionTargetPercent: number
-  /** סכום הפקדה חודשי קבוע, אם הוגדר ידנית (גובר על האחוז) */
+  /** סכום הפקדה חודשי קבוע לפנסיה, אם הוגדר ידנית (גובר על האחוז) */
   monthlyPensionAmount: number | null
+  /** אחוז יעד להפקדה לקרן השתלמות — עצמאי מהפנסיה, לא "נגזר" ממנה */
+  studyFundTargetPercent: number
+  /** סכום הפקדה חודשי קבוע לקרן השתלמות, אם הוגדר ידנית (גובר על האחוז) */
   monthlyStudyFundAmount: number | null
 }
 
@@ -165,6 +168,7 @@ export const createDefaultProfile = (): UserProfile => ({
   pensionGoals: {
     pensionTargetPercent: 12.55,
     monthlyPensionAmount: null,
+    studyFundTargetPercent: 0,
     monthlyStudyFundAmount: null,
   },
 

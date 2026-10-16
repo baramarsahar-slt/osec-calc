@@ -73,4 +73,27 @@ describe('computeMonthlyFinancials — אינטגרציה', () => {
     expect(result.cashAfterStatutoryPayments).toBeCloseTo(expectedCash, 2)
     expect(result.pension.actualMonthlyDeposit).toBeCloseTo(result.pension.mandatoryMonthlyDeposit, 2)
   })
+
+  it('התזרים מחסיר את מלוא הפקדת קה"ש בפועל, לא רק את החלק המוכר לניכוי', () => {
+    const profile = createDefaultProfile()
+    profile.businessStatus = 'exempt'
+    profile.revenueForecast.assignedAdvanceRatePercent = 0
+    profile.bituachLeumi.meetsSelfEmployedDefinition = false
+    profile.pensionGoals.pensionTargetPercent = 0
+    profile.pensionGoals.monthlyStudyFundAmount = 5_000 // מעבר לתקרת הניכוי במכוון
+
+    const result = computeMonthlyFinancials({
+      profile,
+      monthNumber: 5,
+      grossIncome: 50_000,
+      businessExpensesMonthly: 0,
+      privateLoanMonthly: 0,
+      previousMonth: null,
+    })
+
+    expect(result.pension.actualStudyFundDeposit).toBeCloseTo(5_000, 2)
+    expect(result.pension.studyFundDeductibleMonthly).toBeLessThan(5_000)
+    const expectedCash = 50_000 - result.pension.actualMonthlyDeposit - 5_000
+    expect(result.cashAfterStatutoryPayments).toBeCloseTo(expectedCash, 2)
+  })
 })

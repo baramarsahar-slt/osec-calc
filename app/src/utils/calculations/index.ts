@@ -111,7 +111,7 @@ export function computeMonthlyFinancials(input: MonthlyFinancialsInput): Monthly
     incomeTaxAdvance.advanceAmount -
     bituachLeumi.monthlyPayment -
     pension.actualMonthlyDeposit -
-    pension.studyFundDeductibleMonthly -
+    pension.actualStudyFundDeposit -
     vatPayableThisMonth
 
   const recommendedDraw = cashAfterStatutoryPayments + privateLoanMonthly

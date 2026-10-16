@@ -43,7 +43,9 @@ export interface PensionEstimate {
   creditValueMonthly: number
   /** מתוך ההפקדה בפועל — חלק המוכר לניכוי (ערכו תלוי מדרגת המס השולית) */
   deductionEligibleMonthly: number
-  /** קרן השתלמות — VERIFIED, ראו constants2026.ts */
+  /** ההפקדה בפועל לקרן השתלמות: סכום ידני אם הוגדר, אחרת לפי אחוז היעד */
+  actualStudyFundDeposit: number
+  /** מתוך ההפקדה בפועל לקה"ש — החלק המוכר לניכוי בלבד (VERIFIED, ראו constants2026.ts) */
   studyFundDeductibleMonthly: number
 }
 
@@ -77,9 +79,13 @@ export function estimatePension(monthlyProfit: number, profile: UserProfile): Pe
     PENSION_DEDUCTION_ANNUAL_CEILING_2026,
   )
 
-  const studyFundMonthlyAmount = pensionGoals.monthlyStudyFundAmount ?? 0
+  // קרן השתלמות: אותה לוגיקת "ידני גובר על אחוז" כמו הפנסיה, אבל כיעד
+  // עצמאי משלה — לא "שארית" שנגזרת מאחוז הפנסיה.
+  const studyFundTargetFromPercent = (monthlyProfit * pensionGoals.studyFundTargetPercent) / 100
+  const actualStudyFundDeposit = pensionGoals.monthlyStudyFundAmount ?? studyFundTargetFromPercent
+
   const studyFundDeductibleMonthly = Math.min(
-    studyFundMonthlyAmount,
+    actualStudyFundDeposit,
     monthlyProfit * STUDY_FUND_DEDUCTION_RATE_2026,
     STUDY_FUND_DEDUCTION_ANNUAL_CEILING_2026 / 12,
   )
@@ -91,6 +97,7 @@ export function estimatePension(monthlyProfit: number, profile: UserProfile): Pe
     creditEligibleMonthly: creditEligibleAnnual / 12,
     creditValueMonthly: (creditEligibleAnnual / 12) * PENSION_CREDIT_RATE,
     deductionEligibleMonthly: deductionEligibleAnnual / 12,
+    actualStudyFundDeposit,
     studyFundDeductibleMonthly,
   }
 }
