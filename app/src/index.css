@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+/* ============================================================
+   מערכת העיצוב — מותג "בר עמר־סהר"
+   מקור: CLAUDE.md. אין לשנות ערכים אלו בלי לעדכן שם קודם.
+   ============================================================ */
+@theme {
+  /* --- טוקני צבע --- */
+  --color-beige: #F5EDE0;       /* רקע ראשי */
+  --color-beige-2: #E8D5BC;     /* כרטיסים / משטחים משניים */
+  --color-ink: #2F2B26;         /* טקסט וכותרות (פחם חם) */
+  --color-terra: #D4622E;       /* אקצנט: לוגו, קווים, הדגשות, כותרות גדולות */
+  --color-terra-deep: #B5532A;  /* כפתורים (עם טקסט לבן) */
+  --color-brown: #6E5A40;       /* כיתובים ולייבלים */
+  --color-taupe: #8A8178;       /* קשת משנית, טקסט מושתק */
+  --color-taupe-light: #C9BCA9; /* טקסט מושתק על רקע כהה */
+
+  /* --- טיפוגרפיה --- */
+  --font-heading: "Rubik", "Assistant", sans-serif;
+  --font-body: "Assistant", "Rubik", sans-serif;
+  --font-academic: "David Libre", serif;
+
+  /* --- רדיוסים (עיגול פינות עדין, לפי "רוח כללית") --- */
+  --radius-brand-sm: 12px;
+  --radius-brand-md: 14px;
+  --radius-brand-lg: 18px;
+}
+
+@layer base {
+  html {
+    direction: rtl;
+  }
+
+  body {
+    background-color: var(--color-beige);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    font-weight: 400;
+    line-height: 1.6;
+    text-align: right;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--color-ink);
+  }
+
+  /* מספרים, אימיילים, כתובות URL — נשארים LTR גם בתוך הקשר RTL */
+  .ltr-field,
+  [data-ltr] {
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+
+  /* מצבי פוקוס ברורים, נגישים — עיקרון מוביל ולא תוספת */
+  :focus-visible {
+    outline: 3px solid var(--color-terra);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* יעדי מגע ≥44px עבור אלמנטים אינטראקטיביים */
+  button, a, input, select, textarea, [role="button"] {
+    min-height: 44px;
+  }
+
+  /* כיבוד prefers-reduced-motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* שורת תוכן לא ארוכה מ~70 תווים, לקריאוּת */
+  .prose-article {
+    max-width: 70ch;
+    font-family: var(--font-academic);
+    line-height: 1.65;
+  }
+}
