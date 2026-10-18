@@ -8,7 +8,8 @@ interface SafetyNetProgressProps {
 
 /**
  * מד התקדמות לכרית הביטחון העסקית. הטקסט המספרי תמיד נוכח לצד הצבע
- * (עיקרון נגישות: צבע לא נושא מידע לבדו).
+ * (עיקרון נגישות: צבע לא נושא מידע לבדו). הפס עצמו נעצר ב-100%, אבל
+ * הטקסט מציג את האחוז האמיתי גם כשעוברים את היעד (למשל 180%).
  */
 export function SafetyNetProgress({ currentBalance, targetAmount, targetMonths }: SafetyNetProgressProps) {
   if (targetAmount <= 0) {
@@ -19,7 +20,8 @@ export function SafetyNetProgress({ currentBalance, targetAmount, targetMonths }
     )
   }
 
-  const percent = Math.max(0, Math.min(100, (currentBalance / targetAmount) * 100))
+  const rawPercent = (currentBalance / targetAmount) * 100
+  const barPercent = Math.max(0, Math.min(100, rawPercent))
   const reachedTarget = currentBalance >= targetAmount
 
   return (
@@ -28,23 +30,27 @@ export function SafetyNetProgress({ currentBalance, targetAmount, targetMonths }
         <span className="text-sm font-semibold text-brown">
           {currency.format(currentBalance)} מתוך יעד {currency.format(targetAmount)} ({targetMonths} חודשי הוצאות)
         </span>
-        <span className="text-sm font-bold text-ink">{Math.round(percent)}%</span>
+        <span className="text-sm font-bold text-ink">{Math.round(Math.max(0, rawPercent))}%</span>
       </div>
       <div
         className="h-4 w-full overflow-hidden rounded-full bg-beige"
         role="progressbar"
-        aria-valuenow={Math.round(percent)}
+        aria-valuenow={Math.round(barPercent)}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-label="התקדמות כרית הביטחון"
       >
-        <div
-          className="h-full rounded-full bg-terra-deep transition-[width]"
-          style={{ width: `${percent}%` }}
-        />
+        <div className="h-full rounded-full bg-terra-deep transition-[width]" style={{ width: `${barPercent}%` }} />
       </div>
       <p className="text-sm text-brown">
-        {reachedTarget ? '✓ היעד הושג — הכרית מלאה.' : `נותרו ${currency.format(Math.max(0, targetAmount - currentBalance))} עד ליעד.`}
+        {reachedTarget
+          ? rawPercent > 100
+            ? `✓ מעל היעד ב-${Math.round(rawPercent - 100)}% (${currency.format(currentBalance - targetAmount)} מעבר ליעד).`
+            : '✓ היעד הושג — הכרית מלאה.'
+          : `נותרו ${currency.format(Math.max(0, targetAmount - currentBalance))} עד ליעד.`}
+      </p>
+      <p className="text-xs text-taupe">
+        טיפ: שווה לשמור את כרית הביטחון בפיקדון יומי נזיל, לא בעו״ש — כך היא לא "נראית" ככסף פנוי ליומיום.
       </p>
     </div>
   )

@@ -43,6 +43,10 @@ export function ExpenseList({ expenses, onUpdate, onRemove }: ExpenseListProps) 
             <span className="text-sm text-brown" dir="ltr">
               {currency.format(expense.amount)}
               <span className="mx-1 text-taupe">•</span>
+              <span dir="rtl">
+                {expense.source === 'business' ? `מע״מ מוכר: ${currency.format(expense.vatAmount)}` : 'פרטי — ללא מע״מ מוכר'}
+              </span>
+              <span className="mx-1 text-taupe">•</span>
               <span dir="rtl">{currency.format(monthlyEquivalent(expense))} לחודש בממוצע</span>
             </span>
           </div>

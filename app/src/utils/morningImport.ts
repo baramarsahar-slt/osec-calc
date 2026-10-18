@@ -75,9 +75,9 @@ export function parseMorningCsv(csvText: string): MorningImportResult {
       amount,
       vatAmount,
       category: category || null,
-      // ברירת מחדל סבירה לשורת דוח חודשי: עסקה חד-פעמית שתועדה בפועל באותו
-      // חודש, ששולמה מהעסק. המשתמשת יכולה לשנות כל שדה אחרי הייבוא.
-      frequency: 'one_time',
+      // ברירת מחדל סבירה לשורת דוח חודשי: עסקה שתועדה בפועל באותו חודש,
+      // ששולמה מהעסק. המשתמשת יכולה לשנות כל שדה אחרי הייבוא.
+      frequency: 'monthly',
       source: 'business',
       importSource: 'morning',
     })

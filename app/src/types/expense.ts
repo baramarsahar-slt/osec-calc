@@ -6,7 +6,7 @@
  */
 
 /** תדירות ההוצאה — קובעת איך "פורסים" אותה על פני החודשים (החלקת תזרים). */
-export type ExpenseFrequency = 'one_time' | 'monthly' | 'bi_monthly' | 'annual'
+export type ExpenseFrequency = 'monthly' | 'bi_monthly' | 'annual'
 
 /** מקור התשלום בפועל — לצורך מנגנון "הלוואת בעלים". */
 export type PaymentSource = 'business' | 'private'
@@ -34,18 +34,27 @@ export interface Expense {
 }
 
 export const EXPENSE_FREQUENCY_LABELS: Record<ExpenseFrequency, string> = {
-  one_time: 'חד־פעמי',
-  monthly: 'חודשי',
+  monthly: 'החודש',
   bi_monthly: 'דו־חודשי',
   annual: 'שנתי',
 }
 
 /** המחלק שבאמצעותו "פורסים" את ההוצאה לערך חודשי יציב (החלקת תזרים). */
 const FREQUENCY_DIVISOR: Record<ExpenseFrequency, number> = {
-  one_time: 1,
   monthly: 1,
   bi_monthly: 2,
   annual: 12,
+}
+
+/**
+ * מיגרציה שקטה לנתונים ישנים: גרסה קודמת כללה גם 'one_time' כתדירות
+ * נפרדת, שהתנהגה זהה ל-'monthly' (מחלק 1) — מוזגו לאחת ("החודש"), כדי
+ * למנוע כפילות מבלבלת. פונקציה זו ממירה כל הוצאה ישנה בטעינה, בלי לאבד
+ * נתונים אמיתיים שכבר הוזנו.
+ */
+export function migrateLegacyFrequency(frequency: string): ExpenseFrequency {
+  if (frequency === 'one_time') return 'monthly'
+  return frequency as ExpenseFrequency
 }
 
 /** השווי החודשי "המוחלק" של הוצאה — זה הערך שנכנס לחישובי תזרים חודשי יציב. */

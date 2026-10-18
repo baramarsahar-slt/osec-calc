@@ -3,7 +3,9 @@ import { useUserProfile } from '../hooks/useUserProfile'
 import { useExpenses } from '../hooks/useExpenses'
 import { currentMonthKey, useMonthlyIncome } from '../hooks/useMonthlyIncome'
 import { computeDashboardDraw } from '../utils/dashboardDraw'
+import { checkAdvanceRateAlignment } from '../utils/advanceRateCheck'
 import { TaskCard } from '../components/dashboard/TaskCard'
+import { VatTaskCard } from '../components/dashboard/VatTaskCard'
 import { SafetyNetProgress } from '../components/dashboard/SafetyNetProgress'
 import { NetSalaryScale } from '../components/dashboard/NetSalaryScale'
 import { PrivateLoanCard } from '../components/dashboard/PrivateLoanCard'
@@ -53,6 +55,18 @@ export default function Dashboard() {
     [profile, monthKey, grossIncome, totals, incomeByMonth, getMonthlyTotals],
   )
 
+  const advanceRateCheck = useMemo(() => {
+    const currentYear = new Date().getFullYear().toString()
+    const monthsThisYear = Object.entries(incomeByMonth)
+      .filter(([key]) => key.startsWith(currentYear))
+      .map(([key, income]) => ({
+        monthKey: key,
+        grossIncome: income,
+        businessExpensesActual: getMonthlyTotals(key).businessActual,
+      }))
+    return checkAdvanceRateAlignment(profile, monthsThisYear, financials.incomeTaxAdvance.ratePercent)
+  }, [profile, incomeByMonth, getMonthlyTotals, financials.incomeTaxAdvance.ratePercent])
+
   // ברירת מחדל הגיונית: "נטו בפועל" אם קיים ברשימה, אחרת האמצע
   const defaultIndex = Math.max(
     0,
@@ -84,27 +98,7 @@ export default function Dashboard() {
       <section className="flex flex-col gap-3">
         <h2 className="font-heading text-lg font-bold text-ink">משימות לפעולה</h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {financials.vat.applicable && (
-            <TaskCard
-              title="מע״מ"
-              amount={financials.vat.isReportingMonth ? financials.vat.netPayable : financials.vat.accruedHoldAmount}
-              badge={
-                financials.vat.isReportingMonth
-                  ? { text: 'חודש דיווח', tone: 'warning' }
-                  : { text: 'נצבר, לא לתשלום החודש', tone: 'neutral' }
-              }
-            >
-              {financials.vat.isReportingMonth
-                ? 'סכום סופי לתשלום/החזר לרשות המסים, מאוחד עם החודש הקודם.'
-                : 'מומלץ להפריש בצד עד חודש הדיווח הבא.'}
-              {financials.vat.isReportingMonth && financials.vat.previousMonthNetVat !== null && (
-                <p className="mt-1 text-xs text-taupe">
-                  (<span dir="ltr">{currency.format(financials.vat.currentMonthNetVat)}</span> מהחודש הנוכחי +{' '}
-                  <span dir="ltr">{currency.format(financials.vat.previousMonthNetVat)}</span> מהחודש הקודם)
-                </p>
-              )}
-            </TaskCard>
-          )}
+          {financials.vat.applicable && <VatTaskCard vat={financials.vat} reportingMonthKey={monthKey} />}
 
           <TaskCard
             title="מקדמת מס הכנסה"
@@ -115,16 +109,35 @@ export default function Dashboard() {
                 : { text: 'הערכה בלבד', tone: 'warning' }
             }
           >
-            {financials.incomeTaxAdvance.source === 'assigned'
-              ? 'לפי האחוז שנקבע בתיק ברשות המסים.'
-              : 'אחוז רשמי לא הוזן בפרופיל — זו הערכה לפי מדרגות המס, לא המספר הרשמי.'}
+            <p>
+              {financials.incomeTaxAdvance.source === 'assigned'
+                ? 'לפי האחוז שנקבע בתיק ברשות המסים.'
+                : 'אחוז רשמי לא הוזן בפרופיל — זו הערכה לפי מדרגות המס, לא המספר הרשמי.'}
+            </p>
+            {advanceRateCheck?.isSignificantGap && (
+              <p className="mt-1 text-xs font-semibold text-terra-deep">
+                ⚠ לפי {advanceRateCheck.monthsEntered} חודשי הכנסה שהוזנו השנה, התחזית למחזור שנתי (ללא מע״מ) היא{' '}
+                <span dir="ltr">{currency.format(advanceRateCheck.projectedAnnualTurnoverExclVat)}</span> — האחוז שבאמת נראה
+                נדרש הוא כ-{advanceRateCheck.neededRatePercent.toFixed(1)}%, מול{' '}
+                {advanceRateCheck.actualRatePercent.toFixed(1)}% בפועל. כדאי לבדוק מול רו"ח אם נדרש עדכון מקדמות —
+                זו הערכת-בטן בלבד, לא המלצה.
+              </p>
+            )}
+            <a
+              href="https://www.gov.il/he/service/itc-payment-online-incometax"
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-block text-xs font-semibold text-terra-deep underline"
+            >
+              לדיווח ותשלום מקדמות באתר רשות המסים
+            </a>
           </TaskCard>
 
           {profile.bituachLeumi.meetsSelfEmployedDefinition && (
             <TaskCard title="ביטוח לאומי" amount={financials.bituachLeumi.monthlyPayment}>
               {financials.bituachLeumi.minimumBaseApplied
-                ? 'חושב לפי בסיס המינימום החוקי (הרווח בפועל היה נמוך ממנו).'
-                : 'לפי הרווח החייב בפועל החודש.'}
+                ? 'מבוסס רק על הרווח שהוזן עד כה החודש (בלי חודשים קודמים, ובלי הכנסה שעוד לא נכנסה) — לכן נפל לבסיס המינימום החוקי. יתעדכן אוטומטית ברגע שתזיני את ההכנסה של החודש.'
+                : 'לפי הרווח החייב בפועל החודש (רק החודש הזה, לא מצטבר).'}
             </TaskCard>
           )}
 
@@ -137,7 +150,17 @@ export default function Dashboard() {
                 : undefined
             }
           >
-            חובה חוקית מזערית: {currency.format(financials.pension.mandatoryMonthlyDeposit)} לחודש.
+            <p>
+              על בסיס הכנסות בסך <span dir="ltr">{currency.format(financials.taxableProfit)}</span> יש להפקיד
+              מינימום <span dir="ltr">{currency.format(financials.pension.mandatoryMonthlyDeposit)}</span> בפנסיה.
+            </p>
+            <p className="mt-1">
+              על בסיס הכנסות החודש, עליך להפקיד{' '}
+              <span dir="ltr">{currency.format(financials.pension.actualMonthlyDeposit)}</span> לקרן פנסיה (
+              {profile.pensionGoals.pensionTargetPercent}% שמוגדר בפרופיל) ו-
+              <span dir="ltr">{currency.format(financials.pension.actualStudyFundDeposit)}</span> לקרן השתלמות (
+              {profile.pensionGoals.studyFundTargetPercent}% שמוגדר בפרופיל).
+            </p>
           </TaskCard>
         </div>
       </section>
@@ -152,9 +175,12 @@ export default function Dashboard() {
         />
       </section>
 
-      {/* 3. סקאלת הנטו */}
+      {/* 3. נטו בבנק */}
       <section className="flex flex-col gap-3 rounded-brand-lg bg-beige-2 p-5">
-        <h2 className="font-heading text-lg font-bold text-ink">סקאלת הנטו — בחירת מודל משיכה</h2>
+        <div>
+          <h2 className="font-heading text-lg font-bold text-ink">נטו בבנק</h2>
+          <p className="mt-1 text-sm text-brown">צריך לקבוע מהו מודל המשיכה שלך החודש — תזוזי בין האפשרויות כדי לראות את ההשפעה.</p>
+        </div>
         <NetSalaryScale stops={drawStops} selectedIndex={activeIndex} onSelect={setSelectedDrawIndex} />
       </section>
 

@@ -24,6 +24,20 @@
   --radius-brand-sm: 12px;
   --radius-brand-md: 14px;
   --radius-brand-lg: 18px;
+
+  /* --- אנימציה עדינה למעבר בין ערכים (מכבדת prefers-reduced-motion למטה) --- */
+  --animate-fade-in: fade-in 0.2s ease-out;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @layer base {

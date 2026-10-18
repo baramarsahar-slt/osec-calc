@@ -29,7 +29,7 @@ describe('parseMorningCsv', () => {
     expect(first.vatAmount).toBeCloseTo(4.03, 2)
     expect(first.importSource).toBe('morning')
     expect(first.source).toBe('business')
-    expect(first.frequency).toBe('one_time')
+    expect(first.frequency).toBe('monthly')
   })
 
   it('שורה במטבע זר — קוראת את "סכום כולל" (המומר לש"ח), לא את הסכום במטבע המקור', () => {

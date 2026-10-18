@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import type { ReactNode } from 'react'
 import { readJSON, writeJSON } from '../utils/storage'
 import type { Expense, ExpenseFrequency, ExpenseImportSource, PaymentSource } from '../types/expense'
-import { monthlyEquivalent, monthlyVatEquivalent } from '../types/expense'
+import { migrateLegacyFrequency, monthlyEquivalent, monthlyVatEquivalent } from '../types/expense'
 
 const STORAGE_KEY = 'osec_calc_expenses_v2'
 
@@ -77,6 +77,15 @@ function buildExpense(input: NewExpenseInput): Expense {
 
 const EMPTY_EXPENSES: Expense[] = []
 
+/** מריצה מיגרציה על כל ההוצאות שנטענו מהאחסון (ראו migrateLegacyFrequency) */
+function migrateExpensesByMonth(data: ExpensesByMonth): ExpensesByMonth {
+  const result: ExpensesByMonth = {}
+  for (const [monthKey, expenses] of Object.entries(data)) {
+    result[monthKey] = expenses.map((e) => ({ ...e, frequency: migrateLegacyFrequency(e.frequency) }))
+  }
+  return result
+}
+
 function computeTotals(expenses: Expense[]): MonthlyExpenseTotals {
   const businessExpenses = expenses.filter((e) => e.source === 'business')
   const privateExpenses = expenses.filter((e) => e.source === 'private')
@@ -93,8 +102,8 @@ function computeTotals(expenses: Expense[]): MonthlyExpenseTotals {
 function useExpensesState(): UseExpensesResult {
   // טעינה סינכרונית ב-initializer — ראו ההערה המפורטת ב-useUserProfile
   // לגבי הסיבה שזה קריטי (StrictMode מריץ effects פעמיים ויוצר מרוץ).
-  const [expensesByMonth, setExpensesByMonth] = useState<ExpensesByMonth>(
-    () => readJSON<ExpensesByMonth>(STORAGE_KEY) ?? {},
+  const [expensesByMonth, setExpensesByMonth] = useState<ExpensesByMonth>(() =>
+    migrateExpensesByMonth(readJSON<ExpensesByMonth>(STORAGE_KEY) ?? {}),
   )
 
   useEffect(() => {
