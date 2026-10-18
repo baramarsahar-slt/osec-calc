@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { currentMonthKey, useMonthlyIncome } from '../hooks/useMonthlyIncome'
 import { useExpenses } from '../hooks/useExpenses'
+import { useUserProfile } from '../hooks/useUserProfile'
 import { getSelectableMonths } from '../utils/monthOptions'
 import FormSection from '../components/form/FormSection'
 import Field from '../components/form/Field'
@@ -14,6 +15,7 @@ export default function MonthlyInput() {
   const [selectedMonthKey, setSelectedMonthKey] = useState(() => currentMonthKey())
   const monthOptions = getSelectableMonths()
 
+  const { profile } = useUserProfile()
   const { getIncomeForMonth, setIncomeForMonth } = useMonthlyIncome()
   const { getExpensesForMonth, addExpense, addExpenses, updateExpense, removeExpense, getMonthlyTotals } =
     useExpenses()
@@ -43,7 +45,15 @@ export default function MonthlyInput() {
       </div>
 
       <FormSection step={1} title="הכנסה ברוטו" description="סך התקבולים שנכנסו לעסק בחודש זה.">
-        <Field label="הכנסה ברוטו חודשית (₪)" htmlFor="gross-income">
+        <Field
+          label="הכנסה ברוטו חודשית (₪)"
+          htmlFor="gross-income"
+          hint={
+            profile.businessStatus === 'exempt'
+              ? 'הסכום הכולל שנכנס בפועל לחשבון העסק החודש (אצל עוסק פטור אין מע״מ בכלל, אז זה פשוט כל הסכום).'
+              : 'הסכום הכולל שנכנס בפועל לחשבון העסק החודש — כולל מע״מ שגבית מלקוחות. אין צורך להוריד את המע״מ בעצמך, המערכת עושה את זה.'
+          }
+        >
           <TextInput
             id="gross-income"
             type="number"
