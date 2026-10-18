@@ -46,7 +46,7 @@ export interface PersonalInfo {
   creditPointsOverride: number | null
 }
 
-/** 3. הכנסות — נקודת פתיחה בלבד (לא תחליף להזנה חודשית אמיתית ב"קלט חודשי") */
+/** 3. הכנסות — נקודת פתיחה בלבד (לא תחליף להזנה חודשית אמיתית ב"החודש שלי") */
 export type RevenueTrend = 'same' | 'increase' | 'decrease'
 
 export interface RevenueForecast {

@@ -54,6 +54,8 @@ export interface UseExpensesResult {
   addExpenses: (monthKey: string, inputs: NewExpenseInput[]) => void
   updateExpense: (monthKey: string, id: string, patch: Partial<NewExpenseInput>) => void
   removeExpense: (monthKey: string, id: string) => void
+  /** מוחקת את כל ההוצאות של חודש נתון (חוזר לרשימה ריקה) */
+  clearMonth: (monthKey: string) => void
   getMonthlyTotals: (monthKey: string) => MonthlyExpenseTotals
 }
 
@@ -133,6 +135,14 @@ function useExpensesState(): UseExpensesResult {
     }))
   }, [])
 
+  const clearMonth = useCallback((monthKey: string) => {
+    setExpensesByMonth((prev) => {
+      const next = { ...prev }
+      delete next[monthKey]
+      return next
+    })
+  }, [])
+
   const getMonthlyTotals = useCallback(
     (monthKey: string) => computeTotals(expensesByMonth[monthKey] ?? EMPTY_EXPENSES),
     [expensesByMonth],
@@ -145,6 +155,7 @@ function useExpensesState(): UseExpensesResult {
     addExpenses,
     updateExpense,
     removeExpense,
+    clearMonth,
     getMonthlyTotals,
   }
 }

@@ -67,7 +67,7 @@ export default function Dashboard() {
         <h1 className="font-heading text-2xl font-bold text-terra">דשבורד</h1>
         <p className="text-brown">
           עדיין לא הוזנה הכנסה לחודש {monthLabel(monthKey)}. כדי לראות את התמונה המלאה, יש להזין הכנסה והוצאות
-          בעמוד "קלט חודשי".
+          בעמוד "החודש שלי".
         </p>
       </section>
     )

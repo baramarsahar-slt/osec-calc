@@ -23,6 +23,8 @@ export interface UseMonthlyIncomeResult {
   incomeByMonth: MonthlyIncomeMap
   getIncomeForMonth: (monthKey: string) => number
   setIncomeForMonth: (monthKey: string, amount: number) => void
+  /** מוחקת לגמרי את ההכנסה של חודש נתון (חוזר למצב "לא הוזן") */
+  clearIncomeForMonth: (monthKey: string) => void
 }
 
 const MonthlyIncomeContext = createContext<UseMonthlyIncomeResult | null>(null)
@@ -42,7 +44,15 @@ function useMonthlyIncomeState(): UseMonthlyIncomeResult {
     setIncomeByMonth((prev) => ({ ...prev, [monthKey]: amount }))
   }, [])
 
-  return { incomeByMonth, getIncomeForMonth, setIncomeForMonth }
+  const clearIncomeForMonth = useCallback((monthKey: string) => {
+    setIncomeByMonth((prev) => {
+      const next = { ...prev }
+      delete next[monthKey]
+      return next
+    })
+  }, [])
+
+  return { incomeByMonth, getIncomeForMonth, setIncomeForMonth, clearIncomeForMonth }
 }
 
 export function MonthlyIncomeProvider({ children }: { children: ReactNode }) {

@@ -9,7 +9,7 @@ export function PrivateLoanCard({ amount }: PrivateLoanCardProps) {
   if (amount <= 0) {
     return (
       <div className="rounded-brand-lg border border-taupe-light bg-beige p-4 text-sm text-taupe">
-        אין החזר הלוואת בעלים לחודש זה — כל ההוצאות העסקיות סומנו כ"עסקי" בעמוד "קלט חודשי".
+        אין החזר הלוואת בעלים לחודש זה — כל ההוצאות העסקיות סומנו כ"עסקי" בעמוד "החודש שלי".
       </div>
     )
   }

@@ -16,13 +16,32 @@ export default function MonthlyInput() {
   const monthOptions = getSelectableMonths()
 
   const { profile } = useUserProfile()
-  const { getIncomeForMonth, setIncomeForMonth } = useMonthlyIncome()
-  const { getExpensesForMonth, addExpense, addExpenses, updateExpense, removeExpense, getMonthlyTotals } =
-    useExpenses()
+  const { getIncomeForMonth, setIncomeForMonth, clearIncomeForMonth } = useMonthlyIncome()
+  const {
+    getExpensesForMonth,
+    addExpense,
+    addExpenses,
+    updateExpense,
+    removeExpense,
+    clearMonth,
+    getMonthlyTotals,
+  } = useExpenses()
 
   const grossIncome = getIncomeForMonth(selectedMonthKey)
   const expenses = getExpensesForMonth(selectedMonthKey)
   const totals = getMonthlyTotals(selectedMonthKey)
+
+  const selectedMonthLabel = monthOptions.find((m) => m.key === selectedMonthKey)?.label ?? selectedMonthKey
+  const hasDataThisMonth = grossIncome > 0 || expenses.length > 0
+
+  const handleResetMonth = () => {
+    const confirmed = window.confirm(
+      `לאפס את כל הנתונים של ${selectedMonthLabel}? ההכנסה וכל ההוצאות של החודש הזה בלבד יימחקו לצמיתות. חודשים אחרים לא ייפגעו. אי אפשר לבטל פעולה זו.`,
+    )
+    if (!confirmed) return
+    clearIncomeForMonth(selectedMonthKey)
+    clearMonth(selectedMonthKey)
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -32,15 +51,26 @@ export default function MonthlyInput() {
           כל הנתונים נשמרים לפי חודש — אפשר לחזור ולמלא/לתקן חודשים קודמים בכל עת. ככל שיש יותר
           היסטוריה, הדשבורד מדויק יותר (למשל לחישוב ממוצע ולדיווח מע"מ דו-חודשי).
         </p>
-        <div className="mt-3 max-w-xs">
-          <Field label="בחירת חודש" htmlFor="month-select">
-            <SelectInput
-              id="month-select"
-              options={monthOptions.map((m) => ({ value: m.key, label: m.label }))}
-              value={selectedMonthKey}
-              onChange={(e) => setSelectedMonthKey(e.target.value)}
-            />
-          </Field>
+        <div className="mt-3 flex flex-wrap items-end gap-3">
+          <div className="max-w-xs grow">
+            <Field label="בחירת חודש" htmlFor="month-select">
+              <SelectInput
+                id="month-select"
+                options={monthOptions.map((m) => ({ value: m.key, label: m.label }))}
+                value={selectedMonthKey}
+                onChange={(e) => setSelectedMonthKey(e.target.value)}
+              />
+            </Field>
+          </div>
+          {hasDataThisMonth && (
+            <button
+              type="button"
+              onClick={handleResetMonth}
+              className="rounded-brand-sm border border-terra-deep px-4 py-2.5 text-sm font-semibold text-terra-deep hover:bg-beige-2"
+            >
+              איפוס נתוני {selectedMonthLabel}
+            </button>
+          )}
         </div>
       </div>
 

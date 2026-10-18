@@ -14,7 +14,7 @@ export function SafetyNetProgress({ currentBalance, targetAmount, targetMonths }
   if (targetAmount <= 0) {
     return (
       <p className="text-sm text-taupe">
-        עדיין אין מספיק נתוני הוצאות כדי לחשב יעד לכרית הביטחון — הזיני הוצאות חודשיות בעמוד "קלט חודשי".
+        עדיין אין מספיק נתוני הוצאות כדי לחשב יעד לכרית הביטחון — הזיני הוצאות חודשיות בעמוד "החודש שלי".
       </p>
     )
   }
