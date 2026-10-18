@@ -68,7 +68,7 @@ export default function MonthlyInput() {
       <FormSection
         step={2}
         title="ניהול הוצאות"
-        description="כל הוצאה מסווגת לפי תדירות (להחלקת תזרים) ולפי מקור תשלום (עסקי/פרטי)."
+        description='כל הוצאה מסווגת לפי מקור תשלום (עסקי/פרטי). התדירות (חודשי/שנתי/דו-חודשי) לא משפיעה על הסכומים כאן — הסכום המלא תמיד נספר במלואו בחודש שבו שולם. היא משפיעה רק על "נטו ממוצע מומלץ" ועל יעד כרית הביטחון בדשבורד, כדי שתשלום גדול וחד-פעמי לא יעוות את המלצת המשיכה היציבה.'
       >
         <MorningImport onImport={(inputs) => addExpenses(selectedMonthKey, inputs)} />
         <ExpenseForm onAdd={(input) => addExpense(selectedMonthKey, input)} />
@@ -78,9 +78,9 @@ export default function MonthlyInput() {
           onRemove={(id) => removeExpense(selectedMonthKey, id)}
         />
         <ExpenseSummary
-          totalMonthlyEquivalent={totals.totalMonthlyEquivalent}
-          businessMonthlyEquivalent={totals.businessMonthlyEquivalent}
-          privateLoanMonthlyEquivalent={totals.privateLoanMonthlyEquivalent}
+          totalActual={totals.totalActual}
+          businessActual={totals.businessActual}
+          privateLoanActual={totals.privateLoanActual}
         />
       </FormSection>
     </div>

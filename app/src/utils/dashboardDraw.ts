@@ -4,26 +4,33 @@ import type { DrawStop } from '../components/dashboard/NetSalaryScale'
 import { addMonthsToKey } from '../hooks/useMonthlyIncome'
 
 export interface MonthExpenseTotals {
-  businessExpensesMonthly: number
-  businessVatDeductibleMonthly: number
+  /** בפועל (לא מוחלק) — לחישובי מס/מע"מ/תזרים אמיתי */
+  businessExpensesActual: number
+  businessVatDeductibleActual: number
+  /** "מוחלק" לפי תדירות — רק לסימולציית ה"ממוצע" ויעד כרית הביטחון */
+  businessExpensesSmoothed: number
+  businessVatDeductibleSmoothed: number
 }
 
 export interface DashboardDrawInputs {
   profile: UserProfile
   monthKey: string // "YYYY-MM" של החודש הנוכחי
   grossIncome: number
-  businessExpensesMonthly: number
+  /** הוצאות עסקיות החודש, בפועל — זה מה שנכנס לחישוב הרווח/מס/מע"מ האמיתי */
+  businessExpensesActual: number
   privateLoanMonthly: number
-  businessVatDeductibleMonthly: number
+  businessVatDeductibleActual: number
+  /** הוצאות עסקיות החודש, "מוחלקות" — ליעד כרית הביטחון בלבד */
+  businessExpensesSmoothed: number
   /** כל ההכנסות שהוזנו אי-פעם, לפי מפתח חודש — לחישוב "ממוצע" */
   incomeHistory: Record<string, number>
-  /** מחזירה את ההוצאות העסקיות בפועל של חודש נתון — ממשית, לא קירוב */
+  /** מחזירה את הוצאות החודש (בפועל + מוחלק) של חודש נתון */
   getExpenseTotalsForMonth: (monthKey: string) => MonthExpenseTotals
 }
 
 export interface DashboardDrawResult {
   financials: MonthlyFinancials
-  /** יעד כרית הביטחון בש"ח: חודשי היעד × סך ההוצאות החודשי הנוכחי */
+  /** יעד כרית הביטחון בש"ח: חודשי היעד × הוצאות חודשיות "מוחלקות" (טיפוסיות) */
   safetyNetTarget: number
   /** 4 נקודות על הסרגל, ממוינות לפי ערך עולה */
   drawStops: DrawStop[]
@@ -34,9 +41,11 @@ function monthNumberFromKey(monthKey: string): number {
 }
 
 /**
- * ממוצע "נטו אחרי תשלומים סטטוטוריים" על פני כל החודשים שיש להם הכנסה
- * רשומה — כל חודש משתמש **בהוצאות שלו עצמו בפועל**, לא בהוצאות החודש
- * הנוכחי. ככל שיש יותר היסטוריה אמיתית, הממוצע הזה מדויק יותר.
+ * "נטו ממוצע מומלץ" — על פני כל החודשים שיש להם הכנסה רשומה, אבל **עם
+ * הוצאות מוחלקות** (לא ההוצאה המלאה בפועל של כל חודש). זה בכוונה: המטרה
+ * של ה-stop הזה היא בסיס יציב להשוואה, לא שיקוף מדויק של כל חודש לחוד —
+ * לכן תשלום שנתי גדול לא אמור "לקפוץ" את הממוצע הזה. חישוב המס/המע"מ
+ * בפועל (financials הראשי למטה) תמיד משתמש בסכומים האמיתיים, לא באלה.
  */
 function computeAverageNet(
   profile: UserProfile,
@@ -52,9 +61,9 @@ function computeAverageNet(
       profile,
       monthNumber: monthNumberFromKey(monthKey),
       grossIncome: income,
-      businessExpensesMonthly: monthExpenses.businessExpensesMonthly,
+      businessExpensesMonthly: monthExpenses.businessExpensesSmoothed,
       privateLoanMonthly: 0, // הלוואת בעלים נוספת בנפרד בסוף, לא חלק מהבסיס להשוואה
-      businessVatDeductibleMonthly: monthExpenses.businessVatDeductibleMonthly,
+      businessVatDeductibleMonthly: monthExpenses.businessVatDeductibleSmoothed,
       previousMonth: null, // ממוצע הוא תמונת-מצב חודשית בודדת לכל חודש, לא התחשבנות מע"מ מאוחדת
     })
     return sum + result.cashAfterStatutoryPayments
@@ -68,23 +77,25 @@ export function computeDashboardDraw(input: DashboardDrawInputs): DashboardDrawR
     profile,
     monthKey,
     grossIncome,
-    businessExpensesMonthly,
+    businessExpensesActual,
     privateLoanMonthly,
-    businessVatDeductibleMonthly,
+    businessVatDeductibleActual,
+    businessExpensesSmoothed,
     incomeHistory,
     getExpenseTotalsForMonth,
   } = input
 
   // נתוני החודש הקודם בפועל (אם הוזנו) — מאפשרים איחוד דו-חודשי אמיתי של
-  // מע"מ, במקום להניח "אין היסטוריה" בכל חודש.
+  // מע"מ, במקום להניח "אין היסטוריה" בכל חודש. תמיד הסכומים האמיתיים —
+  // התחשבנות מע"מ מול הרשות היא תמיד לפי מה ששולם בפועל, לא מוחלק.
   const previousMonthKey = addMonthsToKey(monthKey, -1)
   const previousMonthIncome = incomeHistory[previousMonthKey]
   const previousMonth =
     previousMonthIncome !== undefined
       ? {
           grossIncome: previousMonthIncome,
-          businessExpensesMonthly: getExpenseTotalsForMonth(previousMonthKey).businessExpensesMonthly,
-          businessVatDeductibleMonthly: getExpenseTotalsForMonth(previousMonthKey).businessVatDeductibleMonthly,
+          businessExpensesMonthly: getExpenseTotalsForMonth(previousMonthKey).businessExpensesActual,
+          businessVatDeductibleMonthly: getExpenseTotalsForMonth(previousMonthKey).businessVatDeductibleActual,
         }
       : null
 
@@ -92,13 +103,15 @@ export function computeDashboardDraw(input: DashboardDrawInputs): DashboardDrawR
     profile,
     monthNumber: monthNumberFromKey(monthKey),
     grossIncome,
-    businessExpensesMonthly,
+    businessExpensesMonthly: businessExpensesActual,
     privateLoanMonthly,
-    businessVatDeductibleMonthly,
+    businessVatDeductibleMonthly: businessVatDeductibleActual,
     previousMonth,
   })
 
-  const safetyNetTarget = profile.safetyNet.targetMonthsOfExpenses * businessExpensesMonthly
+  // יעד כרית הביטחון לפי הוצאה "טיפוסית" (מוחלקת) — לא לפי החודש הנוכחי
+  // שעשוי להיות חריג (גבוה בגלל תשלום שנתי, או נמוך באקראי)
+  const safetyNetTarget = profile.safetyNet.targetMonthsOfExpenses * businessExpensesSmoothed
   const gapToTarget = Math.max(0, safetyNetTarget - profile.safetyNet.currentBalance)
 
   const actualNet = financials.cashAfterStatutoryPayments

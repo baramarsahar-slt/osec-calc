@@ -35,15 +35,18 @@ export default function Dashboard() {
         profile,
         monthKey,
         grossIncome,
-        businessExpensesMonthly: totals.businessMonthlyEquivalent,
-        privateLoanMonthly: totals.privateLoanMonthlyEquivalent,
-        businessVatDeductibleMonthly: totals.businessVatDeductibleMonthlyEquivalent,
+        businessExpensesActual: totals.businessActual,
+        privateLoanMonthly: totals.privateLoanActual,
+        businessVatDeductibleActual: totals.businessVatDeductibleActual,
+        businessExpensesSmoothed: totals.businessSmoothed,
         incomeHistory: incomeByMonth,
         getExpenseTotalsForMonth: (key) => {
           const monthTotals = getMonthlyTotals(key)
           return {
-            businessExpensesMonthly: monthTotals.businessMonthlyEquivalent,
-            businessVatDeductibleMonthly: monthTotals.businessVatDeductibleMonthlyEquivalent,
+            businessExpensesActual: monthTotals.businessActual,
+            businessVatDeductibleActual: monthTotals.businessVatDeductibleActual,
+            businessExpensesSmoothed: monthTotals.businessSmoothed,
+            businessVatDeductibleSmoothed: monthTotals.businessVatDeductibleSmoothed,
           }
         },
       }),
@@ -152,11 +155,11 @@ export default function Dashboard() {
       {/* 4. הלוואת בעלים */}
       <section className="flex flex-col gap-3">
         <h2 className="font-heading text-lg font-bold text-ink">החזר הלוואת בעלים</h2>
-        <PrivateLoanCard amount={totals.privateLoanMonthlyEquivalent} />
+        <PrivateLoanCard amount={totals.privateLoanActual} />
       </section>
 
       {/* 5. סכום סופי למשיכה */}
-      <FinalDrawCard baseDraw={selectedStop.value} privateLoanAmount={totals.privateLoanMonthlyEquivalent} />
+      <FinalDrawCard baseDraw={selectedStop.value} privateLoanAmount={totals.privateLoanActual} />
     </div>
   )
 }

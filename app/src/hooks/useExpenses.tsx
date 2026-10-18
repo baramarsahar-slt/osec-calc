@@ -17,15 +17,30 @@ export interface NewExpenseInput {
   importSource?: ExpenseImportSource
 }
 
+/**
+ * שני סוגי סכומים, בכוונה, לשני צרכים שונים לגמרי:
+ *  - "Actual" — הסכום המלא בפועל, בלי שום פריסה. זה מה שבאמת יצא/נכנס
+ *    מהחשבון החודש, וזה מה שחייב להיכנס לכל חישוב מס/מע"מ/רווח/הלוואת
+ *    בעלים. הוצאה שנתית של 6,000 ₪ ששולמה החודש מפחיתה 6,000 ₪ מהרווח
+ *    החייב החודש — לא 500 ₪.
+ *  - "Smoothed" — אותה הוצאה "מוחלקת" לפי תדירות (שנתי÷12, דו-חודשי÷2).
+ *    זה *לא* נכנס לשום חישוב מס — הוא משמש אך ורק את "ההמלצה היציבה"
+ *    בדשבורד (ה-stop "נטו ממוצע מומלץ" וכן יעד כרית הביטחון), כדי
+ *    שהמלצת המשיכה החודשית לא תקפוץ פרא בגלל תשלום חד-פעמי גדול.
+ */
 export interface MonthlyExpenseTotals {
-  /** סך ההוצאות החודשי המוחלק (אחרי פריסת הוצאות תקופתיות) */
-  totalMonthlyEquivalent: number
-  /** מתוך הסך — רק מה ששולם מהחשבון העסקי */
-  businessMonthlyEquivalent: number
-  /** מתוך הסך — רק מה ששולם מהחשבון הפרטי = "הלוואת בעלים" שהעסק חייב להחזיר */
-  privateLoanMonthlyEquivalent: number
-  /** מתוך ההוצאות העסקיות — סך המע"מ המוכר לקיזוז (לשימוש מנוע המע"מ) */
-  businessVatDeductibleMonthlyEquivalent: number
+  /** סך כל ההוצאות בפועל (לא מוחלק) */
+  totalActual: number
+  /** מתוך הסך — רק מה ששולם מהחשבון העסקי, בפועל */
+  businessActual: number
+  /** מתוך הסך — רק מה ששולם מהחשבון הפרטי בפועל = "הלוואת בעלים" שהעסק חייב להחזיר */
+  privateLoanActual: number
+  /** מתוך ההוצאות העסקיות — סך המע"מ המוכר לקיזוז, בפועל (לשימוש מנוע המע"מ) */
+  businessVatDeductibleActual: number
+  /** הוצאות עסקיות "מוחלקות" — רק ליישור תנודתיות בהמלצת משיכה, לא לחישובי מס */
+  businessSmoothed: number
+  /** מע"מ תשומות "מוחלק" — לשימוש פנימי בלבד בסימולציית ה"ממוצע" */
+  businessVatDeductibleSmoothed: number
 }
 
 type ExpensesByMonth = Record<string, Expense[]>
@@ -62,16 +77,14 @@ const EMPTY_EXPENSES: Expense[] = []
 
 function computeTotals(expenses: Expense[]): MonthlyExpenseTotals {
   const businessExpenses = expenses.filter((e) => e.source === 'business')
+  const privateExpenses = expenses.filter((e) => e.source === 'private')
   return {
-    totalMonthlyEquivalent: expenses.reduce((sum, e) => sum + monthlyEquivalent(e), 0),
-    businessMonthlyEquivalent: businessExpenses.reduce((sum, e) => sum + monthlyEquivalent(e), 0),
-    privateLoanMonthlyEquivalent: expenses
-      .filter((e) => e.source === 'private')
-      .reduce((sum, e) => sum + monthlyEquivalent(e), 0),
-    businessVatDeductibleMonthlyEquivalent: businessExpenses.reduce(
-      (sum, e) => sum + monthlyVatEquivalent(e),
-      0,
-    ),
+    totalActual: expenses.reduce((sum, e) => sum + e.amount, 0),
+    businessActual: businessExpenses.reduce((sum, e) => sum + e.amount, 0),
+    privateLoanActual: privateExpenses.reduce((sum, e) => sum + e.amount, 0),
+    businessVatDeductibleActual: businessExpenses.reduce((sum, e) => sum + e.vatAmount, 0),
+    businessSmoothed: businessExpenses.reduce((sum, e) => sum + monthlyEquivalent(e), 0),
+    businessVatDeductibleSmoothed: businessExpenses.reduce((sum, e) => sum + monthlyVatEquivalent(e), 0),
   }
 }
 

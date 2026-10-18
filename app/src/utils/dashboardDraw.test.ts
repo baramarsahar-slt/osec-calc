@@ -12,13 +12,18 @@ function baseProfile() {
   return profile
 }
 
-/** עבור טסטים שבהם כל החודשים משתמשים באותן הוצאות — מפשט את ההגדרה */
-function uniformExpenses(businessExpensesMonthly: number, businessVatDeductibleMonthly = 0) {
-  return (): MonthExpenseTotals => ({ businessExpensesMonthly, businessVatDeductibleMonthly })
+/** עבור טסטים שבהם ההוצאה בפועל זהה למוחלקת (אין תשלומים תקופתיים) */
+function uniformExpenses(businessExpenses: number, businessVatDeductible = 0) {
+  return (): MonthExpenseTotals => ({
+    businessExpensesActual: businessExpenses,
+    businessVatDeductibleActual: businessVatDeductible,
+    businessExpensesSmoothed: businessExpenses,
+    businessVatDeductibleSmoothed: businessVatDeductible,
+  })
 }
 
 describe('computeDashboardDraw', () => {
-  it('יעד כרית הביטחון = חודשי היעד × הוצאות חודשיות', () => {
+  it('יעד כרית הביטחון = חודשי היעד × הוצאות חודשיות מוחלקות', () => {
     const profile = baseProfile()
     profile.safetyNet.targetMonthsOfExpenses = 3
 
@@ -26,14 +31,55 @@ describe('computeDashboardDraw', () => {
       profile,
       monthKey: '2026-05',
       grossIncome: 20_000,
-      businessExpensesMonthly: 4_000,
+      businessExpensesActual: 4_000,
       privateLoanMonthly: 0,
-      businessVatDeductibleMonthly: 0,
+      businessVatDeductibleActual: 0,
+      businessExpensesSmoothed: 4_000,
       incomeHistory: { '2026-05': 20_000 },
       getExpenseTotalsForMonth: uniformExpenses(4_000),
     })
 
     expect(result.safetyNetTarget).toBeCloseTo(12_000, 2)
+  })
+
+  it('תשלום שנתי גדול לא מעוות את יעד הכרית — היעד לפי ההוצאה המוחלקת, לא בפועל', () => {
+    const profile = baseProfile()
+    profile.safetyNet.targetMonthsOfExpenses = 3
+
+    const result = computeDashboardDraw({
+      profile,
+      monthKey: '2026-05',
+      grossIncome: 20_000,
+      businessExpensesActual: 24_000, // תשלום ביטוח שנתי גדול, שולם במלואו החודש
+      privateLoanMonthly: 0,
+      businessVatDeductibleActual: 0,
+      businessExpensesSmoothed: 2_000, // אותו תשלום, "מוחלק" ל-12 חודשים
+      incomeHistory: { '2026-05': 20_000 },
+      getExpenseTotalsForMonth: uniformExpenses(2_000),
+    })
+
+    // היעד מבוסס על ה-2,000 ה"טיפוסי", לא על ה-24,000 החריג
+    expect(result.safetyNetTarget).toBeCloseTo(6_000, 2)
+  })
+
+  it('תשלום שנתי גדול מפחית את מלוא הסכום מהרווח החייב/מהנטו בפועל של החודש', () => {
+    const profile = baseProfile()
+
+    const result = computeDashboardDraw({
+      profile,
+      monthKey: '2026-05',
+      grossIncome: 20_000,
+      businessExpensesActual: 24_000, // הוצאה אמיתית: כל ה-24,000 יורדים החודש
+      privateLoanMonthly: 0,
+      businessVatDeductibleActual: 0,
+      businessExpensesSmoothed: 2_000,
+      incomeHistory: { '2026-05': 20_000 },
+      getExpenseTotalsForMonth: uniformExpenses(2_000),
+    })
+
+    // רווח/נטו החודש: 20,000 - 24,000 = שלילי, לא 20,000 - 2,000 = 18,000
+    expect(result.financials.taxableProfit).toBeCloseTo(-4_000, 2)
+    expect(result.financials.cashAfterStatutoryPayments).toBeLessThan(0)
   })
 
   it('כשהפער לכרית גדול בהרבה מהנטו החודשי, משיכה מינימלית=0 ומקסימלית=הנטו המלא', () => {
@@ -45,9 +91,10 @@ describe('computeDashboardDraw', () => {
       profile,
       monthKey: '2026-05',
       grossIncome: 10_000,
-      businessExpensesMonthly: 9_000, // יעד = 27,000 — הרבה מעבר לנטו החודש הקטן
+      businessExpensesActual: 9_000, // יעד = 27,000 — הרבה מעבר לנטו החודש הקטן
       privateLoanMonthly: 0,
-      businessVatDeductibleMonthly: 0,
+      businessVatDeductibleActual: 0,
+      businessExpensesSmoothed: 9_000,
       incomeHistory: { '2026-05': 10_000 },
       getExpenseTotalsForMonth: uniformExpenses(9_000),
     })
@@ -67,9 +114,10 @@ describe('computeDashboardDraw', () => {
       profile,
       monthKey: '2026-05',
       grossIncome: 10_000,
-      businessExpensesMonthly: 1_000, // יעד = 3,000 — קטן מהנטו החודשי
+      businessExpensesActual: 1_000, // יעד = 3,000 — קטן מהנטו החודשי
       privateLoanMonthly: 0,
-      businessVatDeductibleMonthly: 0,
+      businessVatDeductibleActual: 0,
+      businessExpensesSmoothed: 1_000,
       incomeHistory: { '2026-05': 10_000 },
       getExpenseTotalsForMonth: uniformExpenses(1_000),
     })
@@ -89,9 +137,10 @@ describe('computeDashboardDraw', () => {
       profile,
       monthKey: '2026-05',
       grossIncome: 10_000,
-      businessExpensesMonthly: 1_000,
+      businessExpensesActual: 1_000,
       privateLoanMonthly: 0,
-      businessVatDeductibleMonthly: 0,
+      businessVatDeductibleActual: 0,
+      businessExpensesSmoothed: 1_000,
       incomeHistory: { '2026-05': 10_000 },
       getExpenseTotalsForMonth: uniformExpenses(1_000),
     })
@@ -107,9 +156,10 @@ describe('computeDashboardDraw', () => {
       profile,
       monthKey: '2026-06',
       grossIncome: 20_000,
-      businessExpensesMonthly: 2_000,
+      businessExpensesActual: 2_000,
       privateLoanMonthly: 0,
-      businessVatDeductibleMonthly: 0,
+      businessVatDeductibleActual: 0,
+      businessExpensesSmoothed: 2_000,
       incomeHistory: { '2026-05': 10_000, '2026-06': 20_000 },
       getExpenseTotalsForMonth: uniformExpenses(2_000),
     })
@@ -120,31 +170,38 @@ describe('computeDashboardDraw', () => {
     expect(averageStop.value).toBeGreaterThan(0)
   })
 
-  it('ממוצע משתמש בהוצאות האמיתיות של כל חודש, לא בהוצאות החודש הנוכחי', () => {
+  it('ממוצע משתמש בהוצאות המוחלקות של כל חודש היסטורי, לא בהוצאה בפועל של אותו חודש', () => {
     const profile = baseProfile()
 
-    // אותה הכנסה בשני החודשים, אבל הוצאות שונות — אם הממוצע היה "דוחס" את
-    // הוצאות החודש הנוכחי על החודש הקודם, שני החודשים היו יוצאים זהים.
+    // חודש קודם: תשלום שנתי גדול בפועל (24,000) אבל מוחלק נמוך (2,000) —
+    // הממוצע אמור להשתמש ב-2,000 ולא ב-24,000, כדי לא "לקפוץ" מתשלום חד-פעמי.
     const result = computeDashboardDraw({
       profile,
       monthKey: '2026-06',
       grossIncome: 20_000,
-      businessExpensesMonthly: 2_000, // הוצאות החודש הנוכחי
+      businessExpensesActual: 2_000,
       privateLoanMonthly: 0,
-      businessVatDeductibleMonthly: 0,
+      businessVatDeductibleActual: 0,
+      businessExpensesSmoothed: 2_000,
       incomeHistory: { '2026-05': 20_000, '2026-06': 20_000 },
       getExpenseTotalsForMonth: (monthKey) =>
         monthKey === '2026-05'
-          ? { businessExpensesMonthly: 10_000, businessVatDeductibleMonthly: 0 } // חודש קודם: הוצאות גבוהות בהרבה
-          : { businessExpensesMonthly: 2_000, businessVatDeductibleMonthly: 0 },
+          ? {
+              businessExpensesActual: 24_000,
+              businessVatDeductibleActual: 0,
+              businessExpensesSmoothed: 2_000, // הערך שבאמת נכנס לממוצע
+              businessVatDeductibleSmoothed: 0,
+            }
+          : { businessExpensesActual: 2_000, businessVatDeductibleActual: 0, businessExpensesSmoothed: 2_000, businessVatDeductibleSmoothed: 0 },
     })
 
     const averageStop = result.drawStops.find((s) => s.key === 'average')!
-    // ממוצע של (20,000-10,000) וחודש נוכחי (20,000-2,000=18,000) → נמוך מ-18,000
-    expect(averageStop.value).toBeLessThan(result.financials.cashAfterStatutoryPayments)
+    // אם הממוצע היה משתמש ב-24,000 בפועל, הוא היה שלילי/קרוב ל-0 — כאן הוא
+    // אמור להיות קרוב לנטו של חודש "רגיל" (20,000-2,000=18,000 בשני החודשים)
+    expect(averageStop.value).toBeCloseTo(result.financials.cashAfterStatutoryPayments, 1)
   })
 
-  it('חודש קודם קיים בהיסטוריה — מוזן כ-previousMonth למנוע המע"מ (איחוד דו-חודשי אמיתי)', () => {
+  it('חודש קודם קיים בהיסטוריה — מוזן כ-previousMonth למנוע המע"מ, לפי הסכום בפועל', () => {
     const profile = baseProfile()
     profile.businessStatus = 'licensed'
 
@@ -152,9 +209,10 @@ describe('computeDashboardDraw', () => {
       profile,
       monthKey: '2026-06', // חודש זוגי = חודש דיווח
       grossIncome: 11_800,
-      businessExpensesMonthly: 0,
+      businessExpensesActual: 0,
       privateLoanMonthly: 0,
-      businessVatDeductibleMonthly: 0,
+      businessVatDeductibleActual: 0,
+      businessExpensesSmoothed: 0,
       incomeHistory: { '2026-05': 23_600, '2026-06': 11_800 },
       getExpenseTotalsForMonth: uniformExpenses(0),
     })
@@ -172,9 +230,10 @@ describe('computeDashboardDraw', () => {
       profile,
       monthKey: '2026-05',
       grossIncome: 15_000,
-      businessExpensesMonthly: 2_000,
+      businessExpensesActual: 2_000,
       privateLoanMonthly: 0,
-      businessVatDeductibleMonthly: 0,
+      businessVatDeductibleActual: 0,
+      businessExpensesSmoothed: 2_000,
       incomeHistory: { '2026-05': 15_000 },
       getExpenseTotalsForMonth: uniformExpenses(2_000),
     })
@@ -191,9 +250,10 @@ describe('computeDashboardDraw', () => {
       profile,
       monthKey: '2026-05',
       grossIncome: 15_000,
-      businessExpensesMonthly: 2_000,
+      businessExpensesActual: 2_000,
       privateLoanMonthly: 0,
-      businessVatDeductibleMonthly: 0,
+      businessVatDeductibleActual: 0,
+      businessExpensesSmoothed: 2_000,
       incomeHistory: { '2026-05': 15_000 },
       getExpenseTotalsForMonth: uniformExpenses(2_000),
     })
@@ -202,9 +262,10 @@ describe('computeDashboardDraw', () => {
       profile,
       monthKey: '2026-05',
       grossIncome: 15_000,
-      businessExpensesMonthly: 2_000,
+      businessExpensesActual: 2_000,
       privateLoanMonthly: 5_000,
-      businessVatDeductibleMonthly: 0,
+      businessVatDeductibleActual: 0,
+      businessExpensesSmoothed: 2_000,
       incomeHistory: { '2026-05': 15_000 },
       getExpenseTotalsForMonth: uniformExpenses(2_000),
     })
