@@ -37,6 +37,10 @@ export interface VatEstimate {
   netPayable: number
   /** בחודש אי-זוגי בלבד: הסכום שכדאי "להפריש בצד" עד חודש הדיווח */
   accruedHoldAmount: number
+  /** תרומת החודש הנוכחי בלבד לסכום הסופי (פלט פחות תשומות, רק החודש הזה) */
+  currentMonthNetVat: number
+  /** תרומת החודש הקודם בלבד — null אם אין נתוני חודש קודם (למשל בינואר) */
+  previousMonthNetVat: number | null
 }
 
 function extractVatPortion(grossAmount: number): number {
@@ -67,11 +71,14 @@ export function computeVat(
       periodInputVat: 0,
       netPayable: 0,
       accruedHoldAmount: 0,
+      currentMonthNetVat: 0,
+      previousMonthNetVat: null,
     }
   }
 
   const currentOutput = extractVatPortion(currentMonth.grossIncome)
   const currentInput = resolveInputVat(currentMonth)
+  const currentMonthNetVat = currentOutput - currentInput
 
   if (isOddMonth) {
     // חודש ראשון בתקופה: צוברים, בלי דרישת תשלום מיידית
@@ -82,13 +89,16 @@ export function computeVat(
       periodOutputVat: currentOutput,
       periodInputVat: currentInput,
       netPayable: 0,
-      accruedHoldAmount: currentOutput - currentInput,
+      accruedHoldAmount: currentMonthNetVat,
+      currentMonthNetVat,
+      previousMonthNetVat: null,
     }
   }
 
   // חודש זוגי = חודש הדיווח: מאחדים עם החודש הקודם (אם קיים)
   const prevOutput = previousMonth ? extractVatPortion(previousMonth.grossIncome) : 0
   const prevInput = previousMonth ? resolveInputVat(previousMonth) : 0
+  const previousMonthNetVat = previousMonth ? prevOutput - prevInput : null
 
   const periodOutputVat = currentOutput + prevOutput
   const periodInputVat = currentInput + prevInput
@@ -101,5 +111,7 @@ export function computeVat(
     periodInputVat,
     netPayable: periodOutputVat - periodInputVat,
     accruedHoldAmount: 0,
+    currentMonthNetVat,
+    previousMonthNetVat,
   }
 }

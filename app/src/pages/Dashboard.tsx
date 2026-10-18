@@ -97,6 +97,12 @@ export default function Dashboard() {
               {financials.vat.isReportingMonth
                 ? 'סכום סופי לתשלום/החזר לרשות המסים, מאוחד עם החודש הקודם.'
                 : 'מומלץ להפריש בצד עד חודש הדיווח הבא.'}
+              {financials.vat.isReportingMonth && financials.vat.previousMonthNetVat !== null && (
+                <p className="mt-1 text-xs text-taupe">
+                  (<span dir="ltr">{currency.format(financials.vat.currentMonthNetVat)}</span> מהחודש הנוכחי +{' '}
+                  <span dir="ltr">{currency.format(financials.vat.previousMonthNetVat)}</span> מהחודש הקודם)
+                </p>
+              )}
             </TaskCard>
           )}
 
