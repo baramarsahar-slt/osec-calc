@@ -72,15 +72,15 @@ export default function MonthlyInput() {
       >
         <MorningImport onImport={(inputs) => addExpenses(selectedMonthKey, inputs)} />
         <ExpenseForm onAdd={(input) => addExpense(selectedMonthKey, input)} />
-        <ExpenseSummary
-          totalMonthlyEquivalent={totals.totalMonthlyEquivalent}
-          businessMonthlyEquivalent={totals.businessMonthlyEquivalent}
-          privateLoanMonthlyEquivalent={totals.privateLoanMonthlyEquivalent}
-        />
         <ExpenseList
           expenses={expenses}
           onUpdate={(id, patch) => updateExpense(selectedMonthKey, id, patch)}
           onRemove={(id) => removeExpense(selectedMonthKey, id)}
+        />
+        <ExpenseSummary
+          totalMonthlyEquivalent={totals.totalMonthlyEquivalent}
+          businessMonthlyEquivalent={totals.businessMonthlyEquivalent}
+          privateLoanMonthlyEquivalent={totals.privateLoanMonthlyEquivalent}
         />
       </FormSection>
     </div>
