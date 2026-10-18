@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeDashboardDraw } from './dashboardDraw'
+import { computeDashboardDraw, type MonthExpenseTotals } from './dashboardDraw'
 import { createDefaultProfile } from '../types/profile'
 
 function baseProfile() {
@@ -10,6 +10,11 @@ function baseProfile() {
   profile.pensionGoals.pensionTargetPercent = 0
   profile.pensionGoals.monthlyPensionAmount = 0
   return profile
+}
+
+/** עבור טסטים שבהם כל החודשים משתמשים באותן הוצאות — מפשט את ההגדרה */
+function uniformExpenses(businessExpensesMonthly: number, businessVatDeductibleMonthly = 0) {
+  return (): MonthExpenseTotals => ({ businessExpensesMonthly, businessVatDeductibleMonthly })
 }
 
 describe('computeDashboardDraw', () => {
@@ -25,6 +30,7 @@ describe('computeDashboardDraw', () => {
       privateLoanMonthly: 0,
       businessVatDeductibleMonthly: 0,
       incomeHistory: { '2026-05': 20_000 },
+      getExpenseTotalsForMonth: uniformExpenses(4_000),
     })
 
     expect(result.safetyNetTarget).toBeCloseTo(12_000, 2)
@@ -43,6 +49,7 @@ describe('computeDashboardDraw', () => {
       privateLoanMonthly: 0,
       businessVatDeductibleMonthly: 0,
       incomeHistory: { '2026-05': 10_000 },
+      getExpenseTotalsForMonth: uniformExpenses(9_000),
     })
 
     const minStop = result.drawStops.find((s) => s.key === 'min')!
@@ -64,6 +71,7 @@ describe('computeDashboardDraw', () => {
       privateLoanMonthly: 0,
       businessVatDeductibleMonthly: 0,
       incomeHistory: { '2026-05': 10_000 },
+      getExpenseTotalsForMonth: uniformExpenses(1_000),
     })
 
     const minStop = result.drawStops.find((s) => s.key === 'min')!
@@ -85,6 +93,7 @@ describe('computeDashboardDraw', () => {
       privateLoanMonthly: 0,
       businessVatDeductibleMonthly: 0,
       incomeHistory: { '2026-05': 10_000 },
+      getExpenseTotalsForMonth: uniformExpenses(1_000),
     })
 
     const minStop = result.drawStops.find((s) => s.key === 'min')!
@@ -102,12 +111,57 @@ describe('computeDashboardDraw', () => {
       privateLoanMonthly: 0,
       businessVatDeductibleMonthly: 0,
       incomeHistory: { '2026-05': 10_000, '2026-06': 20_000 },
+      getExpenseTotalsForMonth: uniformExpenses(2_000),
     })
 
     const averageStop = result.drawStops.find((s) => s.key === 'average')!
     // חודש חלש יותר (10,000) מושך את הממוצע מתחת לחודש הנוכחי (20,000)
     expect(averageStop.value).toBeLessThan(result.financials.cashAfterStatutoryPayments)
     expect(averageStop.value).toBeGreaterThan(0)
+  })
+
+  it('ממוצע משתמש בהוצאות האמיתיות של כל חודש, לא בהוצאות החודש הנוכחי', () => {
+    const profile = baseProfile()
+
+    // אותה הכנסה בשני החודשים, אבל הוצאות שונות — אם הממוצע היה "דוחס" את
+    // הוצאות החודש הנוכחי על החודש הקודם, שני החודשים היו יוצאים זהים.
+    const result = computeDashboardDraw({
+      profile,
+      monthKey: '2026-06',
+      grossIncome: 20_000,
+      businessExpensesMonthly: 2_000, // הוצאות החודש הנוכחי
+      privateLoanMonthly: 0,
+      businessVatDeductibleMonthly: 0,
+      incomeHistory: { '2026-05': 20_000, '2026-06': 20_000 },
+      getExpenseTotalsForMonth: (monthKey) =>
+        monthKey === '2026-05'
+          ? { businessExpensesMonthly: 10_000, businessVatDeductibleMonthly: 0 } // חודש קודם: הוצאות גבוהות בהרבה
+          : { businessExpensesMonthly: 2_000, businessVatDeductibleMonthly: 0 },
+    })
+
+    const averageStop = result.drawStops.find((s) => s.key === 'average')!
+    // ממוצע של (20,000-10,000) וחודש נוכחי (20,000-2,000=18,000) → נמוך מ-18,000
+    expect(averageStop.value).toBeLessThan(result.financials.cashAfterStatutoryPayments)
+  })
+
+  it('חודש קודם קיים בהיסטוריה — מוזן כ-previousMonth למנוע המע"מ (איחוד דו-חודשי אמיתי)', () => {
+    const profile = baseProfile()
+    profile.businessStatus = 'licensed'
+
+    const result = computeDashboardDraw({
+      profile,
+      monthKey: '2026-06', // חודש זוגי = חודש דיווח
+      grossIncome: 11_800,
+      businessExpensesMonthly: 0,
+      privateLoanMonthly: 0,
+      businessVatDeductibleMonthly: 0,
+      incomeHistory: { '2026-05': 23_600, '2026-06': 11_800 },
+      getExpenseTotalsForMonth: uniformExpenses(0),
+    })
+
+    expect(result.financials.vat.isReportingMonth).toBe(true)
+    // פלט משולב: (11,800+23,600) ברוטו ⇐ 5,400 מע"מ עסקאות
+    expect(result.financials.vat.periodOutputVat).toBeCloseTo(5_400, 1)
   })
 
   it('ה-stops תמיד ממוינים לפי ערך עולה', () => {
@@ -122,6 +176,7 @@ describe('computeDashboardDraw', () => {
       privateLoanMonthly: 0,
       businessVatDeductibleMonthly: 0,
       incomeHistory: { '2026-05': 15_000 },
+      getExpenseTotalsForMonth: uniformExpenses(2_000),
     })
 
     const values = result.drawStops.map((s) => s.value)
@@ -140,6 +195,7 @@ describe('computeDashboardDraw', () => {
       privateLoanMonthly: 0,
       businessVatDeductibleMonthly: 0,
       incomeHistory: { '2026-05': 15_000 },
+      getExpenseTotalsForMonth: uniformExpenses(2_000),
     })
 
     const withLoan = computeDashboardDraw({
@@ -150,6 +206,7 @@ describe('computeDashboardDraw', () => {
       privateLoanMonthly: 5_000,
       businessVatDeductibleMonthly: 0,
       incomeHistory: { '2026-05': 15_000 },
+      getExpenseTotalsForMonth: uniformExpenses(2_000),
     })
 
     const avgWithout = withoutLoan.drawStops.find((s) => s.key === 'average')!.value

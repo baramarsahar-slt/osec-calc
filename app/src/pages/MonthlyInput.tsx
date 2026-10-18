@@ -1,36 +1,45 @@
-import { useMonthlyIncome } from '../hooks/useMonthlyIncome'
+import { useState } from 'react'
+import { currentMonthKey, useMonthlyIncome } from '../hooks/useMonthlyIncome'
 import { useExpenses } from '../hooks/useExpenses'
+import { getSelectableMonths } from '../utils/monthOptions'
 import FormSection from '../components/form/FormSection'
 import Field from '../components/form/Field'
-import { TextInput } from '../components/form/inputs'
+import { SelectInput, TextInput } from '../components/form/inputs'
 import { ExpenseForm } from '../components/expenses/ExpenseForm'
 import { ExpenseList } from '../components/expenses/ExpenseList'
 import { ExpenseSummary } from '../components/expenses/ExpenseSummary'
 import { MorningImport } from '../components/expenses/MorningImport'
 
-const monthLabel = (monthKey: string) => {
-  const [year, month] = monthKey.split('-').map(Number)
-  return new Date(year, month - 1, 1).toLocaleDateString('he-IL', { year: 'numeric', month: 'long' })
-}
-
 export default function MonthlyInput() {
-  const { monthKey, grossIncome, setGrossIncome } = useMonthlyIncome()
-  const {
-    expenses,
-    addExpense,
-    addExpenses,
-    updateExpense,
-    removeExpense,
-    totalMonthlyEquivalent,
-    businessMonthlyEquivalent,
-    privateLoanMonthlyEquivalent,
-  } = useExpenses()
+  const [selectedMonthKey, setSelectedMonthKey] = useState(() => currentMonthKey())
+  const monthOptions = getSelectableMonths()
+
+  const { getIncomeForMonth, setIncomeForMonth } = useMonthlyIncome()
+  const { getExpensesForMonth, addExpense, addExpenses, updateExpense, removeExpense, getMonthlyTotals } =
+    useExpenses()
+
+  const grossIncome = getIncomeForMonth(selectedMonthKey)
+  const expenses = getExpensesForMonth(selectedMonthKey)
+  const totals = getMonthlyTotals(selectedMonthKey)
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="font-heading text-2xl font-bold text-terra">קלט חודשי</h1>
-        <p className="mt-1 text-brown">חודש: {monthLabel(monthKey)}</p>
+        <h1 className="font-heading text-2xl font-bold text-terra">החודש שלי</h1>
+        <p className="mt-1 text-brown">
+          כל הנתונים נשמרים לפי חודש — אפשר לחזור ולמלא/לתקן חודשים קודמים בכל עת. ככל שיש יותר
+          היסטוריה, הדשבורד מדויק יותר (למשל לחישוב ממוצע ולדיווח מע"מ דו-חודשי).
+        </p>
+        <div className="mt-3 max-w-xs">
+          <Field label="בחירת חודש" htmlFor="month-select">
+            <SelectInput
+              id="month-select"
+              options={monthOptions.map((m) => ({ value: m.key, label: m.label }))}
+              value={selectedMonthKey}
+              onChange={(e) => setSelectedMonthKey(e.target.value)}
+            />
+          </Field>
+        </div>
       </div>
 
       <FormSection step={1} title="הכנסה ברוטו" description="סך התקבולים שנכנסו לעסק בחודש זה.">
@@ -41,7 +50,7 @@ export default function MonthlyInput() {
             min={0}
             step="0.01"
             value={grossIncome || ''}
-            onChange={(e) => setGrossIncome(Number(e.target.value))}
+            onChange={(e) => setIncomeForMonth(selectedMonthKey, Number(e.target.value))}
           />
         </Field>
       </FormSection>
@@ -51,14 +60,18 @@ export default function MonthlyInput() {
         title="ניהול הוצאות"
         description="כל הוצאה מסווגת לפי תדירות (להחלקת תזרים) ולפי מקור תשלום (עסקי/פרטי)."
       >
-        <MorningImport onImport={addExpenses} />
-        <ExpenseForm onAdd={addExpense} />
+        <MorningImport onImport={(inputs) => addExpenses(selectedMonthKey, inputs)} />
+        <ExpenseForm onAdd={(input) => addExpense(selectedMonthKey, input)} />
         <ExpenseSummary
-          totalMonthlyEquivalent={totalMonthlyEquivalent}
-          businessMonthlyEquivalent={businessMonthlyEquivalent}
-          privateLoanMonthlyEquivalent={privateLoanMonthlyEquivalent}
+          totalMonthlyEquivalent={totals.totalMonthlyEquivalent}
+          businessMonthlyEquivalent={totals.businessMonthlyEquivalent}
+          privateLoanMonthlyEquivalent={totals.privateLoanMonthlyEquivalent}
         />
-        <ExpenseList expenses={expenses} onUpdate={updateExpense} onRemove={removeExpense} />
+        <ExpenseList
+          expenses={expenses}
+          onUpdate={(id, patch) => updateExpense(selectedMonthKey, id, patch)}
+          onRemove={(id) => removeExpense(selectedMonthKey, id)}
+        />
       </FormSection>
     </div>
   )

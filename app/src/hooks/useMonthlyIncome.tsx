@@ -9,42 +9,40 @@ export function currentMonthKey(date = new Date()): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
 }
 
+/** מפתח החודש שלפני/אחרי מפתח נתון, בהפרש חודשים נתון (יכול להיות שלילי). */
+export function addMonthsToKey(monthKey: string, delta: number): string {
+  const [year, month] = monthKey.split('-').map(Number)
+  const date = new Date(year, month - 1 + delta, 1)
+  return currentMonthKey(date)
+}
+
 type MonthlyIncomeMap = Record<string, number>
 
 export interface UseMonthlyIncomeResult {
-  monthKey: string
-  /** ההכנסה ברוטו שהוזנה לחודש הנוכחי (0 אם טרם הוזנה) */
-  grossIncome: number
-  setGrossIncome: (amount: number) => void
-  /**
-   * כל ההכנסות שהוזנו אי-פעם, לפי מפתח חודש. משמש לחישוב "ממוצע היסטורי"
-   * בדשבורד. שימו לב: זו רק היסטוריית הכנסה — אין עדיין ארכיון הוצאות
-   * חודשי, כך שממוצע מבוסס-היסטוריה מניח את רשימת ההוצאות הנוכחית
-   * כקירוב לכל החודשים (ראו הערה בדשבורד).
-   */
-  incomeHistory: MonthlyIncomeMap
+  /** כל ההכנסות שהוזנו, לפי מפתח חודש */
+  incomeByMonth: MonthlyIncomeMap
+  getIncomeForMonth: (monthKey: string) => number
+  setIncomeForMonth: (monthKey: string, amount: number) => void
 }
 
 const MonthlyIncomeContext = createContext<UseMonthlyIncomeResult | null>(null)
 
 function useMonthlyIncomeState(): UseMonthlyIncomeResult {
-  const monthKey = currentMonthKey()
-  const [incomeMap, setIncomeMap] = useState<MonthlyIncomeMap>(
+  const [incomeByMonth, setIncomeByMonth] = useState<MonthlyIncomeMap>(
     () => readJSON<MonthlyIncomeMap>(STORAGE_KEY) ?? {},
   )
 
   useEffect(() => {
-    writeJSON(STORAGE_KEY, incomeMap)
-  }, [incomeMap])
+    writeJSON(STORAGE_KEY, incomeByMonth)
+  }, [incomeByMonth])
 
-  const setGrossIncome = useCallback(
-    (amount: number) => {
-      setIncomeMap((prev) => ({ ...prev, [monthKey]: amount }))
-    },
-    [monthKey],
-  )
+  const getIncomeForMonth = useCallback((monthKey: string) => incomeByMonth[monthKey] ?? 0, [incomeByMonth])
 
-  return { monthKey, grossIncome: incomeMap[monthKey] ?? 0, setGrossIncome, incomeHistory: incomeMap }
+  const setIncomeForMonth = useCallback((monthKey: string, amount: number) => {
+    setIncomeByMonth((prev) => ({ ...prev, [monthKey]: amount }))
+  }, [])
+
+  return { incomeByMonth, getIncomeForMonth, setIncomeForMonth }
 }
 
 export function MonthlyIncomeProvider({ children }: { children: ReactNode }) {

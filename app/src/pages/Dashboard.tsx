@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useUserProfile } from '../hooks/useUserProfile'
 import { useExpenses } from '../hooks/useExpenses'
-import { useMonthlyIncome } from '../hooks/useMonthlyIncome'
+import { currentMonthKey, useMonthlyIncome } from '../hooks/useMonthlyIncome'
 import { computeDashboardDraw } from '../utils/dashboardDraw'
 import { TaskCard } from '../components/dashboard/TaskCard'
 import { SafetyNetProgress } from '../components/dashboard/SafetyNetProgress'
@@ -18,12 +18,14 @@ const monthLabel = (monthKey: string) => {
 
 export default function Dashboard() {
   const { profile } = useUserProfile()
-  const {
-    businessMonthlyEquivalent,
-    privateLoanMonthlyEquivalent,
-    businessVatDeductibleMonthlyEquivalent,
-  } = useExpenses()
-  const { monthKey, grossIncome, incomeHistory } = useMonthlyIncome()
+  const { getMonthlyTotals } = useExpenses()
+  const { incomeByMonth, getIncomeForMonth } = useMonthlyIncome()
+
+  // הדשבורד תמיד מציג את "עכשיו" (החודש האמיתי של היום) — לא מושפע מבחירת
+  // החודש בעמוד "החודש שלי", שמשמשת רק להזנת/תיקון נתונים היסטוריים.
+  const monthKey = currentMonthKey()
+  const grossIncome = getIncomeForMonth(monthKey)
+  const totals = getMonthlyTotals(monthKey)
 
   const [selectedDrawIndex, setSelectedDrawIndex] = useState<number | null>(null)
 
@@ -33,20 +35,19 @@ export default function Dashboard() {
         profile,
         monthKey,
         grossIncome,
-        businessExpensesMonthly: businessMonthlyEquivalent,
-        privateLoanMonthly: privateLoanMonthlyEquivalent,
-        businessVatDeductibleMonthly: businessVatDeductibleMonthlyEquivalent,
-        incomeHistory,
+        businessExpensesMonthly: totals.businessMonthlyEquivalent,
+        privateLoanMonthly: totals.privateLoanMonthlyEquivalent,
+        businessVatDeductibleMonthly: totals.businessVatDeductibleMonthlyEquivalent,
+        incomeHistory: incomeByMonth,
+        getExpenseTotalsForMonth: (key) => {
+          const monthTotals = getMonthlyTotals(key)
+          return {
+            businessExpensesMonthly: monthTotals.businessMonthlyEquivalent,
+            businessVatDeductibleMonthly: monthTotals.businessVatDeductibleMonthlyEquivalent,
+          }
+        },
       }),
-    [
-      profile,
-      monthKey,
-      grossIncome,
-      businessMonthlyEquivalent,
-      privateLoanMonthlyEquivalent,
-      businessVatDeductibleMonthlyEquivalent,
-      incomeHistory,
-    ],
+    [profile, monthKey, grossIncome, totals, incomeByMonth, getMonthlyTotals],
   )
 
   // ברירת מחדל הגיונית: "נטו בפועל" אם קיים ברשימה, אחרת האמצע
@@ -151,11 +152,11 @@ export default function Dashboard() {
       {/* 4. הלוואת בעלים */}
       <section className="flex flex-col gap-3">
         <h2 className="font-heading text-lg font-bold text-ink">החזר הלוואת בעלים</h2>
-        <PrivateLoanCard amount={privateLoanMonthlyEquivalent} />
+        <PrivateLoanCard amount={totals.privateLoanMonthlyEquivalent} />
       </section>
 
       {/* 5. סכום סופי למשיכה */}
-      <FinalDrawCard baseDraw={selectedStop.value} privateLoanAmount={privateLoanMonthlyEquivalent} />
+      <FinalDrawCard baseDraw={selectedStop.value} privateLoanAmount={totals.privateLoanMonthlyEquivalent} />
     </div>
   )
 }

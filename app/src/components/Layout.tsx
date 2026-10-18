@@ -3,7 +3,7 @@ import logo from '../assets/logos/logo-color.png'
 
 const navItems = [
   { to: '/onboarding', label: 'פרופיל' },
-  { to: '/monthly', label: 'קלט חודשי' },
+  { to: '/monthly', label: 'החודש שלי' },
   { to: '/', label: 'דשבורד', end: true },
 ]
 
