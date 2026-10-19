@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useUserProfile } from '../hooks/useUserProfile'
 import { useExpenses } from '../hooks/useExpenses'
 import { currentMonthKey, useMonthlyIncome } from '../hooks/useMonthlyIncome'
+import { useSafetyNetBalance } from '../hooks/useSafetyNetBalance'
 import { computeDashboardDraw } from '../utils/dashboardDraw'
 import { checkAdvanceRateAlignment } from '../utils/advanceRateCheck'
 import { TaskCard } from '../components/dashboard/TaskCard'
@@ -22,12 +23,23 @@ export default function Dashboard() {
   const { profile } = useUserProfile()
   const { getMonthlyTotals } = useExpenses()
   const { incomeByMonth, getIncomeForMonth } = useMonthlyIncome()
+  const { balanceByMonth, getCurrentBalance, setBalanceForMonth } = useSafetyNetBalance()
 
   // הדשבורד תמיד מציג את "עכשיו" (החודש האמיתי של היום) — לא מושפע מבחירת
   // החודש בעמוד "החודש שלי", שמשמשת רק להזנת/תיקון נתונים היסטוריים.
   const monthKey = currentMonthKey()
   const grossIncome = getIncomeForMonth(monthKey)
   const totals = getMonthlyTotals(monthKey)
+  const safetyNetCurrentBalance = getCurrentBalance(monthKey)
+
+  // מיגרציה חד-פעמית: אם עדיין לא הוזן אף ערך חודשי ליתרת הכרית, נזרעים
+  // מהערך הישן שהיה שמור פעם בפרופיל (לפני המעבר לעדכון חודשי בדשבורד).
+  useEffect(() => {
+    if (Object.keys(balanceByMonth).length === 0 && profile.safetyNet.currentBalance > 0) {
+      setBalanceForMonth(monthKey, profile.safetyNet.currentBalance)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const [selectedDrawIndex, setSelectedDrawIndex] = useState<number | null>(null)
 
@@ -51,8 +63,9 @@ export default function Dashboard() {
             businessVatDeductibleSmoothed: monthTotals.businessVatDeductibleSmoothed,
           }
         },
+        safetyNetCurrentBalance,
       }),
-    [profile, monthKey, grossIncome, totals, incomeByMonth, getMonthlyTotals],
+    [profile, monthKey, grossIncome, totals, incomeByMonth, getMonthlyTotals, safetyNetCurrentBalance],
   )
 
   const advanceRateCheck = useMemo(() => {
@@ -116,11 +129,8 @@ export default function Dashboard() {
             </p>
             {advanceRateCheck?.isSignificantGap && (
               <p className="mt-1 text-xs font-semibold text-terra-deep">
-                ⚠ לפי {advanceRateCheck.monthsEntered} חודשי הכנסה שהוזנו השנה, התחזית למחזור שנתי (ללא מע״מ) היא{' '}
-                <span dir="ltr">{currency.format(advanceRateCheck.projectedAnnualTurnoverExclVat)}</span> — האחוז שבאמת נראה
-                נדרש הוא כ-{advanceRateCheck.neededRatePercent.toFixed(1)}%, מול{' '}
-                {advanceRateCheck.actualRatePercent.toFixed(1)}% בפועל. כדאי לבדוק מול רו"ח אם נדרש עדכון מקדמות —
-                זו הערכת-בטן בלבד, לא המלצה.
+                ⚠ על בסיס הנתונים המוזנים במערכת (הכנסות + הגדרות הפרופיל) ייתכן שהמקדמות שלך{' '}
+                {advanceRateCheck.gapPercentPoints > 0 ? 'נמוכות מדי' : 'גבוהות מדי'}. מומלץ לבדוק מול רו"ח.
               </p>
             )}
             <a
@@ -134,11 +144,7 @@ export default function Dashboard() {
           </TaskCard>
 
           {profile.bituachLeumi.meetsSelfEmployedDefinition && (
-            <TaskCard title="ביטוח לאומי" amount={financials.bituachLeumi.monthlyPayment}>
-              {financials.bituachLeumi.minimumBaseApplied
-                ? 'מבוסס רק על הרווח שהוזן עד כה החודש (בלי חודשים קודמים, ובלי הכנסה שעוד לא נכנסה) — לכן נפל לבסיס המינימום החוקי. יתעדכן אוטומטית ברגע שתזיני את ההכנסה של החודש.'
-                : 'לפי הרווח החייב בפועל החודש (רק החודש הזה, לא מצטבר).'}
-            </TaskCard>
+            <TaskCard title="ביטוח לאומי" amount={financials.bituachLeumi.monthlyPayment} />
           )}
 
           <TaskCard
@@ -155,11 +161,16 @@ export default function Dashboard() {
               מינימום <span dir="ltr">{currency.format(financials.pension.mandatoryMonthlyDeposit)}</span> בפנסיה.
             </p>
             <p className="mt-1">
-              על בסיס הכנסות החודש, עליך להפקיד{' '}
-              <span dir="ltr">{currency.format(financials.pension.actualMonthlyDeposit)}</span> לקרן פנסיה (
-              {profile.pensionGoals.pensionTargetPercent}% שמוגדר בפרופיל) ו-
-              <span dir="ltr">{currency.format(financials.pension.actualStudyFundDeposit)}</span> לקרן השתלמות (
-              {profile.pensionGoals.studyFundTargetPercent}% שמוגדר בפרופיל).
+              עליך להפקיד <span dir="ltr">{currency.format(financials.pension.actualMonthlyDeposit)}</span> לקרן
+              פנסיה{' '}
+              {profile.pensionGoals.monthlyPensionAmount !== null
+                ? '(סכום קבוע שהוגדר בפרופיל)'
+                : `(${profile.pensionGoals.pensionTargetPercent}% מההכנסה, לפי האחוז שמוגדר בפרופיל)`}{' '}
+              ו-<span dir="ltr">{currency.format(financials.pension.actualStudyFundDeposit)}</span> לקרן השתלמות{' '}
+              {profile.pensionGoals.monthlyStudyFundAmount !== null
+                ? '(סכום קבוע שהוגדר בפרופיל)'
+                : `(${profile.pensionGoals.studyFundTargetPercent}% מההכנסה, לפי האחוז שמוגדר בפרופיל)`}
+              .
             </p>
           </TaskCard>
         </div>
@@ -169,16 +180,17 @@ export default function Dashboard() {
       <section className="flex flex-col gap-3 rounded-brand-lg bg-beige-2 p-5">
         <h2 className="font-heading text-lg font-bold text-ink">כרית ביטחון עסקית</h2>
         <SafetyNetProgress
-          currentBalance={profile.safetyNet.currentBalance}
+          currentBalance={safetyNetCurrentBalance}
           targetAmount={safetyNetTarget}
           targetMonths={profile.safetyNet.targetMonthsOfExpenses}
+          onUpdateBalance={(amount) => setBalanceForMonth(monthKey, amount)}
         />
       </section>
 
-      {/* 3. נטו בבנק */}
-      <section className="flex flex-col gap-3 rounded-brand-lg bg-beige-2 p-5">
+      {/* 3. נטו בבנק — הפתרון המרכזי של האפליקציה, לכן בולט יותר משאר הקטעים */}
+      <section className="flex flex-col gap-4 rounded-brand-lg border-2 border-terra bg-beige-2 p-6">
         <div>
-          <h2 className="font-heading text-lg font-bold text-ink">נטו בבנק</h2>
+          <h2 className="font-heading text-2xl font-extrabold text-terra">נטו בבנק</h2>
           <p className="mt-1 text-sm text-brown">צריך לקבוע מהו מודל המשיכה שלך החודש — תזוזי בין האפשרויות כדי לראות את ההשפעה.</p>
         </div>
         <NetSalaryScale stops={drawStops} selectedIndex={activeIndex} onSelect={setSelectedDrawIndex} />

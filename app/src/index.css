@@ -96,3 +96,53 @@
     line-height: 1.65;
   }
 }
+
+@layer components {
+  /* סרגל "נטו בבנק": ציר בהיר כמו סימן מים, עם נקודה טרקוטה נעה — לא פס מילוי */
+  .net-salary-range {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+  }
+
+  .net-salary-range::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-terra) 18%, var(--color-beige) 82%);
+  }
+
+  .net-salary-range::-moz-range-track {
+    height: 4px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-terra) 18%, var(--color-beige) 82%);
+  }
+
+  .net-salary-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    margin-top: -10px;
+    border-radius: 50%;
+    background: var(--color-terra-deep);
+    border: 3px solid var(--color-beige);
+    box-shadow: 0 1px 3px rgba(47, 43, 38, 0.25);
+    cursor: pointer;
+  }
+
+  .net-salary-range::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--color-beige);
+    border-radius: 50%;
+    background: var(--color-terra-deep);
+    box-shadow: 0 1px 3px rgba(47, 43, 38, 0.25);
+    cursor: pointer;
+  }
+
+  .net-salary-range:focus-visible::-webkit-slider-thumb,
+  .net-salary-range:focus-visible::-moz-range-thumb {
+    outline: 3px solid var(--color-terra);
+    outline-offset: 2px;
+  }
+}

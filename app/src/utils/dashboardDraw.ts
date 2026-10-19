@@ -26,6 +26,8 @@ export interface DashboardDrawInputs {
   incomeHistory: Record<string, number>
   /** מחזירה את הוצאות החודש (בפועל + מוחלק) של חודש נתון */
   getExpenseTotalsForMonth: (monthKey: string) => MonthExpenseTotals
+  /** יתרת כרית הביטחון בפועל כרגע — מתעדכנת חודשית בדשבורד, לא בפרופיל */
+  safetyNetCurrentBalance: number
 }
 
 export interface DashboardDrawResult {
@@ -83,6 +85,7 @@ export function computeDashboardDraw(input: DashboardDrawInputs): DashboardDrawR
     businessExpensesSmoothed,
     incomeHistory,
     getExpenseTotalsForMonth,
+    safetyNetCurrentBalance,
   } = input
 
   // נתוני החודש הקודם בפועל (אם הוזנו) — מאפשרים איחוד דו-חודשי אמיתי של
@@ -112,7 +115,7 @@ export function computeDashboardDraw(input: DashboardDrawInputs): DashboardDrawR
   // יעד כרית הביטחון לפי הוצאה "טיפוסית" (מוחלקת) — לא לפי החודש הנוכחי
   // שעשוי להיות חריג (גבוה בגלל תשלום שנתי, או נמוך באקראי)
   const safetyNetTarget = profile.safetyNet.targetMonthsOfExpenses * businessExpensesSmoothed
-  const gapToTarget = Math.max(0, safetyNetTarget - profile.safetyNet.currentBalance)
+  const gapToTarget = Math.max(0, safetyNetTarget - safetyNetCurrentBalance)
 
   const actualNet = financials.cashAfterStatutoryPayments
   const averageNet = computeAverageNet(profile, incomeHistory, getExpenseTotalsForMonth)

@@ -462,32 +462,23 @@ export default function Onboarding() {
       </FormSection>
 
       {/* 7. כרית ביטחון עסקית */}
-      <FormSection step={7} title="כרית ביטחון עסקית" description="יעד מקובל: 2–6 חודשי הוצאות, ברירת מחדל 3.">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="יעד — חודשי הוצאות" htmlFor="targetMonths">
-            <TextInput
-              id="targetMonths"
-              type="number"
-              min={1}
-              max={12}
-              value={profile.safetyNet.targetMonthsOfExpenses}
-              onChange={(e) =>
-                updateSection('safetyNet', { targetMonthsOfExpenses: Number(e.target.value) })
-              }
-            />
-          </Field>
-          <Field label="יתרה נוכחית בקרן (₪)" htmlFor="currentBalance">
-            <TextInput
-              id="currentBalance"
-              type="number"
-              min={0}
-              value={profile.safetyNet.currentBalance}
-              onChange={(e) =>
-                updateSection('safetyNet', { currentBalance: Number(e.target.value) })
-              }
-            />
-          </Field>
-        </div>
+      <FormSection
+        step={7}
+        title="כרית ביטחון עסקית"
+        description='יעד מקובל: 2–6 חודשי הוצאות, ברירת מחדל 3. את היתרה הנוכחית בכרית מעדכנים מהדשבורד מדי חודש — כאן קובעים רק את היעד.'
+      >
+        <Field label="יעד — חודשי הוצאות" htmlFor="targetMonths">
+          <TextInput
+            id="targetMonths"
+            type="number"
+            min={1}
+            max={12}
+            value={profile.safetyNet.targetMonthsOfExpenses}
+            onChange={(e) =>
+              updateSection('safetyNet', { targetMonthsOfExpenses: Number(e.target.value) })
+            }
+          />
+        </Field>
       </FormSection>
 
       {/* 8. העדפת משיכת שכר */}

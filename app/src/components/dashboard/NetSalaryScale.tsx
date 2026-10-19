@@ -21,7 +21,6 @@ export function NetSalaryScale({ stops, selectedIndex, onSelect }: NetSalaryScal
   if (stops.length === 0) return null
 
   const selected = stops[selectedIndex] ?? stops[0]
-  const trackFillPercent = stops.length > 1 ? (selectedIndex / (stops.length - 1)) * 100 : 0
 
   return (
     <div className="flex flex-col gap-4">
@@ -33,13 +32,7 @@ export function NetSalaryScale({ stops, selectedIndex, onSelect }: NetSalaryScal
         <p className="mt-1 text-sm text-brown">{selected.description}</p>
       </div>
 
-      <div className="relative py-2">
-        <div className="pointer-events-none absolute inset-x-0 top-1/2 h-2 -translate-y-1/2 overflow-hidden rounded-full bg-beige-2">
-          <div
-            className="h-full rounded-full bg-terra-deep transition-[width] duration-200 ease-out"
-            style={{ width: `${trackFillPercent}%` }}
-          />
-        </div>
+      <div className="py-3">
         <input
           type="range"
           min={0}
@@ -47,7 +40,7 @@ export function NetSalaryScale({ stops, selectedIndex, onSelect }: NetSalaryScal
           step={1}
           value={selectedIndex}
           onChange={(e) => onSelect(Number(e.target.value))}
-          className="relative h-2 w-full cursor-pointer appearance-none bg-transparent accent-terra-deep"
+          className="net-salary-range h-6 w-full cursor-pointer"
           aria-label="בחירת מודל משיכת שכר"
           aria-valuetext={`${selected.label}: ${currency.format(selected.value)}`}
         />
@@ -69,7 +62,6 @@ export function NetSalaryScale({ stops, selectedIndex, onSelect }: NetSalaryScal
                   : 'text-brown hover:scale-[1.02] hover:bg-beige',
               ].join(' ')}
             >
-              {isActive && <span aria-hidden="true">●</span>}
               {stop.label}
             </button>
           )

@@ -37,6 +37,7 @@ describe('computeDashboardDraw', () => {
       businessExpensesSmoothed: 4_000,
       incomeHistory: { '2026-05': 20_000 },
       getExpenseTotalsForMonth: uniformExpenses(4_000),
+      safetyNetCurrentBalance: 0,
     })
 
     expect(result.safetyNetTarget).toBeCloseTo(12_000, 2)
@@ -56,6 +57,7 @@ describe('computeDashboardDraw', () => {
       businessExpensesSmoothed: 2_000, // אותו תשלום, "מוחלק" ל-12 חודשים
       incomeHistory: { '2026-05': 20_000 },
       getExpenseTotalsForMonth: uniformExpenses(2_000),
+      safetyNetCurrentBalance: 0,
     })
 
     // היעד מבוסס על ה-2,000 ה"טיפוסי", לא על ה-24,000 החריג
@@ -75,6 +77,7 @@ describe('computeDashboardDraw', () => {
       businessExpensesSmoothed: 2_000,
       incomeHistory: { '2026-05': 20_000 },
       getExpenseTotalsForMonth: uniformExpenses(2_000),
+      safetyNetCurrentBalance: 0,
     })
 
     // רווח/נטו החודש: 20,000 - 24,000 = שלילי, לא 20,000 - 2,000 = 18,000
@@ -85,7 +88,6 @@ describe('computeDashboardDraw', () => {
   it('כשהפער לכרית גדול בהרבה מהנטו החודשי, משיכה מינימלית=0 ומקסימלית=הנטו המלא', () => {
     const profile = baseProfile()
     profile.safetyNet.targetMonthsOfExpenses = 3
-    profile.safetyNet.currentBalance = 0
 
     const result = computeDashboardDraw({
       profile,
@@ -97,6 +99,7 @@ describe('computeDashboardDraw', () => {
       businessExpensesSmoothed: 9_000,
       incomeHistory: { '2026-05': 10_000 },
       getExpenseTotalsForMonth: uniformExpenses(9_000),
+      safetyNetCurrentBalance: 0,
     })
 
     const minStop = result.drawStops.find((s) => s.key === 'min')!
@@ -108,7 +111,6 @@ describe('computeDashboardDraw', () => {
   it('כשהפער לכרית חלקי, משיכה מינימלית = נטו בפועל פחות הפער (לא אפס)', () => {
     const profile = baseProfile()
     profile.safetyNet.targetMonthsOfExpenses = 3
-    profile.safetyNet.currentBalance = 0
 
     const result = computeDashboardDraw({
       profile,
@@ -120,6 +122,7 @@ describe('computeDashboardDraw', () => {
       businessExpensesSmoothed: 1_000,
       incomeHistory: { '2026-05': 10_000 },
       getExpenseTotalsForMonth: uniformExpenses(1_000),
+      safetyNetCurrentBalance: 0,
     })
 
     const minStop = result.drawStops.find((s) => s.key === 'min')!
@@ -131,7 +134,6 @@ describe('computeDashboardDraw', () => {
   it('כשהכרית כבר מלאה, משיכה מינימלית = משיכה בפועל (אין עוד מה לדחוף לכרית)', () => {
     const profile = baseProfile()
     profile.safetyNet.targetMonthsOfExpenses = 1
-    profile.safetyNet.currentBalance = 100_000 // הרבה מעל כל יעד סביר
 
     const result = computeDashboardDraw({
       profile,
@@ -143,6 +145,7 @@ describe('computeDashboardDraw', () => {
       businessExpensesSmoothed: 1_000,
       incomeHistory: { '2026-05': 10_000 },
       getExpenseTotalsForMonth: uniformExpenses(1_000),
+      safetyNetCurrentBalance: 100_000, // הרבה מעל כל יעד סביר
     })
 
     const minStop = result.drawStops.find((s) => s.key === 'min')!
@@ -162,6 +165,7 @@ describe('computeDashboardDraw', () => {
       businessExpensesSmoothed: 2_000,
       incomeHistory: { '2026-05': 10_000, '2026-06': 20_000 },
       getExpenseTotalsForMonth: uniformExpenses(2_000),
+      safetyNetCurrentBalance: 0,
     })
 
     const averageStop = result.drawStops.find((s) => s.key === 'average')!
@@ -193,6 +197,7 @@ describe('computeDashboardDraw', () => {
               businessVatDeductibleSmoothed: 0,
             }
           : { businessExpensesActual: 2_000, businessVatDeductibleActual: 0, businessExpensesSmoothed: 2_000, businessVatDeductibleSmoothed: 0 },
+      safetyNetCurrentBalance: 0,
     })
 
     const averageStop = result.drawStops.find((s) => s.key === 'average')!
@@ -215,6 +220,7 @@ describe('computeDashboardDraw', () => {
       businessExpensesSmoothed: 0,
       incomeHistory: { '2026-05': 23_600, '2026-06': 11_800 },
       getExpenseTotalsForMonth: uniformExpenses(0),
+      safetyNetCurrentBalance: 0,
     })
 
     expect(result.financials.vat.isReportingMonth).toBe(true)
@@ -224,7 +230,6 @@ describe('computeDashboardDraw', () => {
 
   it('ה-stops תמיד ממוינים לפי ערך עולה', () => {
     const profile = baseProfile()
-    profile.safetyNet.currentBalance = 0
 
     const result = computeDashboardDraw({
       profile,
@@ -236,6 +241,7 @@ describe('computeDashboardDraw', () => {
       businessExpensesSmoothed: 2_000,
       incomeHistory: { '2026-05': 15_000 },
       getExpenseTotalsForMonth: uniformExpenses(2_000),
+      safetyNetCurrentBalance: 0,
     })
 
     const values = result.drawStops.map((s) => s.value)
@@ -256,6 +262,7 @@ describe('computeDashboardDraw', () => {
       businessExpensesSmoothed: 2_000,
       incomeHistory: { '2026-05': 15_000 },
       getExpenseTotalsForMonth: uniformExpenses(2_000),
+      safetyNetCurrentBalance: 0,
     })
 
     const withLoan = computeDashboardDraw({
@@ -268,6 +275,7 @@ describe('computeDashboardDraw', () => {
       businessExpensesSmoothed: 2_000,
       incomeHistory: { '2026-05': 15_000 },
       getExpenseTotalsForMonth: uniformExpenses(2_000),
+      safetyNetCurrentBalance: 0,
     })
 
     const avgWithout = withoutLoan.drawStops.find((s) => s.key === 'average')!.value

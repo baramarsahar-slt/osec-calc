@@ -1,17 +1,66 @@
+import { useState } from 'react'
+
 const currency = new Intl.NumberFormat('he-IL', { style: 'currency', currency: 'ILS', maximumFractionDigits: 0 })
 
 interface SafetyNetProgressProps {
   currentBalance: number
   targetAmount: number
   targetMonths: number
+  onUpdateBalance: (amount: number) => void
 }
 
 /**
- * מד התקדמות לכרית הביטחון העסקית. הטקסט המספרי תמיד נוכח לצד הצבע
- * (עיקרון נגישות: צבע לא נושא מידע לבדו). הפס עצמו נעצר ב-100%, אבל
- * הטקסט מציג את האחוז האמיתי גם כשעוברים את היעד (למשל 180%).
+ * מד התקדמות לכרית הביטחון העסקית, עם עדכון יתרה ישיר מהדשבורד — היעד
+ * נשאר הגדרת פרופיל יציבה, אבל היתרה בפועל משתנה מחודש לחודש ומתעדכנת
+ * כאן, לא בפרופיל. הטקסט המספרי תמיד נוכח לצד הצבע (עיקרון נגישות: צבע
+ * לא נושא מידע לבדו). הפס עצמו נעצר ב-100%, אבל הטקסט מציג את האחוז
+ * האמיתי גם כשעוברים את היעד (למשל 180%).
  */
-export function SafetyNetProgress({ currentBalance, targetAmount, targetMonths }: SafetyNetProgressProps) {
+export function SafetyNetProgress({ currentBalance, targetAmount, targetMonths, onUpdateBalance }: SafetyNetProgressProps) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [draftValue, setDraftValue] = useState(String(currentBalance))
+
+  const startEditing = () => {
+    setDraftValue(String(currentBalance))
+    setIsEditing(true)
+  }
+
+  const saveEdit = () => {
+    const amount = Number(draftValue)
+    if (!Number.isNaN(amount) && amount >= 0) onUpdateBalance(amount)
+    setIsEditing(false)
+  }
+
+  if (isEditing) {
+    return (
+      <div className="flex items-end gap-2">
+        <div className="flex flex-col gap-1">
+          <label htmlFor="safety-net-balance" className="text-sm font-semibold text-brown">
+            יתרה נוכחית בכרית הביטחון (₪)
+          </label>
+          <input
+            id="safety-net-balance"
+            type="number"
+            min={0}
+            autoFocus
+            value={draftValue}
+            onChange={(e) => setDraftValue(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && saveEdit()}
+            className="w-full rounded-brand-sm border border-taupe-light bg-beige px-3 py-2 text-left text-ink"
+            dir="ltr"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={saveEdit}
+          className="rounded-brand-sm bg-terra-deep px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+        >
+          שמירה
+        </button>
+      </div>
+    )
+  }
+
   if (targetAmount <= 0) {
     return (
       <p className="text-sm text-taupe">
@@ -26,9 +75,12 @@ export function SafetyNetProgress({ currentBalance, targetAmount, targetMonths }
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-baseline justify-between">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
         <span className="text-sm font-semibold text-brown">
           {currency.format(currentBalance)} מתוך יעד {currency.format(targetAmount)} ({targetMonths} חודשי הוצאות)
+          <button type="button" onClick={startEditing} className="mr-2 text-xs font-semibold text-terra-deep underline">
+            עדכון יתרה
+          </button>
         </span>
         <span className="text-sm font-bold text-ink">{Math.round(Math.max(0, rawPercent))}%</span>
       </div>

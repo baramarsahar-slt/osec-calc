@@ -14,7 +14,7 @@ export function FinalDrawCard({ baseDraw, privateLoanAmount }: FinalDrawCardProp
 
   return (
     <div className="rounded-brand-lg bg-ink p-6 text-center">
-      <p className="font-heading text-sm font-semibold text-taupe-light">סכום סופי להעברה מהעסק לחשבון הפרטי</p>
+      <p className="font-heading text-2xl font-extrabold text-beige">סכום סופי להעברה</p>
       <p className="mt-2 font-heading text-4xl font-bold text-beige" dir="ltr">
         {currency.format(total)}
       </p>
